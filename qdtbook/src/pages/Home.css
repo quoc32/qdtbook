@@ -1,0 +1,44 @@
+.home-layout {
+  display: grid;
+  grid-template-columns: 0.8fr 2fr 0.7fr; /* trái - giữa - phải */
+  height: calc(100vh - 56px); /* full chiều cao trừ navbar */
+  /* margin-top: 56px; tránh bị navbar che */
+  overflow: hidden; /* chặn cuộn chung */
+  background: #f0f2f5;
+}
+
+/* 2 cột bên */
+.sidebar {
+  background: #f0f2f5;
+  padding: 10px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  scrollbar-color: #bcc0c4 #f0f2f5;
+}
+
+.sidebar:hover {
+  scrollbar-width: thin;                 /* hiện khi hover */
+}
+
+.main-content {
+  background: #f0f2f5;
+  padding: 10px;
+  overflow-y: auto; /* cuộn riêng */
+  -ms-overflow-style: none;
+  scrollbar-color: #bcc0c4 #f0f2f5;
+}
+
+/* demo bài viết */
+.post {
+  background: #e4e6eb;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+
+.black-line {
+  height: 1px;
+  background-color: #ccc;
+  margin: 10px 0;
+}

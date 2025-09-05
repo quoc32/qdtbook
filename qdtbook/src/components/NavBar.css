@@ -1,0 +1,83 @@
+.navbar {
+  background: #fff;
+  padding: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between; /* trái - giữa - phải */
+}
+
+/* Bên trái */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+}
+
+.search-input {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: none;
+  background: #f0f2f5;
+  font-size: 12px;
+  width: 200px;
+  outline: none;
+}
+
+/* Giữa */
+.nav-list {
+  display: flex;
+  justify-content: center;
+  /* gap: 40px; */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-icon {
+  width: 55px;
+  height: 28px;
+  object-fit: contain;
+  transition: filter 0.2s, transform 0.2s;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5%;
+}
+
+.nav-icon:hover {
+  transform: scale(1.1);
+  background-color: rgb(235, 235, 235);
+}
+
+/* Bên phải */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 70px;
+}
+
+.right-icon {
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border-radius: 50%;
+  background: #f0f2f5;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.right-icon:hover {
+  background: #e4e6eb;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+}

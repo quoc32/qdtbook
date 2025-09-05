@@ -1,0 +1,124 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 500px;
+  max-width: 90%;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: #f0f2f5;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal-user {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.privacy-btn {
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin-top: 2px;
+  background: #f0f2f5;
+  cursor: pointer;
+}
+
+.post-input {
+  width: 100%;
+  min-height: 100px;
+  border: none;
+  font-size: 16px;
+  resize: none;
+  outline: none;
+}
+
+.add-section {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-icons button {
+  background: none;
+  border: none;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.add-icons img {
+  width: 24px;
+  height: 24px;
+}
+
+.post-btn {
+  width: 100%;
+  background: #1877f2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.post-btn:disabled {
+  background: #ccd0d5;
+  cursor: not-allowed;
+}
