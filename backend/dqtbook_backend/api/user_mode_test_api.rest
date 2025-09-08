@@ -1,0 +1,19 @@
+### Home
+GET http://localhost:8080
+
+### API lấy các users
+GET http://localhost:8080/users
+
+### API tạo user (đăng kí user mới)
+POST http://localhost:8080/users/register
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "john5@example.com",
+  "passwordHash": "123456",
+  "role": "student"
+}
+
+
+
