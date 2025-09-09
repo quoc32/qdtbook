@@ -21,4 +21,17 @@ public class UserService {
     public User saveUser(User user) {
         return userRepository.save(user);
     }
+
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    public User updateUserFullName(Long id, String newFullName) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user != null) {
+            user.setFullName(newFullName);
+            return userRepository.save(user);
+        }
+        return null;
+    }
 }

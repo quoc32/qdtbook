@@ -25,5 +25,10 @@ public class UserController {
         return userService.saveUser(user);
     }
 
+    @PostMapping("/change-fullname")
+    public User changeFullName(@RequestBody User user) {
+        return userService.updateUserFullName(user.getId().longValue(), user.getFullName());
+    }
+    
 }
 

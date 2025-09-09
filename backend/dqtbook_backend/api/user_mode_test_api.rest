@@ -10,10 +10,19 @@ Content-Type: application/json
 
 {
   "fullName": "John Doe",
-  "email": "john5@example.com",
+  "email": "john6@example.com",
   "passwordHash": "123456",
   "role": "student"
 }
 
+### API thay đổi full name
+POST http://localhost:8080/users/change-fullname
+Content-Type: application/json
 
+{
+  "fullName": "John Doe",
+  "email": "john6@example.com",
+  "passwordHash": "123456",
+  "newName": "John Smith"
+}
 
