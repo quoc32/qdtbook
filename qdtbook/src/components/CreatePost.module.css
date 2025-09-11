@@ -1,14 +1,21 @@
+/* ================= Create Post Container ================= */
 .create-post {
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
-  margin: 10px 50px;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 10px 60px;
   max-width: 600px;
-  font-family: sans-serif;
-  padding-bottom: 3px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s;
+  font-size: 12px;
 }
 
+.create-post:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+/* ================= Top Section ================= */
 .create-post__top {
   display: flex;
   align-items: center;
@@ -20,6 +27,7 @@
   height: 40px;
   border-radius: 50%;
   margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .create-post__input {
@@ -28,20 +36,26 @@
   border: none;
   border-radius: 20px;
   padding: 10px 16px;
-  font-size: 15px;
   outline: none;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
+.create-post__input:hover {
+  background: #e4e6eb;
+}
+
+/* ================= Divider ================= */
 .create-post__divider {
   height: 1px;
   background: #ddd;
   margin: 8px 0;
 }
 
+/* ================= Actions Section ================= */
 .create-post__actions {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
 }
 
 .action-btn {
@@ -49,34 +63,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1px 5px;
+  padding: 5px 2px;
   border: none;
   background: none;
-  font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: #65676b;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
+  margin: 0;
 }
 
 .action-btn:hover {
   background: #f0f2f5;
+  transform: scale(1.02);
 }
 
 .action-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   margin-right: 6px;
+  flex-shrink: 0;
 }
 
-/* màu riêng cho từng loại */
+/* ================= Màu riêng cho từng action ================= */
 .action-btn.live .action-icon {
   filter: hue-rotate(330deg) saturate(150%); /* đỏ */
 }
+
 .action-btn.photo .action-icon {
   filter: hue-rotate(90deg) saturate(150%); /* xanh lá */
 }
+
 .action-btn.feeling .action-icon {
   filter: hue-rotate(40deg) saturate(150%); /* vàng */
 }

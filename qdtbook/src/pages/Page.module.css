@@ -1,0 +1,8 @@
+.home-layout {
+  display: grid;
+  grid-template-columns: 0.8fr 2fr 0.7fr; /* trái - giữa - phải */
+  height: calc(100vh - 35px); /* full chiều cao trừ navbar */
+  /* margin-top: 56px; tránh bị navbar che */
+  overflow: hidden; /* chặn cuộn chung */
+  background: #f0f2f5;
+}

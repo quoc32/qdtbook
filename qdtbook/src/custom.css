@@ -1,0 +1,11 @@
+.fs-7 {
+  font-size: 0.75rem !important; /* ~12px */
+}
+
+.fs-8 {
+  font-size: 0.625rem !important; /* ~10px */
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}

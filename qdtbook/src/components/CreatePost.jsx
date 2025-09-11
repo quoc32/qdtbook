@@ -1,22 +1,23 @@
 import React, { useState } from "react";
 
-import "./CreatePost.css";
-import CreatePostModal from "../popup-window/CreatePostModal";
+import style from "./CreatePost.module.css";
+import CreatePostModal from "../popup/CreatePostModal";
 
 export default function CreatePost() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="create-post">
-      <div className="create-post__top">
+    <div className={style["create-post"]}>
+
+      <div className={style["create-post__top"]}>
         <img
           src="/user-avatar-1.png"
           alt="User Avatar"
-          className="create-post__avatar"
+          className={style["create-post__avatar"]}
         />
         <input
           type="text"
-          className="create-post__input"
+          className={style["create-post__input"]}
           placeholder="Tên ơi, bạn đang nghĩ gì thế?"
           onClick={() => setIsModalOpen(true)}
         />
@@ -26,22 +27,25 @@ export default function CreatePost() {
         />
       </div>
 
-      <div className="create-post__divider"></div>
+      <div className={style["create-post__divider"]}></div>
 
-      <div className="create-post__actions">
-        <button className="action-btn live">
-          <img src="/camera-1.png" alt="Live" className="action-icon" />
+      <div className={style["create-post__actions"]}>
+        <button className={`${style["action-btn"]} ${style["live"]}`}>
+          <img src="/camera-1.png" alt="Live" className={style["action-icon"]} />
           Video trực tiếp
         </button>
-        <button className="action-btn photo">
-          <img src="/media-icon-1.png" alt="Photo" className="action-icon" />
+
+        <button className={`${style["action-btn"]} ${style["photo"]}`}>
+          <img src="/media-icon-1.png" alt="Photo" className={style["action-icon"]} />
           Ảnh/video
         </button>
-        <button className="action-btn feeling">
-          <img src="/smile-face-1.png" alt="Feeling" className="action-icon" />
+        <button className={`${style["action-btn"]} ${style["feeling"]}`}>
+          <img src="/smile-face-1.png" alt="Feeling" className={style["action-icon"]} />
           Cảm xúc/hoạt động
         </button>
+        
       </div>
+
     </div>
   );
 }
