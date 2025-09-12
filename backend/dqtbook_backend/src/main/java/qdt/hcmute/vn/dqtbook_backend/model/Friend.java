@@ -3,10 +3,6 @@ package qdt.hcmute.vn.dqtbook_backend.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.Instant;
 
 @Getter
@@ -17,25 +13,25 @@ public class Friend {
     @EmbeddedId
     private FriendId id;
 
-    @MapsId("userId")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @MapsId("userId1")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id_1", nullable = false)
+    private User user1;
 
-    @MapsId("friendId")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "friend_id", nullable = false)
-    private User friend;
+    @MapsId("userId2")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id_2", nullable = false)
+    private User user2;
 
-    @ColumnDefault("'pending'")
-    @Lob
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private FriendStatus status;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 }
+
+

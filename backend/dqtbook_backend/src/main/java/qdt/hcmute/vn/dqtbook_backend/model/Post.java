@@ -3,10 +3,6 @@ package qdt.hcmute.vn.dqtbook_backend.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.Instant;
 
 @Getter
@@ -19,34 +15,28 @@ public class Post {
     @Column(name = "post_id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
     @Lob
-    @Column(name = "content", nullable = false)
+    @Column(name = "content")
     private String content;
 
-    @Column(name = "media_url")
-    private String mediaUrl;
-
-    @ColumnDefault("'public'")
-    @Lob
     @Column(name = "visibility")
     private String visibility;
 
-    @ColumnDefault("0")
-    @Column(name = "is_special")
-    private Boolean isSpecial;
+    @Column(name = "post_type")
+    private String postType;
 
-    @ColumnDefault("'pending'")
-    @Lob
     @Column(name = "status")
     private String status;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 }
+
+

@@ -27,7 +27,12 @@ public class UserController {
 
     @PostMapping("/change-fullname")
     public User changeFullName(@RequestBody User user) {
-        return userService.updateUserFullName(user.getId().longValue(), user.getFullName());
+        return userService.updateUserFullName(user.getId(), user.getFullName());
+    }
+
+    @PutMapping("/{id}")
+    public User updateUserAll(@PathVariable("id") Integer id, @RequestBody User user) {
+        return userService.updateUserAllFields(id, user);
     }
     
 }
