@@ -14,6 +14,9 @@ import menuIcon from "../assets/menu.png";
 import messengerIcon from "../assets/messenger-logo.png";
 import bellIcon from "../assets/bell.png";
 
+// Modal
+import AvatarMenuModal from "../popup/AvatarMenuModal";
+
 const NavBarItem = ({ icon, altText, link }) => (
   <li>
     <Link to={link}>
@@ -23,7 +26,11 @@ const NavBarItem = ({ icon, altText, link }) => (
 );
 
 const NavBar = () => {
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
+  const avatarClickHandler = () => {
+    setIsAvatarModalOpen(!isAvatarModalOpen);
+  }
 
   return (
     <nav className={style["navbar"]}>
@@ -49,8 +56,17 @@ const NavBar = () => {
         <img src={menuIcon} alt="Menu" className={style["right-icon"]} />
         <img src={messengerIcon} alt="Messenger" className={style["right-icon"]} />
         <img src={bellIcon} alt="Notifications" className={style["right-icon"]} />
-        <img src="/user-avatar-1.png" alt="Avatar" className={style["avatar"]} />
+
+        <img src="/user-avatar-1.png" alt="Avatar" className={style["avatar"]} onClick={avatarClickHandler}/>
+
       </div>
+
+      {/* Modal */}
+      {isAvatarModalOpen && (
+        <AvatarMenuModal/>
+      )}
+
+
     </nav>
   );
 };
