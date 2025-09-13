@@ -83,6 +83,12 @@
   cursor: pointer;
 }
 
+.avatar:active {
+  transform: scale(0.9); /* thu nhỏ nhẹ khi click */
+  transition: transform 0.1s;
+  filter: brightness(75%);
+}
+
 .green-line {
   width: 100%;
   height: 3px;

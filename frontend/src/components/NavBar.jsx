@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import style from "./NavBar.module.css";
 import homeIcon from "../assets/home-icon.png";
@@ -28,9 +28,29 @@ const NavBarItem = ({ icon, altText, link }) => (
 const NavBar = () => {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
+  // Xử lý đóng mở modal của avatar
+  const modalAvatarRef = useRef(null);
   const avatarClickHandler = () => {
-    setIsAvatarModalOpen(!isAvatarModalOpen);
-  }
+    setIsAvatarModalOpen(true);
+  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // nếu modal đang mở và click KHÔNG nằm trong modalAvatarRef
+      if (isAvatarModalOpen && modalAvatarRef.current 
+        && !modalAvatarRef.current.contains(event.target) 
+        && (event.target.alt !== "Avatar")) 
+      {
+        setIsAvatarModalOpen(false);
+        console.log("Đóng modal avatar");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAvatarModalOpen]);
+
 
   return (
     <nav className={style["navbar"]}>
@@ -57,13 +77,15 @@ const NavBar = () => {
         <img src={messengerIcon} alt="Messenger" className={style["right-icon"]} />
         <img src={bellIcon} alt="Notifications" className={style["right-icon"]} />
 
-        <img src="/user-avatar-1.png" alt="Avatar" className={style["avatar"]} onClick={avatarClickHandler}/>
+        <img src="/user-avatar-1.png" alt="Avatar" 
+          className={style["avatar"]} 
+          onClick={avatarClickHandler}/>
 
       </div>
 
       {/* Modal */}
       {isAvatarModalOpen && (
-        <AvatarMenuModal/>
+       <AvatarMenuModal ref={modalAvatarRef}/>
       )}
 
 

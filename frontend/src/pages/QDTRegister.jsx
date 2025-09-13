@@ -19,7 +19,7 @@ export default function QDTRegister() {
   const [month, setMonth] = useState(1);
   const [day, setDay] = useState(1);
   const [days, setDays] = useState([]);
-  const years = Array.from({ length: 2025 - 1905 + 1 }, (_, i) => 1905 + i);
+  const years = Array.from({ length: 2025 - 1905 + 1 }, (_, i) => 2025 - i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   useEffect(() => {
     setDays(Array.from({ length: getDaysInMonth(new Date(year, month - 1)) }, (_, i) => i + 1));

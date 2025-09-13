@@ -25,7 +25,7 @@ Content-Type: application/json
 }
 
 ### API cập nhật toàn bộ thông tin User
-PUT http://localhost:8080/users/1
+PUT http://localhost:8080/users/3
 Content-Type: application/json
 
 {
