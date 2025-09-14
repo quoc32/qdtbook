@@ -9,8 +9,8 @@ POST http://localhost:8080/users/register
 Content-Type: application/json
 
 {
-  "fullName": "John Doe",
-  "email": "john6@example.com",
+  "fullName": "Diep",
+  "email": "diep@example.com",
   "passwordHash": "123456",
   "role": "student"
 }
@@ -20,9 +20,38 @@ POST http://localhost:8080/users/change-fullname
 Content-Type: application/json
 
 {
-  "fullName": "John Doe",
-  "email": "john6@example.com",
-  "passwordHash": "123456",
-  "newName": "John Smith"
+  "id": 1,
+  "fullName": "Tú"
+}
+
+### API cập nhật toàn bộ thông tin User
+PUT http://localhost:8080/users/2
+Content-Type: application/json
+
+{
+  "fullName": "Quang Diep",
+  "email": "quangdiep@example.com",
+  "passwordHash": "newHash",
+  "firstName": "Quang",
+  "lastName": "Diep",
+  "gender": "male",
+  "dateOfBirth": "2001-05-10",
+  "avatarUrl": "https://example.com/avatar.jpg",
+  "coverPhotoUrl": "https://example.com/cover.jpg",
+  "bio": "Hello, I am Diep",
+  "schoolId": "SV23110205",
+  "academicYear": "2020-2024",
+  "role": "student",
+  "phone": "+84-912345678",
+  "website": "https://janesmith.dev",
+  "country": "Vietnam",
+  "city": "HCMC",
+  "education": "HCMUTE",
+  "workplace": "Intern at ACME",
+  "facebookUrl": "https://facebook.com/jane",
+  "instagramUrl": "https://instagram.com/jane",
+  "linkedinUrl": "https://linkedin.com/in/jane",
+  "twitterUrl": "https://twitter.com/jane",
+  "lastSeenAt": "2025-09-12T10:00:00Z"
 }
 

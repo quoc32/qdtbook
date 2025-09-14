@@ -1,0 +1,106 @@
+### Danh sách bài đăng
+GET http://localhost:8080/posts
+
+### Lấy bài đăng theo id
+GET http://localhost:8080/posts/2
+
+### Tạo 1 bài đăng
+POST http://localhost:8080/posts
+Content-Type: application/json
+
+{
+  "author_id": 2,
+  "content": "Đây là bài viết thật nha mấy người",
+  "visibility": "public",
+  "post_type": "normal",
+  "status": "pending",
+  "media": [
+    { "media_type": "image", "media_url": "http://example.com/image.png" }
+  ]
+}
+
+### Cập nhật 1 bài đăng
+PUT http://localhost:8080/posts/7
+Content-Type: application/json
+
+{
+  "content": "Nội dung đã được chỉnh sửa rồi ok",
+  "visibility": "public",
+  "post_type": "normal",
+  "status": "approved",
+  "media": [
+    { "media_type": "image", "media_url": "http://example.com/image2.png" }
+  ]
+}
+
+### Xóa 1 bài đăng
+DELETE http://localhost:8080/posts/7
+
+### Reactions (Like/Reaction)
+# Tạo reaction (like)
+POST http://localhost:8080/posts/5/reactions
+Content-Type: application/json
+
+{
+  "user": { "id": 1 },
+  "type": "love"
+}
+
+### Lấy tất cả reactions của post
+GET http://localhost:8080/posts/1/reactions
+
+### Xoá reaction (unlike) theo reaction id
+DELETE http://localhost:8080/posts/1/reactions/11
+
+### Comments
+# Lấy comment cho post (có thể thêm ?page=..&size=..)
+GET http://localhost:8080/posts/1/comments
+
+### Tạo comment
+POST http://localhost:8080/posts/5/comments
+Content-Type: application/json
+
+{
+  "user": { "id": 1 },
+  "content": "Rất hay luôn!"
+}
+
+### Tạo reply (comment lồng nhau)
+POST http://localhost:8080/posts/1/comments
+Content-Type: application/json
+
+{
+  "user": { "id": 1 },
+  "content": "Cảm ơn bạn, mình trả lời ở đây",
+  "parent_comment_id": 4
+}
+
+### Cập nhật comment
+PUT http://localhost:8080/posts/5/comments/8
+Content-Type: application/json
+
+{
+  "content": "Sửa lại nội dung comment"
+}
+
+### Xoá comment
+DELETE http://localhost:8080/posts/1/comments/9
+
+### Shares (Chia sẻ bài viết)
+# Tạo 1 share 
+POST http://localhost:8080/posts/5/shares
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "shared_text": "Mình chia sẻ bài này",
+  "visibility": "public"
+}
+
+
+
+### Lấy danh sách share của 1 post
+GET http://localhost:8080/posts/2/shares
+
+### Xoá 1 share
+DELETE http://localhost:8080/posts/2/shares/3

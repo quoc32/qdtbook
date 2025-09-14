@@ -3,8 +3,6 @@ package qdt.hcmute.vn.dqtbook_backend.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-
 import java.time.Instant;
 
 @Getter
@@ -20,12 +18,14 @@ public class Chat {
     @Column(name = "chat_name", length = 100)
     private String chatName;
 
-    @ColumnDefault("0")
+    @Column(name = "chat_avatar_url", length = 255)
+    private String chatAvatarUrl;
+
     @Column(name = "is_group")
     private Boolean isGroup;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
-
 }
+
+

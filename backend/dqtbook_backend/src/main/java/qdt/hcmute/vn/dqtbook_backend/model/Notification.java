@@ -3,10 +3,6 @@ package qdt.hcmute.vn.dqtbook_backend.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.Instant;
 
 @Getter
@@ -16,27 +12,28 @@ import java.time.Instant;
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "noti_id", nullable = false)
+    @Column(name = "notification_id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recipient_id", nullable = false)
+    private User recipient;
 
-    @Lob
-    @Column(name = "type", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id")
+    private User sender;
+
+    @Column(name = "type", length = 50, nullable = false)
     private String type;
 
-    @Column(name = "content")
-    private String content;
+    @Column(name = "source_id")
+    private Integer sourceId;
 
-    @ColumnDefault("0")
     @Column(name = "is_read")
     private Boolean isRead;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
-
 }
+
+

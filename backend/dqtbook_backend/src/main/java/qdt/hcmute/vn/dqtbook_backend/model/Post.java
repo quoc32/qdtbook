@@ -1,52 +1,75 @@
 package qdt.hcmute.vn.dqtbook_backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.Instant;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "posts")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
     @Lob
-    @Column(name = "content", nullable = false)
+    @Column(name = "content")
     private String content;
 
-    @Column(name = "media_url")
-    private String mediaUrl;
-
-    @ColumnDefault("'public'")
-    @Lob
     @Column(name = "visibility")
     private String visibility;
 
-    @ColumnDefault("0")
-    @Column(name = "is_special")
+    @Column(name = "post_type")
+    @com.fasterxml.jackson.annotation.JsonAlias({"post_type", "postType"})
+    private String postType;
+
+    // Support older/alternate JSON payloads that send a boolean flag 'isSpecial'
+    // This field is transient (not persisted) and when set will update postType accordingly.
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("isSpecial")
     private Boolean isSpecial;
 
-    @ColumnDefault("'pending'")
-    @Lob
     @Column(name = "status")
     private String status;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        Instant now = Instant.now();
+        if (this.createdAt == null) this.createdAt = now;
+        if (this.updatedAt == null) this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
+
+    public Boolean getIsSpecial() {
+        return this.isSpecial;
+    }
+
+    public void setIsSpecial(Boolean isSpecial) {
+        this.isSpecial = isSpecial;
+        if (isSpecial != null) {
+            // map boolean to postType values defined in DB ('normal' or 'important')
+            this.postType = isSpecial ? "important" : "normal";
+        }
+    }
 }
+
+

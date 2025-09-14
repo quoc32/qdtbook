@@ -1,40 +1,40 @@
 package qdt.hcmute.vn.dqtbook_backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.Instant;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "post_reactions")
+@Table(name = "post_reactions",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "user_id"}))
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PostReaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reaction_id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Lob
-    @Column(name = "type", nullable = false)
-    private String type;
+    @Column(name = "reaction_type", nullable = false, length = 20)
+    @JsonAlias({"type","reaction_type","reactionType"})
+    private String reactionType;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
-
 }
+
+
