@@ -21,7 +21,7 @@ export default function QDTLogin() {
       <div className="row w-100 justify-content-center">
         {/* Left side */}
         <div className="col-md-5 d-flex flex-column justify-content-center mb-4 mb-md-0">
-          <h1 className="text-primary fw-bold display-3 animate__animated animate__zoomInDown">QDTbook</h1>
+          <h1 className="text-primary fw-bold display-3 animate__animated animate__pulse">QDTbook</h1>
           <p className="fs-4">
             QDTbook helps you connect and share with the people in your life.
           </p>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import style from "./NavBar.module.css";
 import homeIcon from "../assets/home-icon.png";
@@ -14,6 +14,9 @@ import menuIcon from "../assets/menu.png";
 import messengerIcon from "../assets/messenger-logo.png";
 import bellIcon from "../assets/bell.png";
 
+// Modal
+import AvatarMenuModal from "../popup/AvatarMenuModal";
+
 const NavBarItem = ({ icon, altText, link }) => (
   <li>
     <Link to={link}>
@@ -23,6 +26,30 @@ const NavBarItem = ({ icon, altText, link }) => (
 );
 
 const NavBar = () => {
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+
+  // Xử lý đóng mở modal của avatar
+  const modalAvatarRef = useRef(null);
+  const avatarClickHandler = () => {
+    setIsAvatarModalOpen(true);
+  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // nếu modal đang mở và click KHÔNG nằm trong modalAvatarRef
+      if (isAvatarModalOpen && modalAvatarRef.current 
+        && !modalAvatarRef.current.contains(event.target) 
+        && (event.target.alt !== "Avatar")) 
+      {
+        setIsAvatarModalOpen(false);
+        console.log("Đóng modal avatar");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAvatarModalOpen]);
 
 
   return (
@@ -49,8 +76,19 @@ const NavBar = () => {
         <img src={menuIcon} alt="Menu" className={style["right-icon"]} />
         <img src={messengerIcon} alt="Messenger" className={style["right-icon"]} />
         <img src={bellIcon} alt="Notifications" className={style["right-icon"]} />
-        <img src="/user-avatar-1.png" alt="Avatar" className={style["avatar"]} />
+
+        <img src="/user-avatar-1.png" alt="Avatar" 
+          className={style["avatar"]} 
+          onClick={avatarClickHandler}/>
+
       </div>
+
+      {/* Modal */}
+      {isAvatarModalOpen && (
+       <AvatarMenuModal ref={modalAvatarRef}/>
+      )}
+
+
     </nav>
   );
 };

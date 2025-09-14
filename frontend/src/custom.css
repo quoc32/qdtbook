@@ -9,3 +9,11 @@
 .cursor-pointer {
   cursor: pointer !important;
 }
+
+.auto-darken {
+  transition: filter 0.2s ease;
+}
+
+.auto-darken:hover {
+  filter: brightness(85%); /* giảm độ sáng xuống 85% → sẫm màu */
+}
