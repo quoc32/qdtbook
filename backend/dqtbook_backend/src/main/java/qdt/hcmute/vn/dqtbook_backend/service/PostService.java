@@ -41,9 +41,9 @@ public class PostService {
 
     @Transactional
     public Optional<Post> createFromDto(PostCreateRequest dto) {
-        if (dto.getAuthorId() == null) return Optional.empty();
+        if (dto.getAuthorId() == null) throw new IllegalArgumentException("author_id is required");
         Optional<User> userOpt = userRepository.findById(dto.getAuthorId());
-        if (userOpt.isEmpty()) return Optional.empty();
+        if (userOpt.isEmpty()) throw new IllegalArgumentException("author not found for id=" + dto.getAuthorId());
 
         Post p = new Post();
         p.setAuthor(userOpt.get());

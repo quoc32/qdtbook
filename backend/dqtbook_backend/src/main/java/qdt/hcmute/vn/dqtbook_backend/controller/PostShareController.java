@@ -24,15 +24,30 @@ public class PostShareController {
     }
 
     @PostMapping
-    public ResponseEntity<PostShare> create(@PathVariable Integer postId, @RequestBody PostShareRequest payload) {
-        return postShareService.createShare(postId, payload)
-                .map(ps -> ResponseEntity.created(URI.create("/posts/" + postId + "/shares/" + ps.getId())).body(ps))
-                .orElseGet(() -> ResponseEntity.badRequest().build());
+    public ResponseEntity<?> create(@PathVariable Integer postId, @RequestBody PostShareRequest payload) {
+        try {
+            var createdOpt = postShareService.createShare(postId, payload);
+            if (createdOpt.isPresent()) {
+                var ps = createdOpt.get();
+                return ResponseEntity.created(URI.create("/posts/" + postId + "/shares/" + ps.getId())).body(ps);
+            }
+            return ResponseEntity.status(400).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(400, "Invalid payload or missing user/post"));
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            return ResponseEntity.status(rse.getStatusCode()).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(rse.getStatusCode().value(), rse.getReason()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(500, "Internal server error"));
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        postShareService.deleteShare(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Integer postId, @PathVariable Integer id) {
+        try {
+            postShareService.deleteShare(postId, id);
+            return ResponseEntity.noContent().build();
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            return ResponseEntity.status(rse.getStatusCode()).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(rse.getStatusCode().value(), rse.getReason()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(500, "Internal server error"));
+        }
     }
 }

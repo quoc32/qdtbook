@@ -59,16 +59,37 @@ public class CommentService {
         return Optional.of(commentRepository.save(comment));
     }
 
-    public Optional<Comment> updateComment(Integer id, Comment updated) {
+    public Optional<Comment> updateComment(Integer postId, Integer id, Comment updated) {
+        // ensure post exists first
+        if (!postRepository.existsById(postId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
         Optional<Comment> opt = commentRepository.findById(id);
         if (opt.isEmpty()) return Optional.empty();
         Comment existing = opt.get();
-    existing.setContent(updated.getContent());
-    existing.setUpdatedAt(Instant.now());
-    return Optional.of(commentRepository.save(existing));
+        // ensure the comment belongs to the post in the path
+        if (existing.getPost() == null || existing.getPost().getId() == null || !existing.getPost().getId().equals(postId)) {
+            // treat as not found when mismatch
+            return Optional.empty();
+        }
+        existing.setContent(updated.getContent());
+        existing.setUpdatedAt(Instant.now());
+        return Optional.of(commentRepository.save(existing));
     }
 
-    public void deleteComment(Integer id) {
+    public void deleteComment(Integer postId, Integer id) {
+        // ensure post exists
+        if (!postRepository.existsById(postId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
+        Optional<Comment> opt = commentRepository.findById(id);
+        if (opt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found");
+        }
+        Comment existing = opt.get();
+        if (existing.getPost() == null || existing.getPost().getId() == null || !existing.getPost().getId().equals(postId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found for this post");
+        }
         commentRepository.deleteById(id);
     }
 }

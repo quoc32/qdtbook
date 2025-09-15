@@ -28,15 +28,29 @@ public class CommentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Comment> update(@PathVariable Integer id, @RequestBody Comment comment) {
-        return commentService.updateComment(id, comment)
-                .map(c -> ResponseEntity.ok(c))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<?> update(@PathVariable Integer postId, @PathVariable Integer id, @RequestBody Comment comment) {
+        try {
+            var updatedOpt = commentService.updateComment(postId, id, comment);
+            if (updatedOpt.isPresent()) return ResponseEntity.ok(updatedOpt.get());
+            return ResponseEntity.status(404).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(404, "Comment not found for this post"));
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            return ResponseEntity.status(rse.getStatusCode()).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(rse.getStatusCode().value(), rse.getReason()));
+        } catch (IllegalArgumentException iae) {
+            return ResponseEntity.status(400).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(400, iae.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(500, "Internal server error"));
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        commentService.deleteComment(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Integer postId, @PathVariable Integer id) {
+        try {
+            commentService.deleteComment(postId, id);
+            return ResponseEntity.noContent().build();
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            return ResponseEntity.status(rse.getStatusCode()).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(rse.getStatusCode().value(), rse.getReason()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(500, "Internal server error"));
+        }
     }
 }

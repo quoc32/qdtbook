@@ -33,13 +33,13 @@ public class PostShareService {
     }
 
     public Optional<PostShare> createShare(Integer postId, PostShareRequest payload) {
-        Optional<Post> postOpt = postRepository.findById(postId);
-        if (postOpt.isEmpty()) return Optional.empty();
-        Post post = postOpt.get();
+    Optional<Post> postOpt = postRepository.findById(postId);
+    if (postOpt.isEmpty()) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Post not found");
+    Post post = postOpt.get();
 
-        if (payload.getUserId() == null) return Optional.empty();
-        Optional<User> userOpt = userRepository.findById(payload.getUserId());
-        if (userOpt.isEmpty()) return Optional.empty();
+    if (payload.getUserId() == null) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "userId is required");
+    Optional<User> userOpt = userRepository.findById(payload.getUserId());
+    if (userOpt.isEmpty()) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "User not found");
 
         PostShare share = new PostShare();
         share.setPost(post);
@@ -66,7 +66,19 @@ public class PostShareService {
         return Optional.of(saved);
     }
 
-    public void deleteShare(Integer id) {
+    public void deleteShare(Integer postId, Integer id) {
+        // ensure post exists
+        if (!postRepository.existsById(postId)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Post not found");
+        }
+        Optional<PostShare> opt = postShareRepository.findById(id);
+        if (opt.isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Share not found");
+        }
+        PostShare existing = opt.get();
+        if (existing.getPost() == null || existing.getPost().getId() == null || !existing.getPost().getId().equals(postId)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Share not found for this post");
+        }
         postShareRepository.deleteById(id);
     }
 }

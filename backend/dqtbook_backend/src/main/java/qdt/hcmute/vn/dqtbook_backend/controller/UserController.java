@@ -1,10 +1,15 @@
 package qdt.hcmute.vn.dqtbook_backend.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import qdt.hcmute.vn.dqtbook_backend.model.User;
+import qdt.hcmute.vn.dqtbook_backend.dto.UserCreateRequestDTO;
+import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
+import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.service.UserService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -16,24 +21,48 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<?> getAllUsers() {
+        List<UserResponseDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
 
-    @PostMapping("/register")
-    public User createUser(@RequestBody User user) {
-        return userService.saveUser(user);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Integer id) {
+        Optional<UserResponseDTO> user = userService.getUserById(id);
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
     }
 
-    @PostMapping("/change-fullname")
-    public User changeFullName(@RequestBody User user) {
-        return userService.updateUserFullName(user.getId(), user.getFullName());
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody UserCreateRequestDTO dto) {
+        Optional<UserResponseDTO> user = userService.createUser(dto);
+        if (user.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(user.get());
+        } else {
+            return ResponseEntity.badRequest().body("Error creating user");
+        }
     }
 
     @PutMapping("/{id}")
-    public User updateUserAll(@PathVariable("id") Integer id, @RequestBody User user) {
-        return userService.updateUserAllFields(id, user);
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserUpdateRequestDTO dto) {
+        Optional<UserResponseDTO> user = userService.updateUser(id, dto);
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        } else {
+            return ResponseEntity.badRequest().body("Error updating user");
+        }
     }
-    
-}
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
+        boolean deleted = userService.deleteUser(id);
+        if (deleted) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+}

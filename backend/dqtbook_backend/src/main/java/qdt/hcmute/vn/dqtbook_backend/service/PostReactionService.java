@@ -26,7 +26,15 @@ public class PostReactionService {
     }
 
     public List<PostReaction> getReactionsForPost(Integer postId) {
-        return postReactionRepository.findByPostId(postId);
+        // ensure post exists
+        if (!postRepository.existsById(postId)) {
+            throw new qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException("Post not found");
+        }
+        List<PostReaction> reactions = postReactionRepository.findByPostId(postId);
+        if (reactions == null || reactions.isEmpty()) {
+            throw new qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException("No reactions for this post");
+        }
+        return reactions;
     }
 
     @Transactional
@@ -58,12 +66,20 @@ public class PostReactionService {
         }
         reaction.setPost(post);
         reaction.setUser(userOpt.get());
+        // check duplicate: same user already reacted to this post
+        Optional<PostReaction> existing = postReactionRepository.findByPostIdAndUserId(postId, userOpt.get().getId());
+        if (existing.isPresent()) {
+            throw new qdt.hcmute.vn.dqtbook_backend.exception.DuplicateReactionException("Reaction already exists for this user on the post");
+        }
         if (reaction.getCreatedAt() == null) reaction.setCreatedAt(Instant.now());
         PostReaction saved = postReactionRepository.saveAndFlush(reaction);
         return Optional.of(saved);
     }
 
     public void deleteReaction(Integer id) {
+        if (!postReactionRepository.existsById(id)) {
+            throw new qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException("Reaction not found");
+        }
         postReactionRepository.deleteById(id);
     }
 }
