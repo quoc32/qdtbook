@@ -1,5 +1,6 @@
 import React from "react";
 import style from "./PostCard.module.css";
+import SimpleButton1 from "./SimpleButton1";
 
 const PostCard = ({ avatar, name, time, content, image, likes, comments, shares }) => {
   return (
@@ -11,8 +12,18 @@ const PostCard = ({ avatar, name, time, content, image, likes, comments, shares 
           <h4 className={style["post-name"]}>{name}</h4>
           <span className={style["post-time"]}>{time}</span>
         </div>
-        <button className={style["post-menu"]}>⋯</button>
-        <button className={style["post-menu"]}>x</button>
+        {/* <button className={style["post-menu"]}>⋯</button>
+        <button className={style["post-menu"]}>x</button> */}
+        <SimpleButton1 
+          imageSrc={"three-dot-1.png"}
+          imageAlt={"menu"}
+          noTooltip
+        />
+        <SimpleButton1 
+          imageSrc={"x.png"}
+          imageAlt={"menu"}
+          noTooltip
+        />
       </div>
 
       {/* Content */}

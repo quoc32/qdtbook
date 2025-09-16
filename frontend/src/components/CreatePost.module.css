@@ -87,14 +87,14 @@
 }
 
 /* ================= Màu riêng cho từng action ================= */
-.action-btn.live .action-icon {
-  filter: hue-rotate(330deg) saturate(150%); /* đỏ */
+/* .action-btn.live .action-icon {
+  filter: hue-rotate(330deg) saturate(150%);
 }
 
 .action-btn.photo .action-icon {
-  filter: hue-rotate(90deg) saturate(150%); /* xanh lá */
+  filter: hue-rotate(90deg) saturate(150%);
 }
 
 .action-btn.feeling .action-icon {
-  filter: hue-rotate(40deg) saturate(150%); /* vàng */
-}
+  filter: hue-rotate(40deg) saturate(150%);
+} */

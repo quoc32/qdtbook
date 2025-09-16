@@ -12,14 +12,14 @@
 }
 
 .sidebar-item__avatar {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%; /* bo tròn avatar */
   margin-right: 10px;
 }
 
 .sidebar-item__label {
-  font-size: 14px;
+  font-size: 11px;
   color: #050505;
   font-weight: 500;
 }

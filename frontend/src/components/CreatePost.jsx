@@ -39,6 +39,7 @@ export default function CreatePost() {
           <img src="/media-icon-1.png" alt="Photo" className={style["action-icon"]} />
           Ảnh/video
         </button>
+        
         <button className={`${style["action-btn"]} ${style["feeling"]}`}>
           <img src="/smile-face-1.png" alt="Feeling" className={style["action-icon"]} />
           Cảm xúc/hoạt động

@@ -1,0 +1,158 @@
+/* ================= Contact Items ================= */
+.contact {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s;
+  margin: 4px;
+}
+
+.contact:hover {
+  background: #e4e6eb;
+}
+
+.avatarWrapper {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ced4da;
+  border-radius: 50%;
+}
+
+.avatar-menu-modal {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.selectionBar-container {
+  display: flex;
+  gap: 10px;
+  margin: 0 10px;
+}
+
+.selectionBar-option {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #050505;
+  transition: background-color 0.2s;
+}
+
+.selectionBar-option:hover {
+  background-color: #f0f2f5;
+}
+
+.selectionBar-active {
+  color: #1877f2;              /* xanh Facebook */
+  background-color: #e7f3ff;   /* nền xanh nhạt */
+}
+
+/* ============= */
+.NotificationItem-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.NotificationItem-item:hover {
+  background: #f0f2f5;
+}
+
+/* Avatar + icon overlay */
+.NotificationItem-avatarWrapper {
+  position: relative;
+  margin-right: 10px;
+}
+
+.NotificationItem-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+}
+
+.NotificationItem-avatar .active {
+  filter: invert(39%) sepia(98%) saturate(749%) hue-rotate(203deg) brightness(80%) contrast(101%);
+  background-color: transparent; /* bỏ nền */
+  transform: none; /* giữ nguyên size */
+}
+
+.NotificationItem-icon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 17px;
+  height: 17px;
+  background: white;
+  border-radius: 50%;
+  padding: 0;
+}
+
+/* Nội dung */
+.NotificationItem-content {
+  flex: 1;
+  font-size: 0;
+}
+
+.NotificationItem-text {
+  margin: 0;
+  font-size: 10px;
+  color: #050505;
+}
+
+.NotificationItem-text b {
+  font-weight: 600;
+}
+
+.NotificationItem-time {
+  font-size: 8px;
+  font-weight: 500;
+  color: #166fe5;;
+}
+
+/* Hành động */
+.NotificationItem-actions {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+}
+
+.NotificationItem-joinBtn {
+  font-size: 10px;
+  padding: 4px 8px;
+  background-color: #1877f2;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.NotificationItem-joinBtn:hover {
+  background-color: #166fe5;
+}
+
+.NotificationItem-deleteBtn {
+  font-size: 10px;
+  padding: 4px 8px;
+  background-color: #e4e6eb;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.NotificationItem-deleteBtn:hover {
+  background-color: #d8dadf;
+}

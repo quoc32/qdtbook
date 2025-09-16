@@ -69,7 +69,7 @@ const AvatarMenuModal = ({ref}) => {
     <div
       ref={ref}
       className={"position-fixed p-0 m-0 shadow rounded-3 " + style["avatar-menu-modal"]}
-      style={{zIndex: 1050 , right: '3%', top: '8%', width: '230px'}}
+      style={{zIndex: 9500 , right: '2%', top: '8%', width: '230px'}}
     >
       <TopPanel />
 

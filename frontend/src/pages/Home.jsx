@@ -9,10 +9,10 @@ import HomeMainContent from '../components/HomeMainContent';
 // Home.jsx
 const Home = () => {
   return (
-    <>
+    <div>
       <NavBar />
 
-      <div className={style["home-layout"]}>
+      <div className={`${style["home-layout"]} ${style["page-wapper"]}`}>
         {/* Cột trái */}
         <HomeLeftPanel />
   
@@ -23,7 +23,7 @@ const Home = () => {
         <HomeContactList />
 
       </div>
-    </>
+    </div>
   );
 };
 
