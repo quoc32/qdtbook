@@ -3,29 +3,36 @@ import React, { useState } from "react";
 import style from "./CreatePost.module.css";
 import CreatePostModal from "../popup/CreatePostModal";
 
+// Caption
+const CreatePostCaption = ({setIsModalOpen, isModalOpen}) => {
+  return (
+    <div className={style["create-post__top"]}>
+      <img
+        src="/user-avatar-1.png"
+        alt="User Avatar"
+        className={style["create-post__avatar"]}
+      />
+      <input
+        type="text"
+        className={style["create-post__input"]}
+        placeholder="Tên ơi, bạn đang nghĩ gì thế?"
+        onClick={() => setIsModalOpen(true)}
+      />
+      <CreatePostModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </div>
+  )
+}
+
 export default function CreatePost() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className={style["create-post"]}>
+      <CreatePostCaption setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen}/>
 
-      <div className={style["create-post__top"]}>
-        <img
-          src="/user-avatar-1.png"
-          alt="User Avatar"
-          className={style["create-post__avatar"]}
-        />
-        <input
-          type="text"
-          className={style["create-post__input"]}
-          placeholder="Tên ơi, bạn đang nghĩ gì thế?"
-          onClick={() => setIsModalOpen(true)}
-        />
-        <CreatePostModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        />
-      </div>
 
       <div className={style["create-post__divider"]}></div>
 

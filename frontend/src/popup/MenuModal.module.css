@@ -1,3 +1,11 @@
+.menu-modal {
+  max-height: min(500px, 90vh); 
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.125);
+}
+
+/* =========================
+   CREATE PANE TAB
+========================= */
 .createPaneTab-container {
   cursor: pointer;
   max-width: 130px;
@@ -6,7 +14,7 @@
 }
 
 .createPaneTab-container:hover {
-  background-color: #eeeef0;;
+  background-color: #eeeef0;
 }
 
 .createPaneTab-container div {
@@ -19,6 +27,7 @@
   padding: 5px;
   margin-right: 12px;
 }
+
 .createPaneTab-container div img {
   width: 100%;
   height: 100%;
@@ -30,13 +39,17 @@
   font-weight: 700;
 }
 
+
+/* =========================
+   CREATE PANEL
+========================= */
 .createPanel {
   background-color: white;
   padding: 4px;
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin: 5px 0;
   border-radius: 5px 0 0 5px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  height: fit-content;
 }
 
 .createPanel h6 {
@@ -45,22 +58,33 @@
 }
 
 
+/* =========================
+   SEARCH BAR
+========================= */
 .search-bar {
   margin-top: 4px;
   display: flex;
   align-items: center;
-  background-color: #f0f2f5; /* màu nền xám nhạt */
-  border-radius: 999px;      /* bo tròn thành pill */
+  background-color: #f0f2f5;  /* màu nền xám nhạt */
+  border-radius: 999px;       /* bo tròn thành pill */
   padding: 2px 10px;
-  width: 100%;               /* cho full chiều rộng cha */
-  max-width: 400px;          /* hoặc cố định theo ý bạn */
+  width: 100%;                /* cho full chiều rộng cha */
+  max-width: 400px;           /* hoặc cố định theo ý bạn */
+  margin-bottom: 10px;
 }
 
 .search-icon {
   font-size: 16px;
-  color: #65676b; /* xám nhạt */
+  color: #65676b;             /* xám nhạt */
   margin-right: 8px;
   flex-shrink: 0;
+}
+
+.search-icon img {
+  width: 10px;
+  height: 10px;
+  opacity: 0.5;
+  margin-bottom: 3px;
 }
 
 .search-input {
@@ -77,13 +101,60 @@
   color: #65676b;
 }
 
+
+/* =========================
+   SEARCH PANEL
+========================= */
 .search-panel-container {
   flex: 1;
-  margin-right: 10px;
+  margin: 5px 10px 5px 0;
   background-color: white;
   padding: 8px;
-  margin-top: 5px;
-  margin-bottom: 5px;
   border-radius: 5px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+
+.searchPanelSection-header {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* mỗi tab 1 hàng */
+.searchPanelSectionTab-container {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.searchPanelSectionTab-container:hover {
+  background-color: #F2F4F7; /* nền xám nhạt khi hover */
+}
+
+.searchPanelSectionTab-container div:first-child {
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.searchPanelSectionTab-container div img {
+  width: 28px;
+  height: 28px;
+  border-radius: 10%;
+}
+
+/* text bên phải */
+.searchPanelSectionTab-container div span {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #050505;
+}
+
+.searchPanelSectionTab-container div p {
+  margin: 2px 0 0 0;
+  font-size: 8px;
+  margin: 0;
+  color: #2d2d2d;
+}
+

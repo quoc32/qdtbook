@@ -46,26 +46,26 @@ const CreatePanel = () => {
 // >> =========Search Panel=========
 const SearchPanelSectionTabContents = {
   "Xã hội": [
-    {"imgURL" : "user-avatar-1.png", "title": "Sự kiện", "description": "Tổ chức hoặc tìm sự kiện cùng những hoạt động khác ở trên mạng ở quanh đây"},
-    {"imgURL" : "user-avatar-1.png", "title": "Bạn bè", "description": "Tìm kiếm bạn bè hoặc những người bạn có thể biến"},
-    {"imgURL" : "user-avatar-1.png", "title": "Nhóm", "description": "Kết nối những người cùng chung sở thích"},
-    {"imgURL" : "user-avatar-1.png", "title": "Bảng tin", "description": "Xem bài viết phù hợp của những người và Trang bạn theo dõi"},
-    {"imgURL" : "user-avatar-1.png", "title": "Bảng feed", "description": "Xem bài viết gần đây nhất từ bạn bè, nhóm, Trang và hơn thế nữa"},
-    {"imgURL" : "user-avatar-1.png", "title": "Trang", "description": "Khám phá và kết nối doanh nghiệp trên QDTbook"},
+    {"imgURL" : "various-icon-1-event.png", "title": "Sự kiện", "description": "Tổ chức hoặc tìm sự kiện cùng những hoạt động khác ở trên mạng ở quanh đây"},
+    {"imgURL" : "various-icon-1-friends.png", "title": "Bạn bè", "description": "Tìm kiếm bạn bè hoặc những người bạn có thể biến"},
+    {"imgURL" : "various-icon-1-groups.png", "title": "Nhóm", "description": "Kết nối những người cùng chung sở thích"},
+    {"imgURL" : "bang-tin.png", "title": "Bảng tin", "description": "Xem bài viết phù hợp của những người và Trang bạn theo dõi"},
+    {"imgURL" : "bang-feed.png", "title": "Bảng feed", "description": "Xem bài viết gần đây nhất từ bạn bè, nhóm, Trang và hơn thế nữa"},
+    {"imgURL" : "various-icon-1-flag.png", "title": "Trang", "description": "Khám phá và kết nối doanh nghiệp trên QDTbook"},
   ],
   "Giải trí": [
-    {"imgURL": "user-avatar-1.png", "title": "Video chơi game", "description": "Xem, kết nối với những game và người phát trực tiếp mà bạn yêu thích."},
-    {"imgURL": "user-avatar-1.png", "title": "Chơi game", "description": "Chơi game bạn yêu thích."},
-    {"imgURL": "user-avatar-1.png", "title": "Video", "description": "Đích đến của thước phim phù hợp với sở thích và quan hệ kết nối của bạn."}
+    {"imgURL": "video-choi-game-1.png", "title": "Video chơi game", "description": "Xem, kết nối với những game và người phát trực tiếp mà bạn yêu thích."},
+    {"imgURL": "various-icon-1-game.png", "title": "Chơi game", "description": "Chơi game bạn yêu thích."},
+    {"imgURL": "various-icon-1-video2.png", "title": "Video", "description": "Đích đến của thước phim phù hợp với sở thích và quan hệ kết nối của bạn."}
   ],
   "Mua sắm": [
-    {"imgURL": "user-avatar-1.png", "title": "Đơn đặt hàng và thanh toán", "description": "Một cách dễ dàng, bảo mật để thanh toán trên các ứng dụng bạn đang dùng."},
-    {"imgURL": "user-avatar-1.png", "title": "Marketplace", "description": "Mua bán trong cộng đồng của bạn."}
+    {"imgURL": "mua-sam-1.png", "title": "Đơn đặt hàng và thanh toán", "description": "Một cách dễ dàng, bảo mật để thanh toán trên các ứng dụng bạn đang dùng."},
+    {"imgURL": "various-icon-1-market.png", "title": "Marketplace", "description": "Mua bán trong cộng đồng của bạn."}
   ],
   "Cá nhân": [
-    {"imgURL": "user-avatar-1.png", "title": "Quảng cáo gần đây", "description": "Xem các quảng cáo bạn đã tương tác trên QDTbook."},
-    {"imgURL": "user-avatar-1.png", "title": "Kỷ niệm", "description": "Ôn lại những khoảnh khắc và kỷ niệm trong quá khứ của bạn."},
-    {"imgURL": "user-avatar-1.png", "title": "Đã lưu", "description": "Tìm lại bài viết, ảnh và video bạn đã lưu để xem sau."},
+    {"imgURL": "quang-cao-gan-day-1.png", "title": "Quảng cáo gần đây", "description": "Xem các quảng cáo bạn đã tương tác trên QDTbook."},
+    {"imgURL": "various-icon-1-memories.png", "title": "Kỷ niệm", "description": "Ôn lại những khoảnh khắc và kỷ niệm trong quá khứ của bạn."},
+    {"imgURL": "various-icon-1-save.png", "title": "Đã lưu", "description": "Tìm lại bài viết, ảnh và video bạn đã lưu để xem sau."},
   ],
   "Các sản phẩm khác của QDT": [],
 }
@@ -73,16 +73,20 @@ const SearchPanelSectionTab = ({ item }) => {
   return (
     <div className={style["searchPanelSectionTab-container"]}>
       <div><img src={item.imgURL} alt={item.title} /></div>
-      <span>{item.title}</span>
-      <p>{item.description}</p>
+
+      <div>
+        <span>{item.title}</span>
+        <p>{item.description}</p>
+      </div>
+
     </div>
   )
 }
 
 const SearchPanelSection = ({ category, items }) => {
   return (
-    <div className="searchPanelSection-container">
-      <div className="searchPanelSection-header">{category}</div>
+    <div className={style["searchPanelSection-container"]}>
+      <div className={style["searchPanelSection-header"]}>{category}</div>
       <div>
         {items.map((item, index) => (
           <SearchPanelSectionTab key={index} item={item} />
@@ -96,7 +100,9 @@ const SearchPanel = () => {
   return (
     <div className={style["search-panel-container"]}>
       <div className={style["search-bar"]}>
-        {/* <span className={style["search-icon"]}>🔍</span> */}
+        <span className={style["search-icon"]}>
+          <img src="search-alt.png" alt="search" />
+        </span>
         <input
           type="text"
           placeholder="Tìm kiếm trong menu"
@@ -117,7 +123,7 @@ const MenuModal = ({ref}) => {
   return (
     <div
       ref={ref}
-      className={"position-fixed p-2 pt-1 m-0 shadow rounded-3 " + style["menu-modal"]}
+      className={"d-flex flex-column position-fixed p-2 pt-1 pb-0 m-0 rounded-3 " + style["menu-modal"]}
         style={{
           zIndex: 1050,
           right: '2%',
@@ -126,9 +132,10 @@ const MenuModal = ({ref}) => {
           backgroundColor: "#F8F9FB",
       }}
     >
-      <h6 style={{fontWeight: 700}}>Menu</h6>
+      <h6 style={{fontWeight: 700, marginBottom: "2px"}}>Menu</h6>
+
       <div style={{
-        height: '300px',
+        height: "300px",
         overflowY: 'auto',
       }}>
         

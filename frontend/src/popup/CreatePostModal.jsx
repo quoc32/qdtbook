@@ -8,9 +8,9 @@ export default function CreatePostModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
+  // >> Xử lý khi nhấn Đăng
   const handleSubmit = async () => {
     if (!postContent.trim()) return;
-
     setLoading(true);
     createPost(postContent)
       .then((data) => {
@@ -31,7 +31,7 @@ export default function CreatePostModal({ isOpen, onClose }) {
 
         {/* Header */}
         <div className={styles["modal-header"]}>
-          <h2>Tạo bài viết</h2>
+          <div><h2>Tạo bài viết</h2></div>
           <button
             className={styles["close-btn"]}
             onClick={() => { setPostContent(""); onClose(); }}
