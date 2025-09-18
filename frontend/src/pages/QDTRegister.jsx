@@ -1,11 +1,14 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { getDaysInMonth } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 import Announcement from "../components/Announcement";
 
 export default function QDTRegister() {
   
+  const navigate = useNavigate();
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState("");
@@ -281,7 +284,7 @@ export default function QDTRegister() {
   
           {/* Footer */}
           <div className="text-center mt-2">
-            <a href="/login" className="text-primary text-decoration-none fs-7">
+            <a href="/login" className="text-primary text-decoration-none fs-7" onClick={(e) => {e.preventDefault(); navigate("/login");}}>
               Already have an account?
             </a>
           </div>

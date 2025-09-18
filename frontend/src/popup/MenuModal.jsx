@@ -110,8 +110,8 @@ const SearchPanel = () => {
         />
       </div>
 
-      {Object.entries(SearchPanelSectionTabContents).map(([category, items]) => (
-        <SearchPanelSection category={category} items={items}/>
+      {Object.entries(SearchPanelSectionTabContents).map(([category, items], index) => (
+        <SearchPanelSection category={category} items={items} key={index}/>
       ))}
 
     </div>
