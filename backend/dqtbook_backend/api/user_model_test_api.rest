@@ -20,7 +20,7 @@ Content-Type: application/json
 
 {
   "full_name": "Quan",
-  "email": "quang@example.com",
+  "email": "quang1@example.com",
   "password_hash": "hashed_password_123",
   "first_name": "Quang",
   "last_name": "Quang",
@@ -29,7 +29,7 @@ Content-Type: application/json
   "avatar_url": "https://example.com/avatar.jpg",
   "cover_photo_url": "https://example.com/cover.jpg",
   "bio": "Hello, I am Quang",
-  "school_id": "SV23110205",
+  "school_id": "SV231102051",
   "academic_year": "2020-2024",
   "role": "student",
   "phone": "+84-912345678",

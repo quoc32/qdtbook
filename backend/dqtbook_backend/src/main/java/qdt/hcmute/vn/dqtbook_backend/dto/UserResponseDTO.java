@@ -34,6 +34,7 @@ public class UserResponseDTO {
     @JsonProperty("cover_photo_url")
     private String coverPhotoUrl;
     
+    @JsonProperty("bio")
     private String bio;
     
     @JsonProperty("school_id")
