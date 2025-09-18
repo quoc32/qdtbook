@@ -1,17 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import style from "./AvatarMenuModal.module.css";
 
-// Hàm sử lý khi Đăng xuất
-const handleLogout = () => {
-  // Xóa token khỏi localStorage
-  // localStorage.removeItem("token");
-  localStorage.clear();
-  // Chuyển hướng người dùng đến trang đăng nhập
-  window.location.href = "/login";
-}
 
 const TopPanel = () => {
+
   return (
     <div className={"rounded-3 m-2 p-1"} style={{ maxWidth: "100%", boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)" }}>
       <div className="text-center p-0">
@@ -63,7 +57,31 @@ const SelectionButton = ({ avatar, name, handleClick, have_arrow = false}) => {
   );
 }
 
+// >> Main
 const AvatarMenuModal = ({ref}) => {
+  const navigate = useNavigate();
+
+  // Hàm sử lý khi Đăng xuất
+  const handleLogout = async () => {
+    try {
+      // gọi API logout
+      await fetch(import.meta.env.VITE_API_URL + "/auth/logout", {
+        method: "POST",
+        credentials: "include", // cần gửi cookie JSESSIONID
+      });
+
+      // xóa dữ liệu client-side
+      localStorage.removeItem("sessionId");
+      sessionStorage.removeItem("auth");
+
+      // điều hướng về login
+      navigate("/login");
+    } catch (error) {
+      console.error("Lỗi khi logout:", error);
+      // fallback: vẫn đưa user về login
+      // navigate("/login");
+    }
+  };
 
   return (
     <div

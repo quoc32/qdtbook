@@ -8,12 +8,12 @@ import Login from "../pages/QDTLogin";
 import Register from "../pages/QDTRegister";
 
 const routes = [
-  { path: "/", element: <Home /> },
-  { path: "/home", element: <Home /> },
-  { path: "/friends", element: <Friends /> },
-  { path: "/videos", element: <Video /> },
-  { path: "/marketplace", element: <Market /> },
-  { path: "/games", element: <Game /> },
+  { path: "/", element: <Home />, protected: true },
+  { path: "/home", element: <Home />, protected: true },
+  { path: "/friends", element: <Friends />, protected: true },
+  { path: "/videos", element: <Video />, protected: true },
+  { path: "/marketplace", element: <Market />, protected: true },
+  { path: "/games", element: <Game />, protected: true },
   { path: "/login", element: <Login />},
   { path: "/register", element: <Register />},
 ];

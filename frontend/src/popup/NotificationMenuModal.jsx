@@ -89,7 +89,7 @@ const NotificationMenuModal = ({ref}) => {
         >
           Trước đó
         </div>
-        <a class="link-offset-2 link-underline link-underline-opacity-0 px-2 m-0"
+        <a className="link-offset-2 link-underline link-underline-opacity-0 px-2 m-0"
           href="#"
           style={{ fontSize: '10px', textDecoration: 'none', fontWeight: '400' }}
         >
