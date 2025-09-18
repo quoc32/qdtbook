@@ -2,28 +2,103 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { getDaysInMonth } from "date-fns";
 
-export default function QDTRegister() {
-  const [gender, setGender] = useState("");
+import Announcement from "../components/Announcement";
 
+export default function QDTRegister() {
+  
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [gender, setGender] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const handleClickGender = (_gender) => {
     setGender(_gender);
   }
-
-  useEffect(() => {
-    console.log(gender);
-    return () => {
-    };
-  }, [gender]);
-
   const [year, setYear] = useState(2025);
   const [month, setMonth] = useState(1);
   const [day, setDay] = useState(1);
   const [days, setDays] = useState([]);
   const years = Array.from({ length: 2025 - 1905 + 1 }, (_, i) => 2025 - i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const padZero = (num) => num.toString().padStart(2, "0");
   useEffect(() => {
     setDays(Array.from({ length: getDaysInMonth(new Date(year, month - 1)) }, (_, i) => i + 1));
   }, [year, month]);
+
+  // >> Xử lý thông báo đăng ký thành công hay thất bại
+  const [announcement, setAnnouncement] = useState(null);
+  useEffect(() => {
+    if (announcement) {
+      const timer = setTimeout(() => {
+        setAnnouncement(null)
+      }, 3000) // Thời gian ô thông báo hiện ra là 3s
+      return () => clearTimeout(timer)
+    }
+  }, [announcement])
+  
+
+  // >> Hàm xử lý submit
+  const handleSubmitForm = async (e) => {
+    e.preventDefault();
+
+    // Tạo payload gửi lên server
+    const date_of_birth = `${year}-${padZero(month)}-${padZero(day)}`;
+    const payload = {
+      full_name: `${firstName} ${lastName}`,
+      email,
+      password_hash: password,
+      first_name: firstName,
+      last_name: lastName,
+      gender,
+      date_of_birth,
+      // avatar_url: "https://example.com/avatar.jpg",
+      // cover_photo_url: "https://example.com/cover.jpg",
+      // bio: "Hello, I am Quang",
+      // school_id: "SV23110205",
+      // academic_year: "2020-2024",
+      // role: "student",
+      // phone: "+84-912345678",
+      // website: "https://diep.dev",
+      // country: "Vietnam",
+      // city: "HCMC",
+    };
+
+    // Fetch API
+    try {
+    console.log(payload)
+    const res = await fetch(import.meta.env.VITE_API_URL + "/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Lỗi HTTP: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("Đăng ký thành công:", data);
+    setAnnouncement({successtive: true, message: "Bạn đã đăng ký thành công!"})
+
+    // Reset state 
+    setFirstName("");
+    setLastName("");
+    // setDay("1");
+    // setMonth("1");
+    // setYear("2025");
+    setEmail("");
+    setPassword("");
+    setGender("");
+
+    } catch (err) {
+      console.error("Lỗi khi gọi API:", err);
+      setAnnouncement({successtive: false, message: `Lỗi khi gọi API: ${err}`})
+    }
+
+  }
+
 
   return (
     <div className="container-fluid bg-light vh-100 h-flex justify-content-center align-items-center">
@@ -32,6 +107,7 @@ export default function QDTRegister() {
         <h1 className="text-primary fw-bold display-6">QDTbook</h1>
       </div>
 
+      {/* Content */}
       <div className="d-flex justify-content-center">
         <div className="card shadow p-3" style={{ maxWidth: "370px", width: "100%" }}>
           {/* Heading */}
@@ -48,6 +124,8 @@ export default function QDTRegister() {
                   type="text"
                   className="form-control fs-7"
                   placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => {setFirstName(e.target.value)}}
                 />
               </div>
               <div className="col">
@@ -55,6 +133,8 @@ export default function QDTRegister() {
                   type="text"
                   className="form-control fs-7"
                   placeholder="Surname"
+                  value={lastName}
+                  onChange={(e) => {setLastName(e.target.value)}}
                 />
               </div>
             </div>
@@ -64,17 +144,17 @@ export default function QDTRegister() {
               <span className="form-label mb-1 fs-8 m-0 p-0">Date of birth</span>
               <div className="row g-1 p-0 m-0">
                 <div className="col">
-                  <select className="form-select fs-7">
+                  <select className="form-select fs-7" onChange={(e) => {setDay(e.target.value)}}>
                     {days.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div className="col">
-                  <select className="form-select fs-7">
+                  <select className="form-select fs-7" onChange={(e) => {setMonth(e.target.value)}}>
                     {months.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div className="col">
-                  <select className="form-select fs-7">
+                  <select className="form-select fs-7"  onChange={(e) => {setYear(e.target.value)}}>
                     {years.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
@@ -164,37 +244,27 @@ export default function QDTRegister() {
 
             </div>
   
-            {/* Email + Password */}
+            {/* Email */}
             <div className="mb-2">
               <input
                 type="email"
                 className="form-control fs-7"
-                placeholder="Mobile number or email address"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => {setEmail(e.target.value)}}
               />
             </div>
+
+            {/* Password */}
             <div className="mb-2">
               <input
                 type="password"
                 className="form-control fs-7"
-                placeholder="New password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => {setPassword(e.target.value)}}
               />
             </div>
-  
-            {/* Terms */}
-            {/* <p className="small text-muted fs-7">
-              People who use our service may have uploaded your contact
-              information to Facebook.{" "}
-              <a href="#" className="text-decoration-none">
-                Learn more.
-              </a>
-            </p>
-            <p className="small text-muted fs-7">
-              By clicking Sign Up, you agree to our{" "}
-              <a href="#" className="text-decoration-none">Terms</a>,{" "}
-              <a href="#" className="text-decoration-none">Privacy Policy</a> and{" "}
-              <a href="#" className="text-decoration-none">Cookies Policy</a>. You
-              may receive SMS notifications from us and can opt out at any time.
-            </p> */}
   
             {/* Submit button */}
             <div className="d-grid">
@@ -202,6 +272,7 @@ export default function QDTRegister() {
                 type="submit"
                 className="btn btn-success fw-bold fs-7"
                 style={{ backgroundColor: "#00a400", borderColor: "#00a400" }}
+                onClick={handleSubmitForm}
               >
                 Sign Up
               </button>
@@ -216,7 +287,8 @@ export default function QDTRegister() {
           </div>
         </div>
       </div>
-
+        
+      {announcement && <Announcement text={announcement.message} successfull={announcement.successtive}></Announcement>}
     </div>
   );
 }

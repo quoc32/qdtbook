@@ -14,8 +14,18 @@
   width: 400px;
   max-width: 90%;
   padding: 16px;
+  padding-top: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   animation: fadeIn 0.2s ease;
+}
+
+.modal-ArticleSubjectSelector {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 90%;
+  padding: 16px;
+  padding-top: 8px;
+  /* box-shadow: 0 4px 12px rgba(0,0,0,0.2); */
 }
 
 @keyframes fadeIn {
@@ -28,8 +38,8 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #ddd;
-  padding-bottom: 8px;
-  margin-bottom: 12px;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .modal-header div {
@@ -61,22 +71,22 @@
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   margin-right: 10px;
 }
 
 .user-name {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 10px;
 }
 
 .privacy-btn {
-  font-size: 13px;
+  font-size: 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 2px 6px;
+  padding: 2px 4px;
   margin-top: 2px;
   background: #f0f2f5;
   cursor: pointer;
@@ -86,19 +96,25 @@
   width: 100%;
   min-height: 100px;
   border: none;
-  font-size: 16px;
+  font-size: 12px;
   resize: none;
   outline: none;
 }
 
 .add-section {
+  font-size: 10px;
+  font-weight: 500;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 8px;
+  padding: 4px 16px;
   margin: 12px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.add-section div div {
+  margin-left: 6px;
 }
 
 .add-icons button {
@@ -119,7 +135,7 @@
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 10px;
+  padding: 5px 10px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -128,4 +144,37 @@
 .post-btn:disabled {
   background: #ccd0d5;
   cursor: not-allowed;
+}
+
+.ArticleSubjectSelectorItems-container {
+  border-radius: 8px;
+  padding: 2px;
+  font-size: 11px;
+}
+
+.ArticleSubjectSelector-footer-container {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.ArticleSubjectSelector-footer-container button {
+  padding: 4px 12px;
+  background-color: #fff;
+  color: #1877F2;
+  border: 0;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.ArticleSubjectSelector-footer-container button:first-child {
+  background-color: #1877F2;
+  color: #fff;
+}
+.ArticleSubjectSelector-footer-container button:first-child:hover {
+  background-color: #1569d6;
+}
+
+.ArticleSubjectSelector-footer-container button:hover {
+  background-color: #eaedf0;
 }
