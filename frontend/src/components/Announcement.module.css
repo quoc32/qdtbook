@@ -1,0 +1,45 @@
+.Announcement-container {
+  padding: 10px 15px;
+  border-radius: 6px 0 0 6px;
+  margin: 10px 0;
+  font-size: 14px;
+  font-weight: 500;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+
+.Announcement-container-success {
+  background-color: #d4edda;  /* xanh nhạt */
+  color: #107828;             /* chữ xanh đậm */
+  border: 1px solid #c3e6cb;
+}
+
+.Announcement-container-error {
+  background-color: #f8d7da;  /* đỏ nhạt */
+  color: #721c24;             /* chữ đỏ đậm */
+  border: 1px solid #f5c6cb;
+}
+
+/* Thanh progress */
+.Announcement-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.179);
+  width: 100%;
+  animation-name: shrink;
+  animation-timing-function: linear;
+}
+
+@keyframes shrink {
+  from {
+    transform: scaleX(1);
+    transform-origin: right;
+  }
+  to {
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+}
