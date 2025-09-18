@@ -1,5 +1,6 @@
 package qdt.hcmute.vn.dqtbook_backend.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import qdt.hcmute.vn.dqtbook_backend.model.User;
@@ -19,10 +20,14 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, DepartmentRepository departmentRepository) {
+    public UserService(UserRepository userRepository,
+                        DepartmentRepository departmentRepository,
+                        PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UserResponseDTO> getAllUsers() {
@@ -43,10 +48,15 @@ public class UserService {
             return Optional.empty();
         }
 
+        
         User user = new User();
+
+        
         user.setFullName(dto.getFullName());
         user.setEmail(dto.getEmail());
-        user.setPasswordHash(dto.getPasswordHash());
+        // user.setPasswordHash(dto.getPasswordHash());
+        // Băm mật khẩu trước khi lưu
+        user.setPasswordHash(passwordEncoder.encode(dto.getPasswordHash()));
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setGender(dto.getGender());
@@ -172,4 +182,13 @@ public class UserService {
         dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
     }
+
+    public Optional<User> login(String email, String rawPassword) {
+        User user = userRepository.findByEmail(email);
+        if (user != null && passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            return Optional.of(user);
+        }
+        return Optional.empty();
+    }
+
 }
