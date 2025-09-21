@@ -1,5 +1,7 @@
 package qdt.hcmute.vn.dqtbook_backend.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import qdt.hcmute.vn.dqtbook_backend.model.Post;
 import qdt.hcmute.vn.dqtbook_backend.model.PostMedia;
@@ -7,10 +9,15 @@ import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostMediaRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
-import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateRequest;
+import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
+import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateRequestDTO;
+import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateResponseDTO;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.servlet.http.HttpSession;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostUpdateRequest;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,14 +28,48 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMediaRepository postMediaRepository;
 
+    @Autowired
+    private HttpSession session;
+
     public PostService(PostRepository postRepository, UserRepository userRepository, PostMediaRepository postMediaRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postMediaRepository = postMediaRepository;
     }
 
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    public ResponseEntity<List<PostContentResponseDTO>> getAllPosts() {
+        List<Post> posts = postRepository.findAll();
+
+        List<PostContentResponseDTO> dtos = posts.stream()
+                .map(post -> {
+                    PostContentResponseDTO dto = new PostContentResponseDTO();
+                    dto.setId(post.getId());
+                    dto.setContent(post.getContent());
+                    dto.setVisibility(post.getVisibility());
+                    dto.setPostType(post.getPostType());
+                    dto.setStatus(post.getStatus());
+
+                    // map author
+                    PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                    if (post.getAuthor() != null) {
+                        authorDto.setId(post.getAuthor().getId());
+                        authorDto.setFullName(post.getAuthor().getFullName());
+                        authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                        authorDto.setEmail(post.getAuthor().getEmail());
+                    }
+                    dto.setAuthor(authorDto);
+
+                    // map medias
+                    List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                            .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                            .toList();
+                    dto.setMedia(mediaDtos);
+
+                    return dto;
+            })
+            .toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     public Optional<Post> findById(Integer id) {
@@ -39,33 +80,99 @@ public class PostService {
         return postRepository.save(post);
     }
 
-    @Transactional
-    public Optional<Post> createFromDto(PostCreateRequest dto) {
-        if (dto.getAuthorId() == null) throw new IllegalArgumentException("author_id is required");
-        Optional<User> userOpt = userRepository.findById(dto.getAuthorId());
-        if (userOpt.isEmpty()) throw new IllegalArgumentException("author not found for id=" + dto.getAuthorId());
+    /**
+     * Chuyển đổi từ Entity Post và danh sách PostMedia đã lưu 
+     * sang PostCreateResponseDTO để trả về cho client.
+     *
+     * @param savedPost   Bài viết đã lưu trong DB
+     * @param savedMedias Danh sách media đã lưu gắn với bài viết
+     * @return DTO chứa thông tin bài viết + tác giả + media
+     */
+    private PostCreateResponseDTO toPostCreateResponseDTO(Post savedPost, List<PostMedia> savedMedias) {
+        PostCreateResponseDTO resDTO = new PostCreateResponseDTO();
 
-        Post p = new Post();
-        p.setAuthor(userOpt.get());
-        p.setContent(dto.getContent());
-        p.setVisibility(dto.getVisibility());
-        p.setPostType(dto.getPostType());
-        p.setStatus(dto.getStatus());
+        // Post cơ bản
+        resDTO.setId(savedPost.getId());
+        resDTO.setContent(savedPost.getContent());
+        resDTO.setVisibility(savedPost.getVisibility());
+        resDTO.setPostType(savedPost.getPostType());
+        resDTO.setStatus(savedPost.getStatus());
+        resDTO.setCreatedAt(savedPost.getCreatedAt());
+        resDTO.setUpdatedAt(savedPost.getUpdatedAt());
 
-        Post saved = postRepository.save(p);
-
-        if (dto.getMedia() != null) {
-            for (PostCreateRequest.MediaItem m : dto.getMedia()) {
-                if (m.getMediaType() == null || m.getMediaUrl() == null) continue;
-                PostMedia pm = new PostMedia();
-                pm.setPost(saved);
-                pm.setMediaType(m.getMediaType());
-                pm.setMediaUrl(m.getMediaUrl());
-                postMediaRepository.save(pm);
-            }
+        // Author
+        if (savedPost.getAuthor() != null) {
+            PostCreateResponseDTO.AuthorDTO authorDTO = new PostCreateResponseDTO.AuthorDTO();
+            authorDTO.setId(savedPost.getAuthor().getId());
+            authorDTO.setEmail(savedPost.getAuthor().getEmail());
+            authorDTO.setFullName(savedPost.getAuthor().getFullName());
+            authorDTO.setFirstName(savedPost.getAuthor().getFirstName());
+            authorDTO.setLastName(savedPost.getAuthor().getLastName());
+            authorDTO.setGender(savedPost.getAuthor().getGender());
+            authorDTO.setBio(savedPost.getAuthor().getBio());
+            resDTO.setAuthor(authorDTO);
         }
 
-        return Optional.of(saved);
+        // Media
+        resDTO.setMedias(new ArrayList<>());
+        for (PostMedia pm : savedMedias) {
+            PostCreateResponseDTO.MediaDTO mediaDTO = new PostCreateResponseDTO.MediaDTO();
+            mediaDTO.setMediaType(pm.getMediaType());
+            mediaDTO.setMediaUrl(pm.getMediaUrl());
+            resDTO.getMedias().add(mediaDTO);
+        }
+
+        return resDTO;
+    }
+
+    /**
+     * Tạo Post mới từ PostCreateRequestDTO và trả về Optional<PostCreateResponseDTO>.
+     * 
+     * Quy trình:
+     * 1. Kiểm tra authorId trong request có hợp lệ và khớp với user đang đăng nhập.
+     * 2. Lấy thông tin User từ DB (theo authorId).
+     * 3. Tạo entity Post và lưu vào DB.
+     * 4. Nếu có media trong request thì duyệt danh sách, tạo PostMedia và lưu vào DB.
+     * 5. Gộp Post và danh sách PostMedia đã lưu thành PostCreateResponseDTO để trả về.
+     *
+     * @param ReqDTO DTO chứa dữ liệu từ client gửi lên để tạo bài viết
+     * @return Optional<PostCreateResponseDTO> chứa thông tin bài viết vừa tạo
+     */
+    @Transactional
+    public Optional<PostCreateResponseDTO> createFromDto(PostCreateRequestDTO ReqDTO) {
+        // Todo: 1. Kiểm tra authorId trong request có hợp lệ và khớp với user đang đăng nhập.
+        if (ReqDTO.getAuthorId() == null) throw new IllegalArgumentException("author_id is required");
+        if (ReqDTO.getAuthorId() != (Integer)session.getAttribute("userId")) {
+            throw new IllegalArgumentException("author_id does not match the logged-in user");
+        }
+        // Todo: 2. Lấy thông tin User từ DB (theo authorId).
+        Optional<User> userOpt = userRepository.findById(ReqDTO.getAuthorId());
+        if (userOpt.isEmpty()) throw new IllegalArgumentException("author not found for id=" + ReqDTO.getAuthorId());
+        // Todo: 3. Tạo entity Post và lưu vào DB.
+        Post p = new Post();
+        p.setAuthor(userOpt.get());
+        p.setContent(ReqDTO.getContent());
+        p.setVisibility(ReqDTO.getVisibility());
+        p.setPostType(ReqDTO.getPostType());
+        p.setStatus(ReqDTO.getStatus());
+        // Todo: 4. Nếu có media trong request thì duyệt danh sách, tạo PostMedia và lưu vào DB.
+        Post savedPost = postRepository.save(p);
+        List<PostMedia> savedPostMedias = new ArrayList<>();
+        // Todo: 5. Gộp Post và danh sách PostMedia đã lưu thành PostCreateResponseDTO để trả về.
+        if (ReqDTO.getMedia() != null) {
+            for (PostCreateRequestDTO.MediaItem m : ReqDTO.getMedia()) {
+                if (m.getMediaType() == null || m.getMediaUrl() == null) continue;
+                PostMedia pm = new PostMedia();
+                pm.setPost(savedPost);
+                pm.setMediaType(m.getMediaType());
+                pm.setMediaUrl(m.getMediaUrl());
+                PostMedia savedPostMedia =  postMediaRepository.save(pm);
+                savedPostMedias.add(savedPostMedia);
+            }
+        }
+        PostCreateResponseDTO ResDTO = toPostCreateResponseDTO(savedPost, savedPostMedias);
+        
+        return Optional.of(ResDTO);
     }
 
     public Post updatePost(Integer id, Post post) {

@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PostCreateRequest {
+public class PostCreateRequestDTO {
     @JsonProperty("author_id")
     private Integer authorId;
 

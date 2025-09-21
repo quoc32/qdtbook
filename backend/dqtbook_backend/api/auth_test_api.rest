@@ -10,7 +10,4 @@ Content-Type: application/json
 ### 2. Logout với sessionId
 POST http://localhost:8080/auth/logout
 Content-Type: application/json
-
-{
-  "sessionId": "08497F53FDAEC7F69650B0DF80E8779E"
-}
+Cookie: JSESSIONID=08154ECA196D0A304C8F64FCCCED02F1

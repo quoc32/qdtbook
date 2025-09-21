@@ -20,7 +20,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping
+    @GetMapping("/api")
     public ResponseEntity<?> getAllUsers() {
         List<UserResponseDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
@@ -36,7 +36,7 @@ public class UserController {
         }
     }
 
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<?> createUser(@RequestBody UserCreateRequestDTO dto) {
         Optional<UserResponseDTO> user = userService.createUser(dto);
         if (user.isPresent()) {
