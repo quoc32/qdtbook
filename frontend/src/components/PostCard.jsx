@@ -30,7 +30,7 @@ const PostCard = ({ avatar, name, time, content, image, likes, comments, shares 
       <div className={style["post-content"]}>
         <p>{content}</p>
         {/* {image || <img src={image == null ? '/user-avatar-1.png' : image} alt="post" className={style["post-image" />} */}
-        {image || <img src={image == null ? '/user-avatar-1.png' : image} alt="post" className={style["post-image"]} />}
+        {<img src={image} alt="post" className={style["post-image"]} />}
       </div>
 
       {/* Footer */}

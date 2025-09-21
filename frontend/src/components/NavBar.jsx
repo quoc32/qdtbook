@@ -7,7 +7,8 @@ import friendsIcon from "../assets/friends-icon.png";
 import videoIcon from "../assets/video-icon.png";
 import marketIcon from "../assets/market-icon.png";
 import gameIcon from "../assets/game-icon.png";
-import fbLogo from "../assets/fb-logo.ico";
+// import fbLogo from "../assets/fb-logo.ico";
+import fbLogo from "../assets/react.svg";
 import TooltipWapper from "./TooltipWapper";
 
 // bên phải
@@ -114,7 +115,7 @@ const NavBar = () => {
       <Link to="/" style={{ textDecoration: "none" }} tabIndex="-1">
         <div className={style["nav-left"]}>
           <img src={fbLogo} alt="Facebook" className={style["logo"]} />
-          <input type="text" placeholder="Tìm kiếm trên Facebook" className={style["search-input"]} />
+          <input type="text" placeholder="Tìm kiếm trên QDTbook" className={style["search-input"]} />
         </div>
       </Link>
 

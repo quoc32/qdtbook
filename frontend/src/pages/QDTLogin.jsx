@@ -1,12 +1,32 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { clear as clearPopupAnnouncementState,
+         changeState as changePopupAnnouncementState
+        } from '../store/slices/popupAnnouncementSlice'
+import Announcement from "../components/Announcement";
 
 export default function QDTLogin() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  // >> State của form
   const [email, setEmail] = useState("");
   const [password, setPasword] = useState("");
 
+  // >> Slice popupAnnouncement state
+  const announcementContent = useSelector((state) => state.popupAnnouncement.content);
+  const announcementSuccess = useSelector((state) => state.popupAnnouncement.successfull);
+  // >> Xử lý thông báo đăng bài Post thành công hay thất bại
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  if (announcementContent && !showAnnouncement) {
+    setShowAnnouncement(true);
+    setTimeout(() => {
+      setShowAnnouncement(false);
+      dispatch(clearPopupAnnouncementState());
+    }, 3000); // Hiển thị thông báo trong 3 giây
+  }
+  // >> Xử lý sự kiện đăng nhập
   const handleLogin = async (e) => {
     e.preventDefault();
     // Perform login logic here (e.g., form validation, API call)
@@ -30,7 +50,6 @@ export default function QDTLogin() {
       }
 
       const data = await response.json();
-      console.log("Login success:", data);
       // Backend trả về data.user với thông tin người dùng
       const userAuth = {
         id: data.user_id,
@@ -41,24 +60,28 @@ export default function QDTLogin() {
         first_name: data.first_name,
         last_name: data.last_name,
       };
+      console.log("Login success:", userAuth);
 
       // Lưu sessionId hoặc user info vào localStorage nếu muốn
+      localStorage.setItem("auth", JSON.stringify(userAuth));
       localStorage.setItem("sessionId", data.session_id);
-      sessionStorage.setItem("auth", JSON.stringify(userAuth));
 
       // Điều hướng về trang home
       navigate("/home");
     } catch (err) {
       console.error("Lỗi đăng nhập:", err);
+      // Hiển thị thông báo lỗi đăng nhập
+      dispatch( clearPopupAnnouncementState() );
+      dispatch( changePopupAnnouncementState({ content: err.message, successfull: false }) );
     }
   }
-  
-
+  // >> Chuyển đến trang đăng ký
   const goToRegister = (e) => {
     e.preventDefault();
     navigate("/register");
   }
 
+  // >> Render
   return (
     <div className="container-fluid bg-light vh-100 d-flex align-items-center">
       <div className="row w-100 justify-content-center">
@@ -126,6 +149,9 @@ export default function QDTLogin() {
           </p>
         </div>
       </div>
+      
+      {/* Announcement */}
+      {showAnnouncement && <Announcement text={announcementContent} successfull={announcementSuccess}></Announcement>}
     </div>
   );
 }
