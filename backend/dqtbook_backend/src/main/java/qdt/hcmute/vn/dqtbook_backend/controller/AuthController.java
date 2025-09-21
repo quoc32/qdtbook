@@ -30,7 +30,7 @@ public class AuthController {
         return userService.login(email, password)
                 .map(user -> {
                     HttpSession session = httpRequest.getSession(true); // tạo session nếu chưa có
-                    session.setAttribute("userId", user.getId());
+                    session.setAttribute("userId", user.getId()); // Session lưu userId
 
                     AuthResponseDTO authResponse = new AuthResponseDTO(
                             "Đăng nhập thành công",
@@ -74,29 +74,41 @@ public class AuthController {
         ));
     }
 
+    // Đăng xuất
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         HttpSession session = request.getSession(false); // không tạo mới
 
         if (session == null) {
-            return ResponseEntity.status(400).body(Map.of(
-                "message", "Session không tồn tại hoặc đã hết hạn"
+            return ResponseEntity.ok(Map.of(
+                "message", "Đã đăng xuất hoặc session không tồn tại"
             ));
         }
 
-        String oldId = session.getId();
+        // Lấy thông tin trước khi invalidate (nếu cần log)
+        String oldSessionId = session.getId();
+        
+        // Invalidate session
         session.invalidate();
 
-        // Xóa cookie
-        Cookie cookie = new Cookie("JSESSIONID", null);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        // Xóa tất cả các cookie session có thể
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("JSESSIONID".equals(cookie.getName())) {
+                    cookie.setValue("");
+                    cookie.setPath("/");
+                    cookie.setHttpOnly(true);
+                    cookie.setMaxAge(0);
+                    cookie.setSecure(false); // có thể set true nếu dùng HTTPS
+                    response.addCookie(cookie);
+                }
+            }
+        }
 
         return ResponseEntity.ok(Map.of(
             "message", "Đăng xuất thành công",
-            "oldSessionId", oldId
+            "sessionId", oldSessionId != null ? oldSessionId : "unknown"
         ));
     }
 

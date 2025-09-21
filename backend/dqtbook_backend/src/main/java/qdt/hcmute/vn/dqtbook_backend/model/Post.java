@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -46,6 +47,10 @@ public class Post {
 
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    // >> relationship with PostMedia
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<PostMedia> medias;
 
     @PrePersist
     protected void onCreate() {

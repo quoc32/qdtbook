@@ -6,7 +6,7 @@ GET http://localhost:8080
 ### ===========================================
 
 ### 1. Get all users
-GET http://localhost:8080/users
+GET http://localhost:8080/users/api
 
 ### 2. Get user by ID (existing user)
 GET http://localhost:8080/users/1
@@ -15,12 +15,12 @@ GET http://localhost:8080/users/1
 GET http://localhost:8080/users/999
 
 ### 4. Create new user (valid data)
-POST http://localhost:8080/users
+POST http://localhost:8080/users/register
 Content-Type: application/json
 
 {
   "full_name": "Quan",
-  "email": "quang1@example.com",
+  "email": "quang2@example.com",
   "password_hash": "hashed_password_123",
   "first_name": "Quang",
   "last_name": "Quang",
@@ -29,7 +29,7 @@ Content-Type: application/json
   "avatar_url": "https://example.com/avatar.jpg",
   "cover_photo_url": "https://example.com/cover.jpg",
   "bio": "Hello, I am Quang",
-  "school_id": "SV231102051",
+  "school_id": "SV231102052",
   "academic_year": "2020-2024",
   "role": "student",
   "phone": "+84-912345678",

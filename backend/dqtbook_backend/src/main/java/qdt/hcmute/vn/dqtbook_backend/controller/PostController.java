@@ -3,11 +3,11 @@ package qdt.hcmute.vn.dqtbook_backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.bind.annotation.*;
-import qdt.hcmute.vn.dqtbook_backend.model.Post;
 import qdt.hcmute.vn.dqtbook_backend.service.PostService;
-import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateRequest;
+import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostUpdateRequest;
 import qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse;
+import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class PostController {
     }
 
     @GetMapping
-    public List<Post> getAllPosts() {
+    public ResponseEntity<List<PostContentResponseDTO>> getAllPosts() {
         return postService.getAllPosts();
     }
 
@@ -44,11 +44,11 @@ public class PostController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> createPost(@RequestBody PostCreateRequest dto) {
+    public ResponseEntity<Object> createPost(@RequestBody PostCreateRequestDTO dto) {
         try {
-        return postService.createFromDto(dto)
-            .map(p -> ResponseEntity.status(201).body((Object)p))
-            .orElseGet(() -> ResponseEntity.status(500).build());
+            return postService.createFromDto(dto)
+                .map(p -> ResponseEntity.status(201).body((Object)p))
+                .orElseGet(() -> ResponseEntity.status(500).build());
         } catch (IllegalArgumentException ex) {
             ErrorResponse err = new ErrorResponse(400, ex.getMessage());
             return ResponseEntity.badRequest().body(err);

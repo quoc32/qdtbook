@@ -1,0 +1,20 @@
+### Upload file
+POST http://localhost:8080/media/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: JSESSIONID=8426175D82F2C2E065FA2D8D62B8B799
+
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="test2.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+--WebAppBoundary--
+
+### Get media
+GET http://localhost:8080/media/files/20_e12016c4-7425-4c75-97fe-22c1709232ef_test.jpg
+Cookie: JSESSIONID=8AB371EFF15A8A2CB1F2E254933018D2
