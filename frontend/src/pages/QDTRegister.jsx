@@ -69,7 +69,7 @@ export default function QDTRegister() {
     // Fetch API
     try {
     console.log(payload)
-    const res = await fetch(import.meta.env.VITE_API_URL + "/users", {
+    const res = await fetch(import.meta.env.VITE_API_URL + "/users/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

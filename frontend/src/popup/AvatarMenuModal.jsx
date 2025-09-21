@@ -72,7 +72,7 @@ const AvatarMenuModal = ({ref}) => {
 
       // xóa dữ liệu client-side
       localStorage.removeItem("sessionId");
-      sessionStorage.removeItem("auth");
+      localStorage.removeItem("auth");
 
       // điều hướng về login
       navigate("/login");
