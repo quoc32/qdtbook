@@ -8,7 +8,7 @@ import qdt.hcmute.vn.dqtbook_backend.service.CommentService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/posts/{postId}/comments")
+@RequestMapping("/api/posts/{postId}/comments")
 public class CommentController {
     private final CommentService commentService;
 

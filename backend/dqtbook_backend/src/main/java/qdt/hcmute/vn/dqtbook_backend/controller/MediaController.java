@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.List;
 
 @RestController
-@RequestMapping("/media")
+@RequestMapping("/api/media")
 public class MediaController {
     private final FileStorageService fileStorageService;
 

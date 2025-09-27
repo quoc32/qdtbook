@@ -9,7 +9,7 @@ import qdt.hcmute.vn.dqtbook_backend.service.ChatService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/chats")
+@RequestMapping("/api/chats")
 public class ChatController {
     private final ChatService chatService;
 

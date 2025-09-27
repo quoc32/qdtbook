@@ -10,7 +10,7 @@ import qdt.hcmute.vn.dqtbook_backend.exception.DuplicateReactionException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/posts/{postId}/reactions")
+@RequestMapping("/api/posts/{postId}/reactions")
 public class PostReactionController {
     private final PostReactionService postReactionService;
 

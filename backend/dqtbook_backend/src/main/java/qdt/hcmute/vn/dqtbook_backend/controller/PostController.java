@@ -12,7 +12,7 @@ import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
 import java.util.List;
 
 @RestController
-@RequestMapping("/posts")
+@RequestMapping("/api/posts")
 public class PostController {
     private final PostService postService;
 

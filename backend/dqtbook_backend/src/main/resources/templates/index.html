@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>QDTBook - Home</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+        body { background:#f0f2f5; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+        .navbar-brand { font-weight:700; color:#1365ff !important; }
+        .search-box { background:#f0f2f5; border:none; border-radius:20px; padding:6px 14px; width:230px; }
+        .search-box:focus { outline:0; box-shadow:none; background:#e4e6eb; }
+        .sidebar-sticky { position:sticky; top:70px; }
+        .story-card { height:160px; border-radius:12px; background:#fff; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; font-weight:600; color:#555; }
+        .composer, .post-card { background:#fff; border-radius:8px; border:1px solid #ddd; }
+        .composer textarea { resize:none; border:none; box-shadow:none; }
+        .composer textarea:focus { outline:0; }
+        .btn-primary { background:#1b74e4; border-color:#1b74e4; }
+        .btn-primary:hover { background:#155ec0; }
+        .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; }
+        .post-img { border-radius:8px; max-height:480px; object-fit:cover; width:100%; }
+        .action-btn { background:transparent; border:none; padding:6px 8px; border-radius:6px; font-weight:500; color:#555; }
+        .action-btn:hover { background:#f0f2f5; }
+        .right-card { background:#fff; border:1px solid #ddd; border-radius:8px; }
+        @media (max-width: 992px){
+            .left-col, .right-col { display:none; }
+            .search-box { width:140px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar:BEGIN -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+
+        <div class="container-fluid px-3">
+            <!-- Tiêu đề -->
+            <a class="navbar-brand" href="#">QDTBook</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                    aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Ô tìm kiếm -->
+            <form class="d-none d-lg-block ms-3 me-3">
+                <input class="search-box" type="text" placeholder="Tìm kiếm...">
+            </form>
+
+            <!-- Các items bên phải và giữa -->
+            <div class="collapse navbar-collapse" id="mainNav">
+                <!-- Danh sách các Tab ở giữa -->
+                <ul class="navbar-nav mx-auto top-tabs position-relative tabs-animate">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-page="home" aria-label="Trang chủ" title="Trang chủ">
+                            <img src="/img/home-icon.png" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="friends" aria-label="Bạn bè" title="Bạn bè">
+                            <img src="/img/friends-icon.png" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="groups" aria-label="Nhóm" title="Nhóm">
+                            <img src="/img/icons/groups.svg" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="marketplace" aria-label="Marketplace" title="Marketplace">
+                            <img src="/img/icons/marketplace.svg" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="video" aria-label="Video" title="Video">
+                            <img src="/img/icons/video.svg" class="nav-ico" alt="">
+                        </a>
+                    </li>
+                    <span class="tab-indicator"></span>
+                </ul>
+                <style>
+                    .tabs-animate .nav-link .nav-ico{
+                        width:26px;
+                        height:26px;
+                        display:block;
+                        filter:grayscale(.15);
+                        transition:filter .25s, transform .25s;
+                    }
+                    .tabs-animate .nav-link.active .nav-ico{filter:none;}
+                    .tabs-animate .nav-link:hover .nav-ico{transform:translateY(-2px);}
+                    @media (max-width:992px){
+                        .tabs-animate .nav-link .nav-ico{width:24px;height:24px;}
+                    }
+                    .tabs-animate{--ti-speed:300ms;}
+                    .tabs-animate .nav-link{
+                        position:relative;
+                        font-weight:500;
+                        padding:10px 18px;
+                        transition:color .25s, background .25s;
+                        border-radius:10px;
+                        overflow:hidden;
+                    }
+                    .tabs-animate .nav-link:not(.active){color:#5a5f65;}
+                    .tabs-animate .nav-link:hover{background:#eef2f7;}
+                    .tabs-animate .nav-link:after{
+                        content:"";
+                        position:absolute;inset:0;
+                        background:radial-gradient(circle at 50% 120%, rgba(27,116,228,.18), transparent 70%);
+                        opacity:0;transform:scale(.6);
+                        transition:opacity .4s,var(--ti-speed) transform;
+                    }
+                    .tabs-animate .nav-link:hover:after{opacity:1;transform:scale(1);}
+                    .tabs-animate .nav-link.active{color:#1b74e4;background:rgba(27,116,228,.10);}
+                    .tabs-animate .nav-link.active:after{display:none;}
+                    .tabs-animate .tab-indicator{
+                        position:absolute;
+                        bottom:4px;
+                        height:3px;
+                        background:linear-gradient(90deg,#1b74e4,#5aa2ff);
+                        border-radius:3px;
+                        width:0;
+                        left:0;
+                        transform:translateX(var(--ti-x,0));
+                        transition:width var(--ti-speed) cubic-bezier(.6,.2,.2,1),
+                                   transform var(--ti-speed) cubic-bezier(.6,.2,.2,1);
+                        box-shadow:0 0 6px -1px rgba(27,116,228,.6);
+                        pointer-events:none;
+                    }
+                    @media (max-width:992px){
+                        .tabs-animate .nav-link{padding:10px 14px;}
+                    }
+                </style>
+                <script>
+                    (function(){
+                        const wrapper=document.querySelector('.tabs-animate');
+                        if(!wrapper) return;
+                        const indicator=wrapper.querySelector('.tab-indicator');
+                        const links=[...wrapper.querySelectorAll('.nav-link')];
+                        function moveIndicator(el){
+                            const r=el.getBoundingClientRect();
+                            const pr=wrapper.getBoundingClientRect();
+                            const w=r.width*0.60;
+                            const center=r.left - pr.left + r.width/2 - w/2;
+                            indicator.style.width=w+'px';
+                            indicator.style.setProperty('--ti-x',center+'px');
+                        }
+                        function setActive(el){
+                            links.forEach(a=>a.classList.remove('active'));
+                            el.classList.add('active');
+                            moveIndicator(el);
+                        }
+                        requestAnimationFrame(()=>{
+                            const current=wrapper.querySelector('.nav-link.active')||links[0];
+                            if(current) moveIndicator(current);
+                        });
+                        links.forEach(a=>{
+                            a.addEventListener('click',e=>{e.preventDefault();setActive(a);});
+                            a.addEventListener('keydown',e=>{
+                                if(e.key==='Enter'||e.key===' '){e.preventDefault();setActive(a);}
+                            });
+                        });
+                        window.addEventListener('resize',()=>{
+                            const active=wrapper.querySelector('.nav-link.active');
+                            if(active) moveIndicator(active);
+                        });
+                    })();
+                </script>
+
+                <!-- Phần bên phải: Thông báo, Avatar -->
+                <ul class="navbar-nav ms-auto align-items-center gap-3 enhanced-userbar">
+
+                    <!-- Notifications -->
+                    <li class="nav-item dropdown position-relative">
+                        <button class="btn-reset notif-btn-neo" id="notifBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thông báo (3 mới)">
+                            <span class="notif-ring"></span>
+                            <img src="/img/bell-icon.png" alt="" width="22" height="22" draggable="false">
+                            <span class="notif-badge pulse" data-count="3">3</span>
+                        </button>
+                        <div class="dropdown-menu notif-menu dropdown-menu-end shadow-lg border-0 p-0" aria-labelledby="notifBtn">
+                            <div class="nm-header d-flex align-items-center">
+                                <span class="fw-semibold">Thông báo</span>
+                                <button class="btn-mark-read" id="markAllNotif" title="Đánh dấu đã đọc">Đã đọc</button>
+                            </div>
+                            <div class="nm-list" id="notifList">
+                                <a href="#" class="nm-item new">
+                                    <div class="dot"></div>
+                                    <div class="txt">
+                                        <strong>Linh Trần</strong> đã thích bài viết của bạn
+                                        <div class="time">2 phút trước</div>
+                                    </div>
+                                </a>
+                                <a href="#" class="nm-item new">
+                                    <div class="dot"></div>
+                                    <div class="txt">
+                                        <strong>An Nguyễn</strong> đã bình luận: "OK nhé!"
+                                        <div class="time">10 phút trước</div>
+                                    </div>
+                                </a>
+                                <a href="#" class="nm-item new">
+                                    <div class="dot"></div>
+                                    <div class="txt">
+                                        Bạn có 1 lời mời kết bạn mới
+                                        <div class="time">30 phút trước</div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="nm-footer">
+                                <a href="#" class="view-all">Xem tất cả</a>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- User avatar / menu -->
+                    <li class="nav-item dropdown user-dropdown">
+                        <!-- Avatar -->
+                        <button class="avatar-trigger" id="userMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
+                            <span class="avatar-ring"></span>
+                            <img src="/img/image1.png" class="avatar-img" alt="User" width="42" height="42">
+                        </button>
+                        <!-- Dropdown -->
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 usermenu-scale" aria-labelledby="userMenuBtn" style="min-width:280px; padding: 1rem;">
+                            <li class="px-3 pt-3 pb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2 position-relative">
+                                        <img src="/img/image1.png" style="width:52px;height:52px;border-radius:18px;object-fit:cover;" alt="">
+                                        <span class="status-dot" title="Online"></span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold lh-sm" id="userFullName">Người dùng</div>
+                                        <script>
+                                        (function(){
+                                            const el = document.getElementById('userFullName');
+                                            if(!el) return;
+                                            try{
+                                                const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                                el.textContent = auth?.full_name?.trim() || 'Người dùng';
+                                            }catch(_){
+                                                el.textContent = 'Người dùng';
+                                            }
+                                        })();
+                                        </script>
+
+                                        <a href="#" class="small text-decoration-none opacity-75 hover-text">Xem trang cá nhân</a>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <!-- Added wrapper class to control spacing without using outer margins that caused clipping -->
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-person"></i><span>Trang cá nhân</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-sliders2"></i><span>Cài đặt & quyền riêng tư</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-life-preserver"></i><span>Trợ giúp & hỗ trợ</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-moon-stars"></i><span>Chế độ tối</span></a></li>
+                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-arrow-repeat"></i><span>Chuyển tài khoản</span></a></li>
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <li>
+                                <a class="dropdown-item text-danger icon-link menu-fix" href="#" id="logoutBtn">
+                                    <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
+                                </a>
+                            </li>
+                            <style>
+                                /* Fix: prevent hover background from being sliced by container edges.
+                                   Remove horizontal margins; use internal padding & safe focus ring. */
+                                .user-dropdown .dropdown-item.menu-fix{
+                                    margin:0;               /* remove outer margin causing clipping */
+                                    border-radius:14px;
+                                    padding:.6rem 1rem;
+                                    box-sizing:border-box;
+                                }
+                                .user-dropdown .dropdown-item.menu-fix + .dropdown-item.menu-fix{
+                                    margin-top:4px;
+                                }
+                                .user-dropdown .dropdown-menu{
+                                    padding:.55rem .55rem  .7rem; /* compensate removed item margins */
+                                    overflow:visible; /* ensure glow/shadow not clipped */
+                                }
+                                .user-dropdown .dropdown-item.menu-fix:hover{
+                                    background:linear-gradient(145deg,#f0f6ff,#e3eefb);
+                                    padding-left:1.15rem; /* slightly less to avoid overflow */
+                                }
+                                .user-dropdown .dropdown-item.menu-fix:focus-visible{
+                                    outline:2px solid #1b74e4;
+                                    outline-offset:2px;
+                                }
+                            </style>
+                        </ul>
+                    </li>
+                </ul>
+
+                <style>
+                .enhanced-userbar .btn-reset{background:transparent;border:0;padding:0;margin:0;font:inherit;color:inherit;}
+                .enhanced-userbar{--neo-bg:#ffffff;--neo-grad:linear-gradient(145deg,#ffffff,#e6eef9);--accent:#1b74e4;--accent-grad:linear-gradient(135deg,#1b74e4,#559dff);--danger:#dc3545;--radius:18px;--drop:0 4px 14px -4px rgba(20,60,120,.25);}
+
+                @media (prefers-color-scheme:dark){
+                 .enhanced-userbar{--neo-bg:#1f2530;--neo-grad:linear-gradient(145deg,#242b36,#1a2029);--accent:#4c95ff;--accent-grad:linear-gradient(135deg,#4c95ff,#74b6ff);--danger:#ff4c5d;}
+                 .notif-menu,.usermenu-scale{background:#1f2530 !important;color:#dce4ef;}
+                 .notif-btn-neo{background:linear-gradient(145deg,#2a313d,#1b222c);}
+                 .nm-item{--item-bg:#28303b;}
+                }
+
+                /* FIX: allow badge & pulse glow fully visible */
+                .enhanced-userbar .notif-btn-neo{
+                 position:relative;
+                 width:50px;height:50px;
+                 border-radius:20px;
+                 background:var(--neo-grad);
+                 border:1px solid rgba(120,150,190,.25);
+                 display:flex;align-items:center;justify-content:center;
+                 box-shadow:inset 0 2px 4px rgba(255,255,255,.6), var(--drop);
+                 transition:.4s cubic-bezier(.65,.05,.36,1);
+                 overflow:visible; /* changed from hidden */
+                }
+
+                .notif-btn-neo:before{
+                 content:"";
+                 position:absolute;inset:0;
+                 background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9),transparent 70%);
+                 opacity:.6;mix-blend-mode:overlay;pointer-events:none;
+                }
+                .notif-btn-neo:hover{transform:translateY(-4px);box-shadow:inset 0 2px 6px rgba(255,255,255,.55),0 8px 26px -6px rgba(30,70,140,.45);}
+                .notif-btn-neo:active{transform:translateY(-1px) scale(.95);}
+                .notif-btn-neo img{filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));border-radius:8px;}
+
+                .notif-ring{
+                 position:absolute;inset:0;border-radius:inherit;
+                 background:conic-gradient(from 0deg,var(--accent) 0 140deg,rgba(0,0,0,0) 140deg 360deg);
+                 mask:radial-gradient(circle at 50% 50%,transparent 55%,#000 57%);
+                 opacity:.55;animation:spinRing 6s linear infinite;
+                }
+                @keyframes spinRing{to{transform:rotate(360deg)}}
+
+                .notif-badge{
+                 position:absolute;top:2px;right:2px;
+                 background:var(--danger);color:#fff;font-size:.65rem;font-weight:600;
+                 padding:.35em .5em;line-height:1;border-radius:14px;
+                 border:2px solid var(--neo-bg);
+                 box-shadow:0 2px 6px -1px rgba(0,0,0,.35),0 0 0 4px rgba(220,53,69,.18);
+                 transform:none; /* removed translate that caused clipping */
+                 min-width:20px;
+                }
+                .notif-badge.pulse{animation:badgePulse 2.4s ease-in-out infinite;}
+                @keyframes badgePulse{
+                 0%{box-shadow:0 0 0 0 rgba(220,53,69,.55);}
+                 60%{box-shadow:0 0 0 10px rgba(220,53,69,0);}
+                 100%{box-shadow:0 0 0 0 rgba(220,53,69,0);}
+                }
+
+                .notif-menu{
+                 width:340px;
+                 background:var(--neo-bg);
+                 border-radius:20px;
+                 overflow:hidden;
+                 animation:popMenu .28s cubic-bezier(.4,.65,.25,1);
+                }
+                @keyframes popMenu{
+                 0%{transform:translateY(8px) scale(.96);opacity:0;}
+                 100%{transform:translateY(0) scale(1);opacity:1;}
+                }
+                .notif-menu .nm-header{
+                 background:linear-gradient(90deg,var(--accent) 0,var(--accent) 2px,transparent 2px),
+                            linear-gradient(145deg,rgba(27,116,228,.08),rgba(27,116,228,.02));
+                 padding:.75rem 1rem;position:sticky;top:0;z-index:2;
+                }
+                .btn-mark-read{
+                 margin-left:auto;background:var(--accent-grad);color:#fff;border:0;
+                 padding:.35rem .7rem;font-size:.7rem;border-radius:20px;
+                 letter-spacing:.5px;text-transform:uppercase;font-weight:600;
+                 box-shadow:0 2px 6px -2px rgba(0,0,0,.35);transition:.25s;
+                }
+                .btn-mark-read:hover{filter:brightness(1.08);}
+                .btn-mark-read:active{transform:translateY(1px);}
+
+                .nm-list{max-height:320px;overflow-y:auto;}
+                .nm-item{
+                 position:relative;display:flex;gap:.75rem;padding:.75rem 1rem;
+                 text-decoration:none;color:inherit;font-size:.83rem;line-height:1.25;
+                 background:linear-gradient(145deg,var(--neo-bg),var(--neo-bg)) padding-box,
+                            linear-gradient(145deg,rgba(27,116,228,.35),rgba(27,116,228,0)) border-box;
+                 border:1px solid rgba(120,150,190,.25);
+                 margin:.55rem .9rem;border-radius:14px;transition:.25s;
+                }
+                .nm-item.new{box-shadow:0 4px 14px -6px rgba(30,70,140,.35),inset 0 0 0 1px rgba(255,255,255,.4);}
+                .nm-item .dot{
+                 width:10px;height:10px;border-radius:50%;background:var(--accent);
+                 margin-top:4px;box-shadow:0 0 0 4px rgba(27,116,228,.18);animation:pingDot 1.8s ease-in-out infinite;flex-shrink:0;
+                }
+                @keyframes pingDot{
+                 0%{transform:scale(.6);opacity:.9;}
+                 60%{transform:scale(1);opacity:.35;}
+                 100%{transform:scale(.6);opacity:.9;}
+                }
+                .nm-item:hover{background:linear-gradient(145deg,#f4f8ff,#e3efff);transform:translateY(-3px);}
+                .nm-item:active{transform:translateY(-1px);}
+                .nm-item .time{font-size:.65rem;opacity:.65;margin-top:2px;}
+                .nm-footer{padding:.55rem;text-align:center;background:linear-gradient(145deg,rgba(27,116,228,.05),transparent);}
+                .view-all{
+                 font-size:.7rem;text-transform:uppercase;letter-spacing:.7px;font-weight:600;
+                 color:var(--accent);text-decoration:none;position:relative;
+                }
+                .view-all:after{
+                 content:"";position:absolute;left:50%;bottom:-2px;width:0;height:2px;
+                 background:var(--accent-grad);transition:.35s;transform:translateX(-50%);border-radius:2px;
+                }
+                .view-all:hover:after{width:82%;}
+
+                .avatar-trigger{
+                 position:relative;background:var(--neo-grad);border:1px solid rgba(120,150,190,.25);
+                 border-radius:22px;padding:2px;width:54px;height:54px;
+                 display:flex;align-items:center;justify-content:center;cursor:pointer;
+                 box-shadow:var(--drop),inset 0 2px 4px rgba(255,255,255,.55);
+                 transition:.45s cubic-bezier(.65,.05,.36,1);
+                }
+                .avatar-trigger:hover{transform:translateY(-4px);
+                 box-shadow:0 10px 28px -6px rgba(30,70,140,.45),inset 0 2px 6px rgba(255,255,255,.55);}
+                .avatar-trigger:active{transform:translateY(-1px) scale(.95);}
+                .avatar-img{width:46px;height:46px;border-radius:16px;object-fit:cover;display:block;filter:saturate(1.05);transition:.35s;}
+                .avatar-trigger:hover .avatar-img{filter:saturate(1.25) contrast(1.05);}
+                .avatar-ring{
+                 position:absolute;inset:0;border-radius:inherit;
+                 background:conic-gradient(from 0deg,var(--accent) 0 260deg,rgba(0,0,0,0) 260deg 360deg);
+                 mask:radial-gradient(circle at 50% 50%,transparent 58%,#000 60%);
+                 animation:avatarSpin 9s linear infinite;opacity:.55;
+                }
+                @keyframes avatarSpin{to{transform:rotate(360deg)}}
+
+                .user-dropdown .dropdown-menu{
+                 border-radius:22px;padding:0;background:var(--neo-bg);
+                 animation:usermenuPop .28s cubic-bezier(.4,.65,.25,1);
+                }
+                @keyframes usermenuPop{
+                 0%{transform:translateY(8px) scale(.95);opacity:0;}
+                 100%{transform:translateY(0) scale(1);opacity:1;}
+                }
+
+                /* FIX: avoid slice when hovering (remove translate causing edge clipping) */
+                .user-dropdown .dropdown-item{
+                 font-size:.85rem;padding:.6rem 1.05rem;border-radius:14px;
+                 margin:.15rem .6rem;font-weight:500;display:flex;align-items:center;
+                 gap:.55rem;position:relative;transition:.28s;background:transparent;
+                }
+                .user-dropdown .dropdown-item:hover{
+                 background:linear-gradient(145deg,#f0f6ff,#e3eefb);
+                 padding-left:1.25rem;
+                }
+                .user-dropdown .dropdown-item.text-danger:hover{background:rgba(220,53,69,.08);}
+                .icon-link i{width:18px;text-align:center;color:var(--accent);
+                 filter:drop-shadow(0 2px 4px rgba(27,116,228,.25));}
+                .status-dot{
+                 position:absolute;right:2px;bottom:2px;width:12px;height:12px;
+                 background:#31a24c;border:2px solid #fff;border-radius:50%;
+                 box-shadow:0 0 0 4px rgba(49,162,76,.25);
+                }
+                .hover-text:hover{text-decoration:underline;}
+                .dropdown-divider{opacity:.25;}
+
+                @media (max-width:992px){
+                 .notif-menu{width:300px;}
+                 .avatar-trigger{width:50px;height:50px;}
+                 .avatar-img{width:42px;height:42px;}
+                }
+
+                .nm-list::-webkit-scrollbar{width:8px;}
+                .nm-list::-webkit-scrollbar-track{background:transparent;}
+                .nm-list::-webkit-scrollbar-thumb{
+                 background:linear-gradient(var(--accent),#7db6ff);
+                 border-radius:20px;border:2px solid var(--neo-bg);
+                }
+                .nm-list:hover::-webkit-scrollbar-thumb{background:linear-gradient(#4796f5,#1b74e4);}
+                </style>
+
+                <script>
+                (function(){
+                 const notifBtn=document.getElementById('notifBtn');
+                 const notifList=document.getElementById('notifList');
+                 const badge=document.querySelector('.notif-badge');
+                 const markBtn=document.getElementById('markAllNotif');
+                 function markAll(){
+                   notifList.querySelectorAll('.nm-item.new').forEach(i=>{
+                     i.classList.remove('new');
+                     i.querySelector('.dot')?.remove();
+                   });
+                   if(badge){
+                     badge.classList.remove('pulse');
+                     badge.textContent='0';
+                     badge.dataset.count='0';
+                     badge.style.background='#6c757d';
+                   }
+                 }
+                 markBtn?.addEventListener('click',e=>{
+                   e.preventDefault();
+                   markAll();
+                 });
+                 document.addEventListener('shown.bs.dropdown',e=>{
+                   if(e.target.contains(notifBtn)){
+                     [...notifList.children].forEach((el,i)=>{
+                       el.style.opacity=0;
+                       el.style.transform='translateY(6px)';
+                       setTimeout(()=>{
+                         el.style.transition='.4s cubic-bezier(.4,.65,.3,1)';
+                         el.style.opacity=1;
+                         el.style.transform='translateY(0)';
+                       }, 40*i+40);
+                     });
+                   }
+                 });
+                })();
+                </script>
+
+                <!-- Logout logic -->
+                <script>
+                (function(){
+                 const btn = document.getElementById('logoutBtn');
+                 if(!btn) return;
+                 btn.addEventListener('click', async (e)=>{
+                   e.preventDefault();
+                   if(btn.dataset.loading) return;
+                   btn.dataset.loading = '1';
+                   const original = btn.innerHTML;
+                   btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span> Đang đăng xuất...</span>';
+                   try{
+                     const res = await fetch('http://localhost:8080/api/auth/logout', {
+                       method: 'POST',
+                       headers: { 'Content-Type':'application/json' },
+                       body: '{}',
+                       credentials:'include'
+                     });
+                     if(!res.ok) throw new Error('Logout failed');
+                     try{ localStorage.removeItem('auth'); }catch(_){}
+                     window.location.href = '/views/login';
+                   }catch(err){
+                     btn.innerHTML = original;
+                     delete btn.dataset.loading;
+                     alert('Không thể đăng xuất. Vui lòng thử lại.');
+                   }
+                 });
+                })();
+                </script>
+                <style>
+                .spin{display:inline-block;animation:sp 1s linear infinite;}
+                @keyframes sp{to{transform:rotate(360deg)}}
+                </style>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+            </div>
+        </div>
+
+    </nav>
+
+    <script>
+        document.querySelectorAll('.top-tabs .nav-link').forEach(a=>{
+            a.addEventListener('click',e=>{
+                e.preventDefault();
+                document.querySelectorAll('.top-tabs .nav-link').forEach(n=>n.classList.remove('active'));
+                a.classList.add('active');
+                // TODO: load content by data-page if needed
+            });
+        });
+    </script>
+    <!-- Navbar:END -->
+
+    <!-- Main content:BEGIN -->
+    <div class="container-fluid mt-3">
+        <div class="row g-3">
+            <!-- Left Sidebar -->
+            <div class="col-lg-3 left-col">
+                <div class="sidebar-sticky">
+                    <ul class="side-nav p-0 mb-3">
+                        <!-- Trang cá nhân -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/image1.png" alt="User">
+                                <span class="fw-semibold" id="sideUserFullName">Trang cá nhân</span>
+                                <script>
+                                (function(){
+                                    const el = document.getElementById('sideUserFullName');
+                                    if(!el) return;
+                                    try{
+                                        const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                        el.textContent = auth?.full_name?.trim() || 'Trang cá nhân';
+                                    }catch(_){
+                                        el.textContent = 'Trang cá nhân';
+                                    }
+                                })();
+                                </script>
+                            </a>
+                        </li>
+                        <!-- Bạn bè -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/friends-icon-2.png" alt="Friends">
+                                <span>Bạn bè</span>
+                            </a>
+                        </li>
+                        <!-- Nhóm -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/groups-icon-2.png" alt="Groups">
+                                <span>Nhóm</span>
+                            </a>
+                        </li>
+                        <!-- Marketplace -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/marketplace-icon-2.png" alt="Marketplace">
+                                <span>Marketplace</span>
+                            </a>
+                        </li>
+                        <!-- Sự kiện -->
+                        <li>
+                            <a href="#" class="side-link">
+                                <img class="side-ico" src="/img/event-icon-2.png" alt="Events">
+                                <span>Sự kiện</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <small class="text-muted">© 2025 QDTBook</small>
+                </div>
+            </div>
+            <style>
+            .side-nav{list-style:none;}
+            .side-nav li{margin:2px 0;}
+            .side-link{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                text-decoration:none;
+                color:#212529;
+                padding:6px 10px;
+                border-radius:8px;
+                font-weight:500;
+                line-height:1.2;
+                transition:background .15s;
+            }
+            .side-link:hover{
+                background:#e4e6eb;
+                text-decoration:none;
+            }
+            .side-ico{
+                width:28px;
+                height:28px;
+                border-radius:6px;
+                object-fit:cover;
+                flex-shrink:0;
+            }
+            </style>
+
+            <!-- Feed:BEGIN -->
+            <div class="col-lg-6">
+                <!-- Stories row (placeholder) -->
+                <div class="row g-2 mb-3">
+                    <div class="col-3">
+                        <div class="story-card">Story 1</div>
+                    </div>
+                    <div class="col-3">
+                        <div class="story-card">Story 2</div>
+                    </div>
+                    <div class="col-3">
+                        <div class="story-card">Story 3</div>
+                    </div>
+                    <div class="col-3">
+                        <div class="story-card">Story 4</div>
+                    </div>
+                </div>
+
+                <!-- Post Composer:BEGIN -->
+                <!-- Composer (click to open modal) -->
+                <div class="composer neo-composer p-3 mb-3" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                    <div class="d-flex align-items-start gap-2 mb-3">
+                        <div class="avatar-wrap">
+                            <img class="avatar" src="/img/image1.png" alt="User">
+                            <span class="glow-ring"></span>
+                        </div>
+                        <textarea class="form-control composer-input"
+                                  rows="2"
+                                  placeholder="Chia sẻ điều bạn đang nghĩ..."
+                                  readonly></textarea>
+                    </div>
+                    <div class="cp-actions d-flex flex-wrap gap-2">
+                        <button type="button" class="cp-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <span class="ico img"><i class="bi bi-image"></i></span>
+                            Ảnh
+                        </button>
+                        <button type="button" class="cp-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <span class="ico vid"><i class="bi bi-camera-reels"></i></span>
+                            Video
+                        </button>
+                        <button type="button" class="cp-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <span class="ico more"><i class="bi bi-stars"></i></span>
+                            Khác
+                        </button>
+                    </div>
+                </div>
+                <style>
+                    .neo-composer{
+                        position:relative;
+                        background:
+                          linear-gradient(155deg,#ffffff,#f2f6fb 55%,#e6eef8);
+                        border:1px solid rgba(120,150,190,.35);
+                        border-radius:20px;
+                        box-shadow:
+                          0 4px 10px -4px rgba(30,70,140,.18),
+                          0 2px 4px -2px rgba(30,70,140,.15),
+                          inset 0 1px 0 rgba(255,255,255,.9);
+                        cursor:pointer;
+                        transition:.45s cubic-bezier(.6,.2,.2,1);
+                        overflow:hidden;
+                    }
+                    .neo-composer:before,
+                    .neo-composer:after{
+                        content:"";
+                        position:absolute;
+                        inset:0;
+                        border-radius:inherit;
+                        pointer-events:none;
+                        opacity:.55;
+                        mix-blend-mode:overlay;
+                        background:
+                          radial-gradient(circle at 18% 15%,rgba(255,255,255,.9),transparent 60%),
+                          radial-gradient(circle at 85% 85%,rgba(255,255,255,.55),transparent 70%);
+                        animation:ccGlow 9s linear infinite;
+                    }
+                    .neo-composer:after{
+                        background:
+                          radial-gradient(circle at 82% 25%,rgba(27,116,228,.20),transparent 55%),
+                          radial-gradient(circle at 25% 80%,rgba(90,162,255,.15),transparent 60%);
+                        opacity:.35;
+                        filter:blur(2px);
+                        animation:ccGlow2 11s linear infinite;
+                    }
+                    @keyframes ccGlow{to{transform:rotate(360deg)}}
+                    @keyframes ccGlow2{to{transform:rotate(-360deg)}}
+                    .neo-composer:hover{
+                        box-shadow:
+                          0 10px 32px -10px rgba(30,70,140,.35),
+                          0 4px 14px -4px rgba(30,70,140,.25),
+                          inset 0 1px 0 rgba(255,255,255,.9);
+                        transform:translateY(-3px);
+                    }
+                    .neo-composer:active{transform:translateY(-1px) scale(.98);}
+
+                    .avatar-wrap{
+                        position:relative;
+                        width:46px;height:46px;
+                        flex-shrink:0;
+                    }
+                    .avatar-wrap .avatar{
+                        width:100%;height:100%;
+                        border-radius:16px;
+                        object-fit:cover;
+                        display:block;
+                        box-shadow:0 4px 10px -4px rgba(0,0,0,.35);
+                    }
+                    .avatar-wrap .glow-ring{
+                        position:absolute;inset:-2px;
+                        border-radius:18px;
+                        background:conic-gradient(from 0deg,#1b74e4 0 260deg,rgba(0,0,0,0) 260deg 360deg);
+                        mask:radial-gradient(circle at 50% 50%,transparent 63%,#000 65%);
+                        animation:spinRingC 10s linear infinite;
+                        opacity:.5;
+                    }
+                    @keyframes spinRingC{to{transform:rotate(360deg)}}
+
+                    .composer-input{
+                        border:0;
+                        border-radius:16px;
+                        resize:none;
+                        background:#f0f4f9;
+                        font-size:.95rem;
+                        padding:10px 14px;
+                        line-height:1.35;
+                        box-shadow:inset 0 1px 2px rgba(0,0,0,.05);
+                        transition:.25s;
+                        cursor:pointer;
+                    }
+                    .composer-input:hover{background:#e8eef5;}
+                    .composer-input:focus{outline:0;}
+
+                    .cp-actions{
+                        position:relative;
+                        z-index:2;
+                    }
+                    .cp-btn{
+                        --grad:linear-gradient(135deg,#f2f7ff,#e5eefb);
+                        position:relative;
+                        flex:1 1 120px;
+                        border:1px solid rgba(120,150,190,.35);
+                        background:var(--grad);
+                        color:#2a3542;
+                        font-weight:600;
+                        font-size:.8rem;
+                        letter-spacing:.3px;
+                        padding:10px 12px;
+                        border-radius:14px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        gap:8px;
+                        text-transform:uppercase;
+                        box-shadow:
+                          0 3px 8px -4px rgba(30,70,140,.35),
+                          inset 0 1px 0 rgba(255,255,255,.9);
+                        overflow:hidden;
+                        transition:.45s cubic-bezier(.6,.2,.2,1);
+                    }
+                    .cp-btn .ico{
+                        width:28px;height:28px;
+                        display:inline-flex;
+                        align-items:center;
+                        justify-content:center;
+                        border-radius:10px;
+                        font-size:1.05rem;
+                        background:#fff;
+                        color:#1b74e4;
+                        box-shadow:0 2px 6px -2px rgba(30,70,140,.35), inset 0 1px 0 rgba(255,255,255,.9);
+                        position:relative;
+                        transition:.4s;
+                    }
+                    .cp-btn .ico.img{color:#1b74e4;}
+                    .cp-btn .ico.vid{color:#e05d1d;}
+                    .cp-btn .ico.more{color:#6a35bb;}
+                    .cp-btn:before{
+                        content:"";
+                        position:absolute;inset:0;
+                        background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.9),transparent 70%);
+                        opacity:0;transition:.5s;
+                    }
+                    .cp-btn:hover{
+                        transform:translateY(-4px);
+                        box-shadow:
+                          0 10px 26px -8px rgba(30,70,140,.4),
+                          inset 0 1px 0 rgba(255,255,255,.9);
+                        border-color:rgba(27,116,228,.5);
+                    }
+                    .cp-btn:hover .ico{
+                        transform:rotate(10deg) scale(1.08);
+                        background:linear-gradient(135deg,#ffffff,#f0f6ff);
+                    }
+                    .cp-btn:hover:before{opacity:.6;}
+                    .cp-btn:active{transform:translateY(-1px) scale(.97);}
+
+                    @media (max-width: 576px){
+                        .neo-composer{padding:1rem 1rem .85rem;}
+                        .cp-btn{flex:1 1 100%;font-size:.75rem;}
+                        .cp-btn .ico{width:26px;height:26px;font-size:.95rem;}
+                    }
+                    @media (prefers-color-scheme:dark){
+                        .neo-composer{
+                            background:linear-gradient(155deg,#222a34,#1a212b 60%,#151b24);
+                            border-color:rgba(140,170,210,.25);
+                        }
+                        .composer-input{background:#2a313b;color:#e2e9f2;}
+                        .composer-input:hover{background:#323a45;}
+                        .cp-btn{
+                            --grad:linear-gradient(135deg,#2b3440,#242c36);
+                            color:#d3dbe6;
+                            border-color:rgba(140,170,210,.25);
+                        }
+                        .cp-btn .ico{background:#2f3843;color:#7eb6ff;}
+                        .cp-btn:hover{border-color:rgba(126,182,255,.55);}
+                    }
+                </style>
+                <!-- Post Composer:END -->
+
+                <!-- Modal tạo bài viết:BEGIN -->
+                <div class="modal fade" id="createPostModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <form id="createPostForm">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-semibold">Tạo bài viết</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="d-flex mb-3">
+                                        <img class="avatar me-2" src="/img/image1.png" alt="">
+                                        <div>
+                                            <div class="fw-semibold">Người dùng</div>
+                                            <select class="form-select form-select-sm mt-1" style="width:auto;">
+                                                <option>Công khai</option>
+                                                <option>Bạn bè</option>
+                                                <option>Chỉ mình tôi</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <textarea class="form-control border-0 fs-5"
+                                            id="postContent"
+                                            rows="5"
+                                            placeholder="Bạn đang nghĩ gì?"
+                                            style="resize:none;"></textarea>
+
+                                    <div id="previewArea" class="mt-3 d-none">
+                                        <div class="d-flex flex-wrap gap-2" id="previewList"></div>
+                                    </div>
+
+                                    <input type="file" id="mediaInput" class="d-none" multiple accept="image/*,video/*">
+
+                                    <div class="border rounded mt-3 p-2 d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-pick="image">Ảnh</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-pick="video">Video</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Gắn thẻ</button>
+                                    </div>
+
+                                    <div class="mt-3 d-none" id="uploadProgressWrap">
+                                        <div class="small mb-1" id="uploadStatus">Đang tải lên...</div>
+                                        <div class="progress" style="height:6px;">
+                                            <div class="progress-bar" id="uploadBar" style="width:0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <span class="text-muted small me-auto" id="fileCounter"></span>
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Hủy</button>
+                                    <button class="btn btn-primary" type="submit" disabled id="submitPostBtn">Đăng</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    // Clear upload status when modal closes
+                    document.getElementById('createPostModal')?.addEventListener('hidden.bs.modal', () => {
+                        const status = document.getElementById('uploadStatus');
+                        const wrap   = document.getElementById('uploadProgressWrap');
+                        const bar    = document.getElementById('uploadBar');
+                        if (status) status.textContent = '';
+                        if (bar) bar.style.width = '0%';
+                        if (wrap) wrap.classList.add('d-none');
+                    });
+                (function(){
+                    // Elements
+                    const modalEl      = document.getElementById('createPostModal');
+                    const form         = document.getElementById('createPostForm');
+                    const contentEl    = document.getElementById('postContent');
+                    const submitBtn    = document.getElementById('submitPostBtn');
+                    const mediaInput   = document.getElementById('mediaInput');
+                    const pickButtons  = document.querySelectorAll('[data-pick]');
+                    const previewArea  = document.getElementById('previewArea');
+                    const previewList  = document.getElementById('previewList');
+                    const fileCounter  = document.getElementById('fileCounter');
+                    const uploadWrap   = document.getElementById('uploadProgressWrap');
+                    const uploadBar    = document.getElementById('uploadBar');
+                    const uploadStatus = document.getElementById('uploadStatus');
+
+                    // State
+                    const MAX_FILES = 10;
+                    let files = [];              // File[]
+                    let objectURLs = [];         // revoke on cleanup
+                    let uploading = false;
+
+                    // Helpers
+                    function revokeAll(){
+                        objectURLs.forEach(URL.revokeObjectURL);
+                        objectURLs = [];
+                    }
+
+                    function canSubmit(){
+                        return (contentEl.value.trim().length > 0) || files.length > 0;
+                    }
+
+                    function updateSubmitState(){
+                        submitBtn.disabled = !canSubmit() || uploading;
+                    }
+
+                    function updatePreview(){
+                        previewList.innerHTML = '';
+                        revokeAll();
+                        if(files.length === 0){
+                            previewArea.classList.add('d-none');
+                            fileCounter.textContent = '';
+                            return;
+                        }
+                        previewArea.classList.remove('d-none');
+                        fileCounter.textContent = files.length + ' tệp đã chọn';
+                        files.forEach((f, idx)=>{
+                            const url = URL.createObjectURL(f);
+                            objectURLs.push(url);
+                            const box = document.createElement('div');
+                            box.className = 'media-thumb';
+                            let inner = '';
+                            if(f.type.startsWith('image/')){
+                                inner = `<img src="${url}" alt="">`;
+                            }else if(f.type.startsWith('video/')){
+                                inner = `<video src="${url}" muted></video>`;
+                            }else{
+                                inner = `<span class="small text-truncate px-1">${f.name}</span>`;
+                            }
+                            box.innerHTML = inner + `<button type="button" class="media-remove" data-rm="${idx}" aria-label="Xóa">&times;</button>`;
+                            previewList.appendChild(box);
+                        });
+                    }
+
+                    // Events: remove media
+                    previewList.addEventListener('click', e=>{
+                        const btn = e.target.closest('[data-rm]');
+                        if(!btn) return;
+                        const i = +btn.dataset.rm;
+                        files.splice(i,1);
+                        updatePreview();
+                        updateSubmitState();
+                    });
+
+                    // Pick buttons
+                    pickButtons.forEach(btn=>{
+                        btn.addEventListener('click', ()=>{
+                            const type = btn.dataset.pick;
+                            if(type === 'image')      mediaInput.accept = 'image/*';
+                            else if(type === 'video') mediaInput.accept = 'video/*';
+                            else                      mediaInput.accept = 'image/*,video/*';
+                            mediaInput.click();
+                        });
+                    });
+
+                    // File selection
+                    mediaInput.addEventListener('change', ()=>{
+                        const selected = Array.from(mediaInput.files);
+                        for(const f of selected){
+                            if(files.length >= MAX_FILES) break;
+                            if(!/^(image|video)\//.test(f.type)) continue;
+                            files.push(f);
+                        }
+                        mediaInput.value = '';
+                        updatePreview();
+                        updateSubmitState();
+                    });
+
+                    // Text input
+                    contentEl.addEventListener('input', updateSubmitState);
+
+                    // Modal focus
+                    modalEl.addEventListener('shown.bs.modal', ()=> contentEl.focus());
+                    modalEl.addEventListener('hidden.bs.modal', ()=>{
+                        // Reset when closed (only if not uploading)
+                        if(uploading) return;
+                        form.reset();
+                        files = [];
+                        updatePreview();
+                        updateSubmitState();
+                    });
+
+                    // Upload (media first) Quốc 1
+                    async function uploadFiles() {
+                        // No files -> nothing to upload
+                        if(files.length === 0) return [];
+
+                        // Prepare FormData
+                        const fd = new FormData();
+                        files.forEach(f => fd.append('files', f, f.name));
+
+                        // UI setup
+                        uploadWrap.classList.remove('d-none');
+                        uploadBar.style.width = '0%';
+                        uploadStatus.textContent = 'Đang tải lên...';
+
+                        // Simulated progress (since fetch upload progress not exposed)
+                        let fakeProgress = 0;
+                        const tick = () => {
+                            if(fakeProgress < 95){
+                                fakeProgress = Math.min(95, fakeProgress + (8 + Math.random()*12));
+                                uploadBar.style.width = fakeProgress + '%';
+                            }
+                        };
+                        const intervalId = setInterval(tick, 300);
+
+                        try{
+                            const res = await fetch('http://localhost:8080/api/media/upload', {
+                                method: 'POST',
+                                body: fd,
+                                credentials: 'include'
+                            });
+
+                            clearInterval(intervalId);
+
+                            if(!res.ok){
+                                uploadStatus.textContent = 'Lỗi tải lên';
+                                throw new Error('Upload failed: ' + res.status);
+                            }
+
+                            uploadBar.style.width = '100%';
+                            uploadStatus.textContent = 'Tải lên xong';
+
+                            // Expecting: { "urls": [ ... ] }
+                            let data;
+                            try{
+                                data = await res.json();
+                            }catch(err){
+                                throw new Error('Invalid JSON response');
+                            }
+
+                            const urls = Array.isArray(data?.urls) ? data.urls : [];
+                            return urls; // Return plain array of URLs
+                        }catch(err){
+                            clearInterval(intervalId);
+                            uploadStatus.textContent = 'Lỗi mạng';
+                            throw err;
+                        }
+                    }
+                    // Create post
+                    async function createPost(uploadedUrls){
+                        // Map returned URLs to media objects paired with original file types
+                        const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
+                            .filter(Boolean)
+                            .map((url, idx) => {
+                                console.log('Mapping media URL:', url);
+                                const f = files[idx];
+                                let media_type = 'image';
+                                if (f?.type?.startsWith('video/')) media_type = 'video';
+                                else if (f?.type?.startsWith('image/')) media_type = 'image';
+                                return {
+                                    media_type,
+                                    media_url: "http://localhost:8080" + url
+                                };
+                            });
+
+                        const payload = {
+                            author_id: (Number(JSON.parse(localStorage.getItem('auth')).user_id) || null), // from localStorage
+                            content: contentEl.value.trim(),
+                            visibility: 'friends',        // or 'public','private' etc. // Quốc 2
+                            post_type: 'normal',
+                            status: 'pending',
+                            media: mediaArray
+                        };
+
+                        try{
+                            const res = await fetch('http://localhost:8080/api/posts', {
+                                method:'POST',
+                                headers:{ 'Content-Type':'application/json' },
+                                body: JSON.stringify(payload),
+                                credentials:'include'
+                            });
+                            if(!res.ok) throw new Error('Post create failed: '+res.status);
+                            return await res.json().catch(()=>({}));
+                        }catch(err){
+                            console.error(err);
+                            throw err;
+                        }
+                    }
+
+                    form.addEventListener('submit', async e=>{
+                        e.preventDefault();
+                        if(uploading || !canSubmit()) return;
+                        uploading = true;
+                        updateSubmitState();
+
+                        try{
+                            const uploadedUrls = await uploadFiles(); // array of URLs
+                            await createPost(uploadedUrls);
+                            // Reset
+                            files = [];
+                            revokeAll();
+                            updatePreview();
+                            form.reset();
+                            contentEl.value = '';
+                            setTimeout(()=>{
+                                uploadWrap.classList.add('d-none');
+                                uploadBar.style.width='0%';
+                            }, 350);
+                            const inst = bootstrap.Modal.getInstance(modalEl);
+                            if(inst) inst.hide();
+                        }catch(err){
+                            // keep previews for retry
+                        }finally{
+                            uploading = false;
+                            updateSubmitState();
+                        }
+                    });
+
+                    // Initial
+                    updateSubmitState();
+                })();
+                </script>
+                <style>
+                    .media-thumb{
+                        position:relative;
+                        width:110px;
+                        height:110px;
+                        border:1px solid #ddd;
+                        border-radius:8px;
+                        overflow:hidden;
+                        background:#f8f9fa;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        font-size:12px;
+                    }
+                    .media-thumb img,
+                    .media-thumb video{
+                        width:100%;
+                        height:100%;
+                        object-fit:cover;
+                    }
+                    .media-remove{
+                        position:absolute;
+                        top:2px;
+                        right:2px;
+                        width:22px;
+                        height:22px;
+                        border:0;
+                        border-radius:50%;
+                        background:rgba(0,0,0,.55);
+                        color:#fff;
+                        font-size:14px;
+                        line-height:1;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        cursor:pointer;
+                    }
+                    .media-remove:hover{background:rgba(0,0,0,.75);}
+                </style>
+                <!-- Modal tạo bài viết:END -->
+
+                <!-- Post Segment:BEGIN -->
+                <div id="postList"></div>
+
+                <template id="postCardTemplate">
+                    <article class="post-card" data-post-id="">
+                        <header>
+                            <strong class="post-author"></strong>
+                            <time class="post-time"></time>
+                        </header>
+                        <p class="post-content"></p>
+                        <div class="post-media"></div>
+                        <footer>
+                            <button type="button" class="btn-like">Thích (<span class="like-count">0</span>)</button>
+                            <button type="button" class="btn-comment">Bình luận</button>
+                        </footer>
+                    </article>
+                </template>
+
+                <script>
+                (async function(){
+                    const listEl = document.getElementById('postList');
+                    const tpl = document.getElementById('postCardTemplate');
+
+                    async function loadPosts(){
+                        listEl.textContent = 'Đang tải...';
+                        try{
+                            const res = await fetch('http://localhost:8080/api/posts', { credentials:'include' });
+                            if(!res.ok) throw new Error('Bad status '+res.status);
+                            const data = await res.json();
+                            render(Array.isArray(data) ? data : (data.content || []));
+                        }catch(err){
+                            listEl.textContent = 'Không tải được bài viết.';
+                        }
+                    }
+
+                    function render(posts){
+                        listEl.innerHTML = '';
+                        if(posts.length === 0){
+                            listEl.textContent = 'Chưa có bài viết.';
+                            return;
+                        }
+                        posts.forEach(p=>{
+                            const node = tpl.content.firstElementChild.cloneNode(true);
+                            node.dataset.postId = p.post_id || '';
+                            node.querySelector('.post-author').textContent = p.author_name || 'Ẩn danh';
+                            node.querySelector('.post-time').textContent = formatTime(p.created_at);
+                            node.querySelector('.post-content').textContent = p.content || '';
+                            const mediaWrap = node.querySelector('.post-media');
+                            (p.media || []).forEach(m=>{
+                                if(m.media_type === 'image'){
+                                    const img = document.createElement('img');
+                                        img.src = m.media_url;
+                                        img.alt = '';
+                                        mediaWrap.appendChild(img);
+                                }else if(m.media_type === 'video'){
+                                    const v = document.createElement('video');
+                                    v.src = m.media_url;
+                                    v.controls = true;
+                                    mediaWrap.appendChild(v);
+                                }
+                            });
+                            node.querySelector('.btn-like').addEventListener('click', ()=>{
+                                const span = node.querySelector('.like-count');
+                                span.textContent = String(Number(span.textContent||'0') + 1);
+                            });
+                            listEl.appendChild(node);
+                        });
+                    }
+
+                    function formatTime(ts){
+                        if(!ts) return '';
+                        try{
+                            const d = new Date(ts);
+                            if(isNaN(d)) return '';
+                            return d.toLocaleString('vi-VN');
+                        }catch(_){ return ''; }
+                    }
+
+                    loadPosts();
+                })();
+                </script>
+                <!-- Post Segment:END -->
+
+            </div>
+            <!-- Feed:END -->
+
+            <!-- Right Sidebar:BEGIN -->
+            <div class="col-lg-3 right-col">
+                <div class="sidebar-sticky">
+                <div class="right-card p-3 mb-3">
+                    <h6 class="fw-semibold mb-3">Bạn bè (Online)</h6>
+                    <ul class="list-unstyled mb-0 small" id="friendList">
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="1" data-name="Linh Trần" data-avatar="https://i.pravatar.cc/100?img=24">
+                            <img src="https://i.pravatar.cc/100?img=24" class="fi-avatar">
+                            <span>Linh Trần</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="2" data-name="An Nguyễn" data-avatar="https://i.pravatar.cc/100?img=32">
+                            <img src="https://i.pravatar.cc/100?img=32" class="fi-avatar">
+                            <span>An Nguyễn</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="3" data-name="Khoa Phạm" data-avatar="https://i.pravatar.cc/100?img=15">
+                            <img src="https://i.pravatar.cc/100?img=15" class="fi-avatar">
+                            <span>Khoa Phạm</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="4" data-name="Hà Minh" data-avatar="https://i.pravatar.cc/100?img=41">
+                            <img src="https://i.pravatar.cc/100?img=41" class="fi-avatar">
+                            <span>Hà Minh</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                        <li>
+                            <button class="friend-item w-100 text-start" data-fid="5" data-name="Lan Phương" data-avatar="https://i.pravatar.cc/100?img=47">
+                            <img src="https://i.pravatar.cc/100?img=47" class="fi-avatar">
+                            <span>Lan Phương</span>
+                            <span class="online-dot"></span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                </div>
+            </div>
+
+            <style>
+                .friend-item{
+                border:0;
+                background:transparent;
+                padding:6px 6px;
+                display:flex;
+                align-items:center;
+                gap:8px;
+                border-radius:8px;
+                cursor:pointer;
+                position:relative;
+                width:100%;
+                }
+                .friend-item:hover{background:#f0f2f5;}
+                .fi-avatar{
+                width:34px;
+                height:34px;
+                border-radius:50%;
+                object-fit:cover;
+                flex-shrink:0;
+                }
+                .online-dot{
+                width:10px;
+                height:10px;
+                background:#31a24c;
+                border:2px solid #fff;
+                border-radius:50%;
+                position:absolute;
+                right:8px;
+                }
+
+                .chat-window{
+                position:fixed;
+                bottom:0;
+                width:300px;
+                background:#fff;
+                border:1px solid #cfd0d3;
+                border-radius:12px 12px 0 0;
+                box-shadow:0 4px 18px -4px rgba(0,0,0,.25);
+                display:flex;
+                flex-direction:column;
+                overflow:hidden;
+                animation:popIn .18s ease;
+                z-index:1040;
+                }
+                @keyframes popIn{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+                .chat-header{
+                padding:6px 10px;
+                display:flex;
+                align-items:center;
+                gap:8px;
+                background:#f5f6f8;
+                cursor:pointer;
+                user-select:none;
+                }
+                .chat-header img{
+                width:32px;
+                height:32px;
+                border-radius:50%;
+                object-fit:cover;
+                }
+                .chat-header .actions{
+                margin-left:auto;
+                display:flex;
+                gap:4px;
+                }
+                .chat-header button{
+                border:0;
+                background:transparent;
+                width:28px;
+                height:28px;
+                border-radius:6px;
+                font-size:14px;
+                }
+                .chat-header button:hover{background:#e4e6eb;}
+                .chat-body{
+                padding:8px 10px 54px;
+                overflow-y:auto;
+                flex:1;
+                font-size:14px;
+                background:#fff;
+                }
+                .chat-msg{
+                margin-bottom:6px;
+                display:flex;
+                max-width:80%;
+                }
+                .chat-msg.you{justify-content:flex-end;margin-left:auto;}
+                .chat-bubble{
+                background:#f0f2f5;
+                padding:6px 10px;
+                border-radius:16px;
+                line-height:1.3;
+                }
+                .chat-msg.you .chat-bubble{
+                background:#1b74e4;
+                color:#fff;
+                }
+                .chat-input-wrap{
+                position:absolute;
+                left:0;right:0;bottom:0;
+                padding:6px 8px 8px;
+                background:#fff;
+                border-top:1px solid #e1e2e4;
+                display:flex;
+                gap:6px;
+                }
+                .chat-input-wrap input{
+                flex:1;
+                border:1px solid #d0d2d5;
+                border-radius:20px;
+                padding:6px 12px;
+                font-size:14px;
+                }
+                .chat-input-wrap input:focus{outline:none;border-color:#1b74e4;}
+                .chat-input-wrap button{
+                border:0;
+                background:#1b74e4;
+                color:#fff;
+                padding:0 14px;
+                border-radius:20px;
+                font-size:14px;
+                }
+                .chat-window.minimized .chat-body,
+                .chat-window.minimized .chat-input-wrap{display:none;}
+                .chat-window.minimized{height:auto;}
+                @media (max-width: 992px){
+                .chat-window{width:260px;}
+                }
+            </style>
+
+            <script>
+            (function(){
+                const MAX_WINDOWS = 2; // max chat windows open
+                const OPEN = new Map(); // friendId -> windowEl
+
+                function calcPositions(){
+                    const wins=[...OPEN.values()];
+                    wins.forEach((w,i)=>{
+                        w.style.right = (10 + i*(w.offsetWidth + 10)) + 'px';
+                    });
+                }
+
+                function createChatWindow(friend){
+                    if(OPEN.has(friend.id)){
+                        focusWindow(friend.id);
+                        return;
+                    }
+                    if(OPEN.size >= MAX_WINDOWS){
+                        const firstKey = OPEN.keys().next().value;
+                        closeWindow(firstKey);
+                    }
+
+                    const FIXED_HEIGHT = 420; // constant chat window height (px)
+
+                    const wrap=document.createElement('div');
+                    wrap.className='chat-window';
+                    wrap.dataset.fid=friend.id;
+                    wrap.style.height = FIXED_HEIGHT + 'px'; // keep constant height so body scrolls
+                    wrap.innerHTML = `
+                        <div class="chat-header" data-role="header">
+                            <img src="${friend.avatar}" alt="">
+                            <div class="small fw-semibold">${friend.name}</div>
+                            <div class="actions">
+                                <button data-action="min" title="Thu nhỏ">_</button>
+                                <button data-action="close" title="Đóng">&times;</button>
+                            </div>
+                        </div>
+                        <div class="chat-body" data-role="body">
+                            <div class="chat-msg">
+                                <div class="chat-bubble">Chào ${friend.name} 👋</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-wrap">
+                            <input type="text" placeholder="Nhắn tin..." data-role="input">
+                            <button data-role="send">Gửi</button>
+                        </div>
+                    `;
+                    document.body.appendChild(wrap);
+                    OPEN.set(friend.id, wrap);
+                    calcPositions();
+
+                    wrap.querySelector('[data-action="close"]').addEventListener('click', e=>{
+                        e.stopPropagation();
+                        closeWindow(friend.id);
+                    });
+                    wrap.querySelector('[data-action="min"]').addEventListener('click', e=>{
+                        e.stopPropagation();
+                        wrap.classList.toggle('minimized');
+                    });
+                    wrap.querySelector('[data-role="header"]').addEventListener('click', e=>{
+                        if(e.target.closest('button')) return;
+                        wrap.classList.toggle('minimized');
+                    });
+
+                    const input=wrap.querySelector('[data-role="input"]');
+                    const body=wrap.querySelector('[data-role="body"]');
+
+                    function send(){
+                        const txt=input.value.trim();
+                        if(!txt) return;
+                        body.insertAdjacentHTML('beforeend',
+                            `<div class="chat-msg you"><div class="chat-bubble"></div></div>`);
+                        body.lastElementChild.querySelector('.chat-bubble').textContent = txt;
+                        input.value='';
+                        body.scrollTop = body.scrollHeight;
+                        setTimeout(()=>{
+                            body.insertAdjacentHTML('beforeend',
+                                `<div class="chat-msg"><div class="chat-bubble">Đã nhận: ${txt}</div></div>`);
+                            body.scrollTop = body.scrollHeight;
+                        }, 700);
+                    }
+
+                    wrap.querySelector('[data-role="send"]').addEventListener('click', send);
+                    input.addEventListener('keydown', e=>{
+                        if(e.key==='Enter'){
+                            e.preventDefault();
+                            send();
+                        }
+                    });
+                    input.focus();
+                }
+
+                function closeWindow(fid){
+                const win=OPEN.get(fid);
+                if(!win) return;
+                win.remove();
+                OPEN.delete(fid);
+                calcPositions();
+                }
+
+                function focusWindow(fid){
+                const win=OPEN.get(fid);
+                if(!win) return;
+                // bring to "top" by re-inserting
+                win.parentNode.appendChild(win);
+                }
+
+                document.getElementById('friendList').addEventListener('click', e=>{
+                    const btn=e.target.closest('.friend-item');
+                    if(!btn) return;
+                    createChatWindow({
+                        id: btn.dataset.fid,
+                        name: btn.dataset.name,
+                        avatar: btn.dataset.avatar
+                    });
+                });
+
+                window.addEventListener('resize', calcPositions);
+            })();
+            </script>
+            <!-- Right Sidebar:END -->
+        </div>
+    </div>
+    <!-- Main content:END -->
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -15,13 +15,13 @@ GET http://localhost:8080/users/1
 GET http://localhost:8080/users/999
 
 ### 4. Create new user (valid data)
-POST http://localhost:8080/users/register
+POST http://localhost:8080/api/users/register
 Content-Type: application/json
 
 {
-  "full_name": "Quan",
-  "email": "quang2@example.com",
-  "password_hash": "hashed_password_123",
+  "full_name": "quoc vu",
+  "email": "test1000@gmail.com",
+  "password_hash": "123",
   "first_name": "Quang",
   "last_name": "Quang",
   "gender": "male",
@@ -29,7 +29,7 @@ Content-Type: application/json
   "avatar_url": "https://example.com/avatar.jpg",
   "cover_photo_url": "https://example.com/cover.jpg",
   "bio": "Hello, I am Quang",
-  "school_id": "SV231102052",
+  "school_id": "SV23110205",
   "academic_year": "2020-2024",
   "role": "student",
   "phone": "+84-912345678",
