@@ -1,24 +1,24 @@
 ### Danh sách bài đăng
-GET http://localhost:8080/posts
-Cookie: JSESSIONID=AF26CCD55A6F65EF04A080D94F1A6D27
+GET http://localhost:8080/api/posts
+Cookie: JSESSIONID=79C1A7C354F95DDD02F904942914C952
 
 ### Lấy bài đăng theo id
-GET http://localhost:8080/posts/5
+GET http://localhost:8080/api/posts/5
 
 ### Tạo 1 bài đăng
-POST http://localhost:8080/posts
+POST http://localhost:8080/api/posts
 Content-Type: application/json
-Cookie: JSESSIONID=4F3E4D3ACC716E1DC9E67A77FB075DD5
+Cookie: JSESSIONID=A54646E6AF2E0CAFB0E9D16886F5A157
 
 {
-  "author_id": 20,
+  "author_id": 1,
   "content": "Tôi đăng ảnh mới",
   "visibility": "friends",
   "post_type": "normal",
   "status": "pending",
   "media": [
-    { "media_type": "image", "media_url": "http://example.com/image.png"},
-    { "media_type": "image", "media_url": "http://example.com/image2.png"}
+    { "media_type": "image", "media_url": "http://localhost:8080/media/files/1_7f2bfaf6-af56-4ae1-960c-87fabc1cab5c_test.jpg"},
+    { "media_type": "image", "media_url": "http://localhost:8080/media/files/1_46e8d03d-6d54-4da9-86cc-7212f2514710_test2.jpg"}
   ]
 }
 

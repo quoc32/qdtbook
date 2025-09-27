@@ -10,7 +10,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/posts/{postId}/shares")
+@RequestMapping("/api/posts/{postId}/shares")
 public class PostShareController {
     private final PostShareService postShareService;
 

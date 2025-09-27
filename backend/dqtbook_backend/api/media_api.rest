@@ -1,7 +1,7 @@
 ### Upload file
-POST http://localhost:8080/media/upload
+POST http://localhost:8080/api/media/upload
 Content-Type: multipart/form-data; boundary=WebAppBoundary
-Cookie: JSESSIONID=8426175D82F2C2E065FA2D8D62B8B799
+Cookie: JSESSIONID=A54646E6AF2E0CAFB0E9D16886F5A157
 
 --WebAppBoundary
 Content-Disposition: form-data; name="files"; filename="test.jpg"

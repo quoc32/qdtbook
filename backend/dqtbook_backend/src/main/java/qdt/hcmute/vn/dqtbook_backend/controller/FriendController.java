@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/friends")
+@RequestMapping("/api/friends")
 public class FriendController {
     private final FriendService friendService;
 

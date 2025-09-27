@@ -10,7 +10,7 @@ import qdt.hcmute.vn.dqtbook_backend.service.MessageService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/messages")
+@RequestMapping("/api/messages")
 public class MessageController {
     private final MessageService messageService;
 
