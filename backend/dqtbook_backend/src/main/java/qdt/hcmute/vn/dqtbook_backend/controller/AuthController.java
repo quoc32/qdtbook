@@ -41,7 +41,9 @@ public class AuthController {
                             user.getFirstName(),
                             user.getLastName(),
                             user.getGender(),
-                            user.getBio()
+                            user.getBio(),
+                            user.getAvatarUrl(),
+                            user.getCoverPhotoUrl()
                     );
 
                     return ResponseEntity.ok(authResponse);
@@ -49,6 +51,8 @@ public class AuthController {
                 .orElse(ResponseEntity.status(401).body(
                         new AuthResponseDTO(
                             "Sai email hoặc mật khẩu",
+                            null,
+                            null,
                             null,
                             null,
                             null,

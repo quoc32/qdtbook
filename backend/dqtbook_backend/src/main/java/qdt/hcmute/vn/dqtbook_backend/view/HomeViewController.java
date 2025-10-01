@@ -15,8 +15,7 @@ public class HomeViewController {
     public String home(Model model, HttpServletRequest request) {
         Object userId = request.getSession().getAttribute("userId");
         if (userId == null) {
-            model.addAttribute("error", "You must be logged in to access this page");
-            return "login";
+            return "redirect:/views/login";
         }
         return "index";
     }
@@ -30,7 +29,7 @@ class LoginViewController {
     public String login(Model model, HttpServletRequest request) {
         Object userId = request.getSession().getAttribute("userId");
         if (userId != null) {
-            return "index";
+            return "redirect:/";
         }
         return "login";
     }
@@ -52,13 +51,37 @@ class RegisterViewController {
 class UserViewController {
 
     @GetMapping("/user")
-    public String user(Model model, HttpServletRequest request) {
+    public String user(HttpServletRequest request, Model model) {
         Object userId = request.getSession().getAttribute("userId");
         if (userId == null) {
             model.addAttribute("error", "You must be logged in to access this page");
             return "error";
         }
-        model.addAttribute("userId", userId);
         return "user";
+    }
+}
+
+@Controller
+@RequestMapping("/views")
+class FriendViewController {
+
+    @GetMapping("/friends")
+    public String user(HttpServletRequest request, Model model) {
+        Object userId = request.getSession().getAttribute("userId");
+        if (userId == null) {
+            model.addAttribute("error", "You must be logged in to access this page");
+            return "error";
+        }
+        return "friends";
+    }
+}
+
+@Controller
+@RequestMapping("/views")
+class ErrorViewController {
+
+    @GetMapping("/error")
+    public String errorPage() {
+        return "error";
     }
 }

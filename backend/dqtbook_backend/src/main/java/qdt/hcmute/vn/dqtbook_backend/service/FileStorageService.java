@@ -18,7 +18,6 @@ import java.util.UUID;
 public class FileStorageService {
     @Value("${file.upload-dir}")
     private String uploadDir;
-
     
     @Autowired
     private HttpSession session;

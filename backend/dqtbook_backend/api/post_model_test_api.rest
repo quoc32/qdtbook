@@ -1,6 +1,6 @@
 ### Danh sách bài đăng
 GET http://localhost:8080/api/posts
-Cookie: JSESSIONID=79C1A7C354F95DDD02F904942914C952
+Cookie: JSESSIONID=4983891FBC2268DD3A0BC06E1F8F6D7D
 
 ### Lấy bài đăng theo id
 GET http://localhost:8080/api/posts/5
