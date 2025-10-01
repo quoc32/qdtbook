@@ -1,8 +1,11 @@
 package qdt.hcmute.vn.dqtbook_backend.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpSession;
 import qdt.hcmute.vn.dqtbook_backend.dto.FriendRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.FriendResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.FriendActionDTO;
@@ -10,11 +13,15 @@ import qdt.hcmute.vn.dqtbook_backend.service.FriendService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/friends")
 public class FriendController {
     private final FriendService friendService;
+
+    @Autowired
+    private HttpSession session;
 
     public FriendController(FriendService friendService) {
         this.friendService = friendService;
@@ -32,6 +39,13 @@ public class FriendController {
 
     @PostMapping("/request")
     public ResponseEntity<?> sendFriendRequest(@RequestBody FriendRequestDTO dto) {
+        // Session user check
+        Integer senderId = dto.getSenderId();
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        if (sessionUserId == null || !sessionUserId.equals(senderId)) {
+            throw new IllegalArgumentException("sender_id does not match the logged-in user");
+        }
+
         Optional<FriendResponseDTO> result = friendService.sendFriendRequest(dto);
         if (result.isPresent()) {
             return ResponseEntity.status(HttpStatus.CREATED).body(result.get());
@@ -50,6 +64,20 @@ public class FriendController {
         }
     }
 
+    @PutMapping("/refuse")
+    public ResponseEntity<?> refuseFriendRequest(@RequestBody FriendActionDTO dto) {
+        boolean deleted = friendService.refuseFriendRequest(dto);
+        if (deleted) {
+            return ResponseEntity.ok(Map.of(
+                "message", "Friend request refused successfully",
+                "senderId", dto.getSenderId(),
+                "receiverId", dto.getReceiverId()
+            ));
+        } else {
+            return ResponseEntity.badRequest().body("Error refusing friend request");
+        }
+    }
+
     @PutMapping("/block")
     public ResponseEntity<?> blockFriend(@RequestBody FriendActionDTO dto) {
         Optional<FriendResponseDTO> result = friendService.blockFriend(dto);
@@ -64,7 +92,11 @@ public class FriendController {
     public ResponseEntity<?> unfriend(@RequestBody FriendActionDTO dto) {
         boolean deleted = friendService.unfriend(dto);
         if (deleted) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(Map.of(
+                "message", "Unfriended successfully",
+                "senderId", dto.getSenderId(),
+                "receiverId", dto.getReceiverId()
+            ));
         } else {
             return ResponseEntity.badRequest().body("Error unfriending");
         }

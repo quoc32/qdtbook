@@ -10,6 +10,9 @@ import qdt.hcmute.vn.dqtbook_backend.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -35,6 +38,17 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
     }
+
+    @GetMapping("find/by-email")
+    public ResponseEntity<?> getUserByEmail(@RequestParam("email") String email) {
+        Optional<UserResponseDTO> user = userService.getUserByEmail(email);
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+    
 
     @PostMapping("/register")
     public ResponseEntity<?> createUser(@RequestBody UserCreateRequestDTO dto) {

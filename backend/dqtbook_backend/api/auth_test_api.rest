@@ -3,7 +3,15 @@ POST http://localhost:8080/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "quoc1@gmail.com",
+  "email": "quoc3@gmail.com",
+  "password": "123456"
+}
+### 1.2. Login với email và mật khẩu
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quoc2@gmail.com",
   "password": "123456"
 }
 

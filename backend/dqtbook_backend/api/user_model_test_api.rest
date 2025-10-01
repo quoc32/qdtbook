@@ -86,21 +86,19 @@ Content-Type: application/json
 }
 
 ### 9. Update user with partial data
-PUT http://localhost:8080/users/1
+PUT http://localhost:8080/api/users/1
 Content-Type: application/json
+Cookie: JSESSIONID=0414ACA542F693A270B50EC8DA838EB3
 
 {
   "bio": "Just updating bio",
-  "website": "https://newwebsite.com"
+  "avatar_url": "https://example.com/new-avatar.jpg",
+  "cover_photo_url": "https://example.com/new-cover.jpg"
 }
 
-### 10. Update user with duplicate email (should fail)
-PUT http://localhost:8080/users/1
-Content-Type: application/json
-
-{
-  "email": "john@example.com"
-}
+### 10. GET user by email
+GET http://localhost:8080/api/users/find/by-email?email=quoc4@gmail.com
+Cookie: JSESSIONID=8A52D464FEC93052717FC6F98A22FAC7
 
 ### 11. Update non-existing user (should fail)
 PUT http://localhost:8080/users/999

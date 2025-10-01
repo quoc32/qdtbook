@@ -32,4 +32,10 @@ public class AuthResponseDTO {
     private String gender;
 
     private String bio;
+
+    @JsonProperty("avatar_url")
+    private String avatarUrl;
+
+    @JsonProperty("cover_photo_url")
+    private String coverPhotoUrl;
 }

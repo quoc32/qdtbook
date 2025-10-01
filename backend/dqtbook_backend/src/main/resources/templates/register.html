@@ -286,18 +286,18 @@
         }
 
         const payload = {
-          fullName: document.getElementById('fullName').value.trim(),
-          username: document.getElementById('username').value.trim(),
+          full_name: document.getElementById('fullName').value.trim(),
+          // username: document.getElementById('username').value.trim(),
           email: document.getElementById('email').value.trim(),
-          password
+          password_hash: password
         };
 
         setLoading(true);
         try {
-          const url = '/api/register'; // change to your API endpoint
+          const url = 'http://localhost:8080/api/users/register'; // change to your API endpoint
           const headers = { 'Content-Type': 'application/json' };
-          const csrf = getCsrfHeader();
-          if (csrf) headers[csrf.header] = csrf.token;
+          // const csrf = getCsrfHeader();
+          // if (csrf) headers[csrf.header] = csrf.token;
 
           const res = await fetch(url, {
             method: 'POST',

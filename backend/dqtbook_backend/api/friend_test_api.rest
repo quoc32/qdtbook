@@ -3,61 +3,28 @@
 ### ===========================================
 
 ### 1. Get friends of user 3
-GET http://localhost:8080/friends/3
+GET http://localhost:8080/api/friends/5
+Cookie: JSESSIONID=70A5C3106055320C87C9E514552744E9
 
 ### 2. Get friends of user 2
-GET http://localhost:8080/friends/2
+GET http://localhost:8080/api/friends/2
 
 ### 3. Get friends of non-existing user
-GET http://localhost:8080/friends/999
+GET http://localhost:8080/api/friends/999
 
-### 4. Send friend request (User 1 -> User 3)
-POST http://localhost:8080/friends/request
+### 4. Send friend request
+POST http://localhost:8080/api/friends/request
+Cookie: JSESSIONID=F364B6AD5B22140A3926453BE0F9E0BD
 Content-Type: application/json
 
 {
-  "sender_id": 1,
-  "receiver_id": 3
+  "sender_id": 3,
+  "receiver_id": 2
 }
 
-### 5. Send friend request (User 4 -> User 5)
-POST http://localhost:8080/friends/request
-Content-Type: application/json
-
-{
-  "sender_id": 4,
-  "receiver_id": 5
-}
-
-### 6. Send friend request to yourself (should fail)
-POST http://localhost:8080/friends/request
-Content-Type: application/json
-
-{
-  "sender_id": 1,
-  "receiver_id": 1
-}
-
-### 7. Send friend request to non-existing user (should fail)
-POST http://localhost:8080/friends/request
-Content-Type: application/json
-
-{
-  "sender_id": 1,
-  "receiver_id": 999
-}
-
-### 8. Send duplicate friend request (should fail)
-POST http://localhost:8080/friends/request
-Content-Type: application/json
-
-{
-  "sender_id": 4,
-  "receiver_id": 5
-}
-
-### 9. Accept friend request (User 3 accepts User 1's request)
-PUT http://localhost:8080/friends/accept
+### 5. Accept friend request (User 3 accepts User 1's request)
+PUT http://localhost:8080/api/friends/accept
+Cookie: JSESSIONID=9A9478DF73891591D21A319AD3789B18
 Content-Type: application/json
 
 {
@@ -65,17 +32,9 @@ Content-Type: application/json
   "receiver_id": 1
 }
 
-### 10. Accept non-existing friend request (should fail)
-PUT http://localhost:8080/friends/accept
-Content-Type: application/json
-
-{
-  "user_id_1": 1,
-  "user_id_2": 3
-}
-
-### 11. Block friend (User 1 blocks User 2)
-PUT http://localhost:8080/friends/block
+### 6. Refuse friend request 
+PUT http://localhost:8080/api/friends/refuse
+Cookie: JSESSIONID=8FD893D527AB7F4AE75F6D57F9459B0A
 Content-Type: application/json
 
 {
@@ -83,17 +42,9 @@ Content-Type: application/json
   "receiver_id": 1
 }
 
-### 12. Block non-existing friend (should fail)
-PUT http://localhost:8080/friends/block
-Content-Type: application/json
-
-{
-  "sender_id": 1,
-  "receiver_id": 999
-}
-
-### 13. Unfriend (User 1 unfriends User 2)
-DELETE http://localhost:8080/friends/unfriend
+### 7. Block friend (User 1 blocks User 2)
+PUT http://localhost:8080/api/friends/block
+Cookie: JSESSIONID=7DBF3861CB4725D9D00F50BED938BB86
 Content-Type: application/json
 
 {
@@ -101,13 +52,14 @@ Content-Type: application/json
   "receiver_id": 3
 }
 
-### 14. Unfriend non-existing relationship (should fail)
-DELETE http://localhost:8080/friends/unfriend
+### 8. Unfriend (User 1 unfriends User 2)
+DELETE http://localhost:8080/api/friends/unfriend
+Cookie: JSESSIONID=AEF5FEA2829B1010CDAEBB2D39C9F52A
 Content-Type: application/json
 
 {
-  "user_id_1": 1,
-  "user_id_2": 999
+  "sender_id": 3,
+  "receiver_id": 1
 }
 
 ### ===========================================

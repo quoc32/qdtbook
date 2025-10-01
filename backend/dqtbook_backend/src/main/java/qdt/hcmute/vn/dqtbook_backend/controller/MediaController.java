@@ -39,7 +39,7 @@ public class MediaController {
       for (MultipartFile file : files) {
         try {
           String fileName = fileStorageService.storeFile(file);
-          String fileUrl = "/media/files/" + fileName;
+          String fileUrl = "/api/media/files/" + fileName;
           urls.add(fileUrl);
         } catch (IOException e) {
           return ResponseEntity.status(500).body("Upload failed: " + e.getMessage());

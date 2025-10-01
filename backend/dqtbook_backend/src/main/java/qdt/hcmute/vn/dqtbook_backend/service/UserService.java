@@ -1,8 +1,11 @@
 package qdt.hcmute.vn.dqtbook_backend.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.servlet.http.HttpSession;
 import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.model.Department;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
@@ -21,6 +24,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private HttpSession session;
 
     public UserService(UserRepository userRepository,
                         DepartmentRepository departmentRepository,
@@ -41,6 +47,11 @@ public class UserService {
                 .map(this::convertToResponseDTO);
     }
 
+    public Optional<UserResponseDTO> getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        return Optional.ofNullable(user).map(this::convertToResponseDTO);
+    }
+
     @Transactional
     public Optional<UserResponseDTO> createUser(UserCreateRequestDTO dto) {
         // Check if email already exists
@@ -48,10 +59,8 @@ public class UserService {
             return Optional.empty();
         }
 
-        
         User user = new User();
 
-        
         user.setFullName(dto.getFullName());
         user.setEmail(dto.getEmail());
         // user.setPasswordHash(dto.getPasswordHash());
@@ -61,7 +70,7 @@ public class UserService {
         user.setLastName(dto.getLastName());
         user.setGender(dto.getGender());
         user.setDateOfBirth(dto.getDateOfBirth());
-        user.setAvatarUrl(dto.getAvatarUrl());
+        user.setAvatarUrl(dto.getAvatarUrl() != null ? dto.getAvatarUrl() : "http://localhost:8080/default-avatar.png");
         user.setCoverPhotoUrl(dto.getCoverPhotoUrl());
         user.setBio(dto.getBio());
         user.setSchoolId(dto.getSchoolId());
@@ -94,7 +103,12 @@ public class UserService {
     public Optional<UserResponseDTO> updateUser(Integer id, UserUpdateRequestDTO dto) {
         Optional<User> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
-            return Optional.empty();
+            throw new IllegalArgumentException("User with id " + id + " does not exist");
+        }
+
+        // Session check
+        if (id != (Integer)session.getAttribute("userId")) {
+            throw new IllegalArgumentException("id does not match the logged-in user");
         }
 
         User user = userOpt.get();
