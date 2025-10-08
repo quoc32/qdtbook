@@ -1,6 +1,7 @@
 package qdt.hcmute.vn.dqtbook_backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -167,43 +168,39 @@ public class FriendService {
 
     /**
      * Từ chối (cập nhật trạng thái) một lời mời kết bạn đang chờ giữa hai người dùng.
-     *
-     * Yêu cầu:
-     * - senderId trong DTO phải trùng với người dùng đang đăng nhập (session).
-     * - Chỉ xử lý nếu tồn tại bản ghi lời mời theo chiều (receiverId -> senderId).
-     *
-     * @param dto chứa senderId (người từ chối) và receiverId (người đã gửi lời mời)
-     * @return true nếu cập nhật trạng thái thành công
-     * @throws IllegalArgumentException nếu thiếu tham số, không đúng user phiên, hoặc không tìm thấy lời mời
+     * Logic giống hủy kết bạn (unfriend) vì về bản chất là xóa quan hệ pending.
      */
     @Transactional
     public boolean refuseFriendRequest(FriendActionDTO dto) {
-        Integer senderId = dto.getSenderId();    // Người gửi lời từ chối
-        Integer receiverId = dto.getReceiverId(); // Người nhận lời từ chối
+        Integer senderId = dto.getSenderId();    // Người gửi lời mời ban đầu
+        Integer receiverId = dto.getReceiverId(); // Người nhận lời mời (đang unfriend)
 
         if (senderId == null || receiverId == null) {
             throw new IllegalArgumentException("sender_id and receiver_id is required");
         }
-
-        // Session user check (optional)
+        // Session user check
         Integer sessionUserId = (Integer) session.getAttribute("userId");
         if (sessionUserId == null || !sessionUserId.equals(senderId)) {
             throw new IllegalArgumentException("sender_id does not match the logged-in user");
         }
 
-        // Find the friend relationship // ! (NO check both directions)
+        // Find the friend relationship (check both directions)
         FriendId friendId1 = new FriendId();
-        friendId1.setUserId1(receiverId);    // user_id_1 = Người gửi lời mời ban đầu
-        friendId1.setUserId2(senderId);  // user_id_2 = Người nhận lời mời (đang từ chối)
+        friendId1.setUserId1(senderId);    // user_id_1 = sender
+        friendId1.setUserId2(receiverId);  // user_id_2 = receiver
+        
+        FriendId friendId2 = new FriendId();
+        friendId2.setUserId1(receiverId);  // user_id_1 = receiver  
+        friendId2.setUserId2(senderId);    // user_id_2 = sender
 
         if (friendRepository.existsById(friendId1)) {
-            Optional<Friend> friendOpt = friendRepository.findById(friendId1);
-            Friend friend = friendOpt.get();
-            friend.setStatus(FriendStatus.refused);
-            friend.setUpdatedAt(Instant.now());
+            friendRepository.deleteById(friendId1);
+            return true;
+        } else if (friendRepository.existsById(friendId2)) {
+            friendRepository.deleteById(friendId2);
             return true;
         } else {
-            throw new IllegalArgumentException("No friend request found between the users");
+            throw new IllegalArgumentException("No friend relationship found between the users");
         }
     }
 
@@ -316,6 +313,71 @@ public class FriendService {
         } else {
             throw new IllegalArgumentException("No friend relationship found between the users");
         }
+    }
+
+    
+    @Transactional
+    public boolean cancel_request(FriendActionDTO dto) {
+        Integer senderId = dto.getSenderId();    // Người gửi lời mời ban đầu
+        Integer receiverId = dto.getReceiverId(); // Người nhận lời mời (đang unfriend)
+
+        if (senderId == null || receiverId == null) {
+            throw new IllegalArgumentException("sender_id and receiver_id is required");
+        }
+        // Session user check
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        if (sessionUserId == null || !sessionUserId.equals(senderId)) {
+            throw new IllegalArgumentException("sender_id does not match the logged-in user");
+        }
+
+        // Find the friend relationship (check both directions)
+        FriendId friendId1 = new FriendId();
+        friendId1.setUserId1(senderId);    // user_id_1 = sender
+        friendId1.setUserId2(receiverId);  // user_id_2 = receiver
+        
+        FriendId friendId2 = new FriendId();
+        friendId2.setUserId1(receiverId);  // user_id_1 = receiver  
+        friendId2.setUserId2(senderId);    // user_id_2 = sender
+
+        if (friendRepository.existsById(friendId1)) {
+            friendRepository.deleteById(friendId1);
+            return true;
+        } else if (friendRepository.existsById(friendId2)) {
+            friendRepository.deleteById(friendId2);
+            return true;
+        } else {
+            throw new IllegalArgumentException("No friend relationship found between the users");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<List<UserResponseDTO>> getFriendSuggestions(Integer userId) {
+        // Session user check
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        if (sessionUserId == null || !sessionUserId.equals(userId)) {
+            throw new IllegalArgumentException("user_id does not match the logged-in user");
+        }
+
+        // Check if user exists
+        if (!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User does not exist");
+        }
+
+        List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
+        List<UserResponseDTO> suggestions = userRepository.findSuggestions(userId, friendIds, PageRequest.of(0, 5)) // Giới hạn 5 gợi ý
+                .stream()
+                .map(user -> {
+                    UserResponseDTO dto = new UserResponseDTO();
+                    dto.setId(user.getId());
+                    dto.setFullName(user.getFullName());
+                    dto.setEmail(user.getEmail());
+                    dto.setFullName(user.getFullName());
+                    dto.setAvatarUrl(user.getAvatarUrl());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return Optional.of(suggestions);
     }
 
     private FriendResponseDTO convertToResponseDTO(Friend friend, Integer currentUserId) {

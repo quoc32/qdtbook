@@ -56,7 +56,8 @@ public class UserController {
         if (user.isPresent()) {
             return ResponseEntity.status(HttpStatus.CREATED).body(user.get());
         } else {
-            return ResponseEntity.badRequest().body("Error creating user");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Map.of("message", "User already exists"));
         }
     }
 

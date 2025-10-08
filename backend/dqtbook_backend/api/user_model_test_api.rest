@@ -7,9 +7,11 @@ GET http://localhost:8080
 
 ### 1. Get all users
 GET http://localhost:8080/users/api
+Cookie: JSESSIONID=EBCBC3B0D42823C290EDA3DA7C3623BF
 
 ### 2. Get user by ID (existing user)
-GET http://localhost:8080/users/1
+GET http://localhost:8080/api/users/2
+Cookie: JSESSIONID=EBCBC3B0D42823C290EDA3DA7C3623BF
 
 ### 3. Get user by ID (non-existing user)
 GET http://localhost:8080/users/999
@@ -20,7 +22,7 @@ Content-Type: application/json
 
 {
   "full_name": "quoc vu",
-  "email": "test1000@gmail.com",
+  "email": "quoc5@gmail.com",
   "password_hash": "123",
   "first_name": "Quang",
   "last_name": "Quang",

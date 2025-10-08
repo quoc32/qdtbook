@@ -3,8 +3,8 @@
 ### ===========================================
 
 ### 1. Get friends of user 3
-GET http://localhost:8080/api/friends/5
-Cookie: JSESSIONID=70A5C3106055320C87C9E514552744E9
+GET http://localhost:8080/api/friends/1
+Cookie: JSESSIONID=1046E9E658BCD323CF84ED0D7F191C14
 
 ### 2. Get friends of user 2
 GET http://localhost:8080/api/friends/2
@@ -54,6 +54,16 @@ Content-Type: application/json
 
 ### 8. Unfriend (User 1 unfriends User 2)
 DELETE http://localhost:8080/api/friends/unfriend
+Cookie: JSESSIONID=D015060D8A7DA0CDA1691649033CF543
+Content-Type: application/json
+
+{
+  "sender_id": 1,
+  "receiver_id": 8
+}
+
+### 8. Cancel friend request (User 1 unfriends User 2)
+DELETE http://localhost:8080/api/friends/cancel_request
 Cookie: JSESSIONID=AEF5FEA2829B1010CDAEBB2D39C9F52A
 Content-Type: application/json
 
@@ -61,6 +71,10 @@ Content-Type: application/json
   "sender_id": 3,
   "receiver_id": 1
 }
+
+### 10. Danh sách bạn bè gợi ý
+GET http://localhost:8080/api/friends/suggestions/10
+Cookie: JSESSIONID=C8777DD8E2056A4FF055D65628CBC399
 
 ### ===========================================
 ### COMPLETE FRIEND FLOW TEST

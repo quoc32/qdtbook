@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class HomeViewController {
@@ -59,6 +60,21 @@ class UserViewController {
         }
         return "user";
     }
+
+    @GetMapping("/user/{id}")
+    public String getMethodName(HttpServletRequest request, @PathVariable("id") String id, Model model) {
+        Object sessionUserId = request.getSession().getAttribute("userId");
+        if (sessionUserId == null) {
+            model.addAttribute("error", "You must be logged in to access this page");
+            return "error";
+        }
+        if (sessionUserId.toString().equals(id)) {
+            return "redirect:/views/user";
+        }
+        model.addAttribute("viewingUserId", id);
+        return "another_user";
+    }
+    
 }
 
 @Controller

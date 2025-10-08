@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 import qdt.hcmute.vn.dqtbook_backend.dto.FriendRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.FriendResponseDTO;
+import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.FriendActionDTO;
 import qdt.hcmute.vn.dqtbook_backend.service.FriendService;
 
@@ -66,8 +67,8 @@ public class FriendController {
 
     @PutMapping("/refuse")
     public ResponseEntity<?> refuseFriendRequest(@RequestBody FriendActionDTO dto) {
-        boolean deleted = friendService.refuseFriendRequest(dto);
-        if (deleted) {
+        boolean done = friendService.refuseFriendRequest(dto);
+        if (done) {
             return ResponseEntity.ok(Map.of(
                 "message", "Friend request refused successfully",
                 "senderId", dto.getSenderId(),
@@ -100,5 +101,30 @@ public class FriendController {
         } else {
             return ResponseEntity.badRequest().body("Error unfriending");
         }
+    
     }
+    @DeleteMapping("/cancel_request")
+    public ResponseEntity<?> cancel_request(@RequestBody FriendActionDTO dto) {
+        boolean deleted = friendService.cancel_request(dto);
+        if (deleted) {
+            return ResponseEntity.ok(Map.of(
+                "message", "Cancel friend request successfully",
+                "senderId", dto.getSenderId(),
+                "receiverId", dto.getReceiverId()
+            ));
+        } else {
+            return ResponseEntity.badRequest().body("Error unfriending");
+        }
+    }
+
+    @GetMapping("/suggestions/{userId}")
+    public ResponseEntity<?> getFriendSuggestions(@PathVariable Integer userId) {
+        Optional<List<UserResponseDTO>> suggestions = friendService.getFriendSuggestions(userId);
+        if (suggestions.isPresent()) {
+            return ResponseEntity.ok(suggestions.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+
 }
