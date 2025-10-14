@@ -438,11 +438,70 @@
                 </style>
 
                 <!-- Nút hiển thị số comment -->
-                <button type="button" class="">
-                    <span class="ico"><i class="bi bi-chat-dots"></i></span>
-                    <span class="txt">Bình luận</span>
-                    <span class="count comment-count">0</span>
+                <button type="button" class="btn-comment-summary" aria-label="Xem bình luận"
+                  style="background:transparent;border:0;padding:0;color:#65676b;font-weight:500;font-size:.9rem;line-height:1;text-transform:none;box-shadow:none;"
+                  onclick="(function(btn){
+                  try{
+                    var article = btn.closest('article'); if(!article) return;
+                    var modal = article.querySelector('.comments-modal'); 
+                    if(modal){
+                    if(article._loadComments) article._loadComments();
+                    var inst = bootstrap.Modal.getOrCreateInstance(modal);
+                    inst.show();
+                    setTimeout(function(){
+                      var input = article.querySelector('.modal-comment-input');
+                      if(input) input.focus();
+                    }, 200);
+                    }
+                  }catch(e){}
+                  })(this)">
+                  <span class="ico"><i class="bi bi-chat-dots"></i></span>
+                  <span class="txt">Bình luận</span>
+                  <span class="count comment-count">0</span>
                 </button>
+
+                <!-- Tải số bình luận ban đầu -->
+                <script>
+                  (function(){
+                  try{
+                    var sc = document.currentScript;
+                    var article = sc;
+                    while(article && article.tagName !== 'ARTICLE'){ article = article.parentElement; }
+                    if(!article) return;
+
+                    var countEl = article.querySelector('.comment-count');
+                    if(!countEl) return;
+
+                    async function setCount(n){
+                    countEl.textContent = Number(n||0);
+                    }
+
+                    async function fetchInitialCount(postId){
+                    //  tải danh sách và đếm
+                    try{
+                      var r2 = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments', { credentials:'include' });
+                      if(r2.ok){
+                      var d = await r2.json();
+                      if(Array.isArray(d)){ setCount(d.length); return; }
+                      if(d && typeof d.totalElements === 'number'){ setCount(d.totalElements); return; }
+                      if(d && Array.isArray(d.content)){ setCount(d.content.length); return; }
+                      }
+                    }catch(_){}
+                    setCount(0);
+                    }
+
+                    function init(){
+                    if(article._commentCountLoaded) return;
+                    var postId = article.dataset.postId;
+                    if(!postId){ setTimeout(init, 50); return; }
+                    article._commentCountLoaded = true;
+                    fetchInitialCount(postId);
+                    }
+
+                    init();
+                  }catch(_){}
+                  })();
+                </script>
 
               </div>
 
@@ -737,45 +796,299 @@
                        })(this)">
               </div>
 
-              <!-- Comments Modal -->
-              <div class="modal fade comments-modal" tabindex="-1" aria-hidden="true" role="dialog">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
+                <!-- Comments Modal:BEGIN -->
+                <div class="modal fade comments-modal" tabindex="-1" aria-hidden="true" role="dialog">
+                  <div class="modal-dialog modal-dialog-centered modal-lg">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h5 class="modal-title">Bình luận</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    <h5 class="modal-title">Bình luận</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                     </div>
                     <div class="modal-body">
-                      <div class="list-group comments-list">
-                        <div class="text-muted small text-center py-2">Chưa có bình luận.</div>
-                      </div>
-                      <div class="mt-3 d-flex gap-2">
-                        <input type="text" class="form-control modal-comment-input" placeholder="Viết bình luận...">
-                        <button type="button" class="btn btn-primary"
-                                onclick="(function(btn){
-                                  try{
-                                    var article = btn.closest('article'); if(!article) return;
-                                    var postId = article.dataset.postId; if(!postId) return;
-                                    var input = article.querySelector('.modal-comment-input');
-                                    var text = (input && input.value || '').trim();
-                                    if(!text) return;
-                                    fetch('/api/posts/'+encodeURIComponent(postId)+'/comments',{
-                                      method:'POST',
-                                      credentials:'include',
-                                      headers:{'Content-Type':'application/json'},
-                                      body:JSON.stringify({content:text})
-                                    }).then(function(res){
-                                      if(res.ok){ input.value=''; }
-                                    }).catch(function(){});
-                                  }catch(e){}
-                                })(this)">
-                          Gửi
-                        </button>
-                      </div>
+                    <div class="list-group comments-list">
+                      <div class="text-muted small text-center py-2">Chưa có bình luận.</div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2">
+                      <input type="text" class="form-control modal-comment-input" placeholder="Viết bình luận...">
+                      <button type="button" class="btn btn-primary"
+                          onclick="(async function(btn){
+                          try{
+                            var article = btn.closest('article'); if(!article) return;
+                            var postId = article.dataset.postId; if(!postId) return;
+                            var input = article.querySelector('.modal-comment-input');
+                            var text = (input && input.value || '').trim();
+                            if(!text) return;
+
+                            var auth = {};
+                            try{ auth = JSON.parse(localStorage.getItem('auth')||'{}'); }catch(e){}
+                            var uid = auth && (auth.user_id || auth.id || auth.userId);
+                            var body = { content: text };
+                            if(uid!=null) body.user = { id: uid };
+
+                            const res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments',{
+                              method:'POST',
+                              credentials:'include',
+                              headers:{'Content-Type':'application/json'},
+                              body: JSON.stringify(body)
+                            });
+                            if(res.ok){
+                            input.value='';
+                            if(article._loadComments) await article._loadComments();
+                            }
+                          }catch(e){}
+                          })(this)">
+                      Gửi
+                      </button>
+                    </div>
                     </div>
                   </div>
+                  </div>
                 </div>
-              </div>
+                
+
+                <script>
+                (function(){
+                  try{
+                  var script = document.currentScript;
+                  var article = script;
+                  while(article && article.tagName !== 'ARTICLE'){ article = article.parentElement; }
+                  if(!article) return;
+
+                  var modal = article.querySelector('.comments-modal');
+                  if(!modal) return;
+
+                  var listEl = modal.querySelector('.comments-list');
+
+                  // cache user details per-article to avoid refetching
+                  var userCache = article._userCache || new Map();
+                  article._userCache = userCache;
+
+                  function normName(u){
+                    return (u && (u.full_name || u.fullName || u.name || u.username)) || 'Ẩn danh';
+                  }
+                  function normAvatar(u){
+                    return (u && (u.avatar_url || u.avatarUrl || u.avatar)) || '/img/image1.png';
+                  }
+                  function normEmail(u){
+                    return (u && (u.email || u.emailAddress)) || '';
+                  }
+
+                  function getUserIdFromComment(c){
+                    return (c.authorId) || null;
+                  }
+
+                  async function fetchUserOnce(id){
+                    if(!id) return null;
+                    if(userCache.has(id)){
+                    const cached = userCache.get(id);
+                    return cached && typeof cached.then === 'function' ? await cached : cached;
+                    }
+                    const pending = (async () => {
+                    try{
+                      // Use same-origin relative API; JSESSIONID is sent via credentials: 'include'
+                      const res = await fetch('/api/users/' + encodeURIComponent(id), { credentials:'include' });
+                      if(!res.ok) return null;
+                      const u = await res.json();
+                      return u || null;
+                    }catch(e){ return null; }
+                    })();
+                    userCache.set(id, pending);
+                    const resolved = await pending;
+                    userCache.set(id, resolved);
+                    return resolved;
+                  }
+
+                  async function copyToClipboard(text){
+                    try{
+                    if(navigator.clipboard && window.isSecureContext){
+                      await navigator.clipboard.writeText(text);
+                    }else{
+                      const ta=document.createElement('textarea');
+                      ta.value=text;
+                      ta.style.position='fixed';
+                      ta.style.top='-9999px';
+                      document.body.appendChild(ta);
+                      ta.focus(); ta.select();
+                      document.execCommand('copy');
+                      ta.remove();
+                    }
+                    return true;
+                    }catch(e){ return false; }
+                  }
+
+                  function formatRelativeTime(ts){
+                    if(!ts) return '';
+                    var d=new Date(ts);
+                    if(isNaN(d)) return '';
+                    var diff=(Date.now()-d.getTime())/1000;
+                    if(diff<60) return 'Vừa xong';
+                    if(diff<3600) return Math.floor(diff/60)+' phút';
+                    if(diff<86400) return Math.floor(diff/3600)+' giờ';
+                    if(diff<172800) return 'Hôm qua';
+                    return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+                  }
+
+                    async function renderComments(arr){
+                    listEl.innerHTML = '';
+                    if(!arr || arr.length===0){
+                      listEl.innerHTML = '<div class="text-muted small text-center py-2">Chưa có bình luận.</div>';
+                      return;
+                    }
+
+                    // Prefetch unique user details using /api/users/{id}
+                    const uniqueIds = Array.from(new Set(arr.map(getUserIdFromComment).filter(Boolean)));
+                    if(uniqueIds.length){
+                      await Promise.all(uniqueIds.map(id => fetchUserOnce(id)));
+                    }
+
+                    // Sort comments by time (oldest -> newest) for natural reading flow
+                    const ts = c => new Date(c.created_at || c.createdAt || c.created || 0).getTime();
+                    arr = arr.slice().sort((a,b)=> ts(a) - ts(b));
+
+                    arr.forEach(function(c){
+                      const fallbackUser = c.user || c.author || {};
+                      const uid = getUserIdFromComment(c);
+                      const u = (uid && userCache.get(uid)) || fallbackUser;
+
+                      const name = normName(u);
+                      const avatar = normAvatar(u);
+                      const email = normEmail(u);
+                      const content = c.content || c.text || '';
+                      const created = c.created_at || c.createdAt || c.created || null;
+
+                      // Item wrapper (no default list-group borders/paddings)
+                      const item = document.createElement('div');
+                      item.className = 'list-group-item border-0 bg-transparent p-0';
+                      item.style.marginBottom = '6px';
+
+                      // Row layout
+                      const row = document.createElement('div');
+                      row.className = 'd-flex align-items-start gap-2 py-2';
+
+                      // Avatar
+                      const img = document.createElement('img');
+                      img.src = avatar; img.alt=''; img.className='rounded-circle';
+                      img.style.width='40px'; img.style.height='40px'; img.style.objectFit='cover';
+                      img.style.boxShadow='0 2px 6px rgba(0,0,0,.15)';
+                      if(email) img.title = email;
+
+                      // Bubble
+                      const bubble = document.createElement('div');
+                      bubble.className = 'flex-fill';
+                      bubble.style.background = '#f7f9fc';
+                      bubble.style.border = '1px solid rgba(120,150,190,.30)';
+                      bubble.style.borderRadius = '12px';
+                      bubble.style.padding = '.5rem .75rem';
+                      bubble.style.minWidth = '0';
+
+                      // Header (name + email on left, time on right)
+                      const header = document.createElement('div');
+                      header.className = 'd-flex align-items-center justify-content-between gap-2 flex-wrap';
+
+                      const left = document.createElement('div');
+                      left.className = 'd-flex align-items-center gap-2 flex-wrap';
+
+                      const nameSpan = document.createElement('span');
+                      nameSpan.textContent = name;
+                      nameSpan.style.fontWeight = '600';
+                      nameSpan.style.color = '#2a3542';
+                      left.appendChild(nameSpan);
+
+                      if(email){
+                      const emailWrap = document.createElement('span');
+                      emailWrap.className = 'text-muted small d-inline-flex align-items-center gap-1';
+                      emailWrap.style.whiteSpace = 'nowrap';
+
+                      const emailSpan = document.createElement('span');
+                      emailSpan.textContent = email;
+                      emailSpan.style.maxWidth = '220px';
+                      emailSpan.style.overflow = 'hidden';
+                      emailSpan.style.textOverflow = 'ellipsis';
+
+                      const copyBtn = document.createElement('button');
+                      copyBtn.type='button';
+                      copyBtn.className='btn btn-sm btn-outline-secondary py-0 px-2';
+                      copyBtn.title='Sao chép email';
+                      copyBtn.innerHTML = "<i class='bi bi-clipboard'></i>";
+                      copyBtn.addEventListener('click', async function(ev){
+                        ev.stopPropagation();
+                        const ok = await copyToClipboard(email);
+                        const prev = copyBtn.innerHTML;
+                        copyBtn.innerHTML = ok ? "<i class='bi bi-clipboard-check'></i>" : "<i class='bi bi-clipboard-x'></i>";
+                        copyBtn.disabled = true;
+                        setTimeout(function(){
+                        copyBtn.innerHTML = prev;
+                        copyBtn.disabled = false;
+                        }, 1200);
+                      });
+
+                      emailWrap.appendChild(emailSpan);
+                      emailWrap.appendChild(copyBtn);
+                      left.appendChild(emailWrap);
+                      }
+
+                      const timeEl = document.createElement('small');
+                      timeEl.className = 'text-muted';
+                      timeEl.textContent = formatRelativeTime(created);
+
+                      header.appendChild(left);
+                      header.appendChild(timeEl);
+
+                      // Content
+                      const contentRow = document.createElement('div');
+                      contentRow.textContent = content;
+                      contentRow.style.whiteSpace = 'pre-wrap';
+                      contentRow.style.marginTop = '4px';
+                      contentRow.style.lineHeight = '1.45';
+                      contentRow.style.color = '#2a3542';
+
+                      // Mount
+                      bubble.appendChild(header);
+                      bubble.appendChild(contentRow);
+                      row.appendChild(img);
+                      row.appendChild(bubble);
+                      item.appendChild(row);
+                      listEl.appendChild(item);
+                    });
+                    }
+
+                  async function loadComments(){
+                    var postId = article.dataset.postId;
+                    if(!postId) return;
+                    try{
+                    listEl.innerHTML = '<div class="text-center text-muted small py-2">Đang tải bình luận...</div>';
+                    var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments', { credentials:'include' });
+                    var arr = res.ok ? await res.json() : [];
+                    if(!Array.isArray(arr)) arr = [];
+                    await renderComments(arr);
+                    var count = arr.length;
+                    article.querySelectorAll('.comment-count').forEach(function(el){ el.textContent = count; });
+                    }catch(e){
+                    listEl.innerHTML = '<div class="text-muted small text-center py-2">Tải bình luận thất bại.</div>';
+                    }
+                  }
+
+                  // expose to inline "Gửi" handler
+                  article._loadComments = loadComments;
+
+                  // load when modal is shown
+                  modal.addEventListener('shown.bs.modal', function(){ loadComments(); });
+
+                  // optional: submit on Enter in input
+                  var input = article.querySelector('.modal-comment-input');
+                  if(input){
+                    input.addEventListener('keydown', function(e){
+                    if(e.key === 'Enter'){
+                      e.preventDefault();
+                      var btn = article.querySelector('.btn.btn-primary');
+                      if(btn) btn.click();
+                    }
+                    });
+                  }
+                  }catch(e){}
+                })();
+                </script>
+                <!-- Comments Modal:END -->
 
           </article>
       </template>
