@@ -1,0 +1,41 @@
+### Test Friends with Online Status API
+
+# 0. Check current session (for debugging)
+GET http://localhost:8080/api/auth/me
+Content-Type: application/json
+
+###
+
+# 0.1. Test basic API first
+GET http://localhost:8080/api/
+Content-Type: application/json
+
+###
+
+# 1. Get friends with online status
+GET http://localhost:8080/api/friends/10/online-status
+Content-Type: application/json
+
+### 
+
+# 2. Update presence (heartbeat)
+POST http://localhost:8080/api/presence/heartbeat
+Content-Type: application/json
+
+###
+
+# 3. Check specific user online status
+GET http://localhost:8080/api/presence/status/11
+Content-Type: application/json
+
+###
+
+# 4. Regular friends API for comparison
+GET http://localhost:8080/api/friends/11
+Content-Type: application/json
+
+###
+
+# 5. Test with user ID 1 (more likely to exist)
+GET http://localhost:8080/api/friends/1/online-status
+Content-Type: application/json

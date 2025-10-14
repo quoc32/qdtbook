@@ -26,7 +26,7 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
     private final UserService userService;
-    
+
     @Autowired
     private HttpSession session;
 
@@ -37,18 +37,23 @@ public class FriendService {
     }
 
     /**
-     * Lấy danh sách bạn bè của người dùng (theo ID) sau khi xác thực người dùng trong session.
+     * Lấy danh sách bạn bè của người dùng (theo ID) sau khi xác thực người dùng
+     * trong session.
      *
      * Logic:
-     * - Kiểm tra userId trong session phải trùng với tham số truyền vào (bảo vệ không truy xuất chéo).
+     * - Kiểm tra userId trong session phải trùng với tham số truyền vào (bảo vệ
+     * không truy xuất chéo).
      * - Kiểm tra sự tồn tại của user.
-     * - Trả về danh sách bạn bè dưới dạng DTO (có thể rỗng) bọc trong Optional (luôn present).
+     * - Trả về danh sách bạn bè dưới dạng DTO (có thể rỗng) bọc trong Optional
+     * (luôn present).
      *
-     * @param userId ID của người dùng cần lấy danh sách bạn bè (phải trùng với user đang đăng nhập).
-     * @return Optional luôn chứa List<FriendResponseDTO>; danh sách có thể rỗng nếu chưa có bạn bè.
+     * @param userId ID của người dùng cần lấy danh sách bạn bè (phải trùng với user
+     *               đang đăng nhập).
+     * @return Optional luôn chứa List<FriendResponseDTO>; danh sách có thể rỗng nếu
+     *         chưa có bạn bè.
      * @throws IllegalArgumentException nếu:
-     *         - userId không trùng với user trong session
-     *         - hoặc user không tồn tại
+     *                                  - userId không trùng với user trong session
+     *                                  - hoặc user không tồn tại
      */
     public Optional<List<FriendResponseDTO>> getFriendsByUserId(Integer userId) {
         // Session user check
@@ -61,7 +66,7 @@ public class FriendService {
         if (!userRepository.existsById(userId)) {
             throw new IllegalArgumentException("User does not exist");
         }
-        
+
         List<Friend> friends = friendRepository.findByUserId1OrUserId2(userId);
         List<FriendResponseDTO> result = friends.stream()
                 .map(friend -> convertToResponseDTO(friend, userId))
@@ -70,8 +75,11 @@ public class FriendService {
     }
 
     /**
-     * Gửi yêu cầu kết bạn (sender -> receiver). Kiểm tra hợp lệ, xác thực user phiên,
-     * tồn tại user, chưa có quan hệ hai chiều; nếu OK tạo yêu cầu trạng thái pending.
+     * Gửi yêu cầu kết bạn (sender -> receiver). Kiểm tra hợp lệ, xác thực user
+     * phiên,
+     * tồn tại user, chưa có quan hệ hai chiều; nếu OK tạo yêu cầu trạng thái
+     * pending.
+     * 
      * @param dto senderId, receiverId
      * @return Optional FriendResponseDTO
      * @throws IllegalArgumentException nếu dữ liệu sai hoặc quan hệ đã tồn tại
@@ -99,11 +107,11 @@ public class FriendService {
         FriendId checkId1 = new FriendId();
         checkId1.setUserId1(senderId);
         checkId1.setUserId2(receiverId);
-        
+
         FriendId checkId2 = new FriendId();
         checkId2.setUserId1(receiverId);
         checkId2.setUserId2(senderId);
-        
+
         if (friendRepository.existsById(checkId1) || friendRepository.existsById(checkId2)) {
             throw new IllegalArgumentException("Friend request or relationship already exists");
         }
@@ -111,7 +119,7 @@ public class FriendService {
         // Create friend request: user_id_1 = sender, user_id_2 = receiver
         Friend friend = new Friend();
         FriendId friendId = new FriendId();
-        friendId.setUserId1(senderId);  // sender
+        friendId.setUserId1(senderId); // sender
         friendId.setUserId2(receiverId); // receiver
         friend.setId(friendId);
         friend.setUser1(userRepository.findById(senderId).get());
@@ -125,17 +133,21 @@ public class FriendService {
     }
 
     /**
-     * Chấp nhận yêu cầu kết bạn. receiver (user đang đăng nhập) chấp nhận request của sender.
-     * Kiểm tra: sender/receiver hợp lệ, phiên đăng nhập đúng receiver, tồn tại bản ghi pending
+     * Chấp nhận yêu cầu kết bạn. receiver (user đang đăng nhập) chấp nhận request
+     * của sender.
+     * Kiểm tra: sender/receiver hợp lệ, phiên đăng nhập đúng receiver, tồn tại bản
+     * ghi pending
      * ở một trong hai chiều. Nếu hợp lệ -> cập nhật trạng thái accepted.
+     * 
      * @param dto senderId (người gửi yêu cầu ban đầu), receiverId (người chấp nhận)
      * @return Optional FriendResponseDTO
-     * @throws IllegalArgumentException nếu không tìm thấy pending request hoặc sai user phiên
+     * @throws IllegalArgumentException nếu không tìm thấy pending request hoặc sai
+     *                                  user phiên
      */
     @Transactional
     public Optional<FriendResponseDTO> acceptFriendRequest(FriendActionDTO dto) {
-        Integer senderId = dto.getSenderId();    
-        Integer receiverId = dto.getReceiverId(); 
+        Integer senderId = dto.getSenderId();
+        Integer receiverId = dto.getReceiverId();
 
         if (senderId == null || receiverId == null) {
             throw new IllegalArgumentException("sender_id and receiver_id is required");
@@ -149,11 +161,11 @@ public class FriendService {
 
         // Find the friend relationship // ! (NO check both directions)
         FriendId friendId1 = new FriendId();
-        friendId1.setUserId1(receiverId);    // user_id_1 = Người gửi lời mời ban đầu
-        friendId1.setUserId2(senderId);  // user_id_2 = Người nhận lời mời (đang chấp nhận)
+        friendId1.setUserId1(receiverId); // user_id_1 = Người gửi lời mời ban đầu
+        friendId1.setUserId2(senderId); // user_id_2 = Người nhận lời mời (đang chấp nhận)
 
         Optional<Friend> friendOpt = friendRepository.findById(friendId1);
-        
+
         if (friendOpt.isEmpty() || friendOpt.get().getStatus() != FriendStatus.pending) {
             throw new IllegalArgumentException("No pending friend request found between the users");
         }
@@ -167,12 +179,13 @@ public class FriendService {
     }
 
     /**
-     * Từ chối (cập nhật trạng thái) một lời mời kết bạn đang chờ giữa hai người dùng.
+     * Từ chối (cập nhật trạng thái) một lời mời kết bạn đang chờ giữa hai người
+     * dùng.
      * Logic giống hủy kết bạn (unfriend) vì về bản chất là xóa quan hệ pending.
      */
     @Transactional
     public boolean refuseFriendRequest(FriendActionDTO dto) {
-        Integer senderId = dto.getSenderId();    // Người gửi lời mời ban đầu
+        Integer senderId = dto.getSenderId(); // Người gửi lời mời ban đầu
         Integer receiverId = dto.getReceiverId(); // Người nhận lời mời (đang unfriend)
 
         if (senderId == null || receiverId == null) {
@@ -186,12 +199,12 @@ public class FriendService {
 
         // Find the friend relationship (check both directions)
         FriendId friendId1 = new FriendId();
-        friendId1.setUserId1(senderId);    // user_id_1 = sender
-        friendId1.setUserId2(receiverId);  // user_id_2 = receiver
-        
+        friendId1.setUserId1(senderId); // user_id_1 = sender
+        friendId1.setUserId2(receiverId); // user_id_2 = receiver
+
         FriendId friendId2 = new FriendId();
-        friendId2.setUserId1(receiverId);  // user_id_1 = receiver  
-        friendId2.setUserId2(senderId);    // user_id_2 = sender
+        friendId2.setUserId1(receiverId); // user_id_1 = receiver
+        friendId2.setUserId2(senderId); // user_id_2 = sender
 
         if (friendRepository.existsById(friendId1)) {
             friendRepository.deleteById(friendId1);
@@ -204,23 +217,27 @@ public class FriendService {
         }
     }
 
-
     /**
      * Chặn bạn bè trong quan hệ hiện có giữa hai người dùng.
      *
      * Quy trình:
-     * - Kiểm tra senderId, receiverId hợp lệ và sender trùng với người dùng đang đăng nhập.
+     * - Kiểm tra senderId, receiverId hợp lệ và sender trùng với người dùng đang
+     * đăng nhập.
      * - Tìm quan hệ bạn bè theo cả hai chiều.
      * - Nếu không tồn tại quan hệ hoặc đã ở trạng thái blocked -> ném lỗi.
      * - Cập nhật trạng thái quan hệ thành blocked và trả về thông tin sau cập nhật.
      *
-     * @param dto DTO chứa senderId (người thực hiện chặn) và receiverId (người bị chặn)
-     * @return Optional chứa FriendResponseDTO phản ánh trạng thái blocked sau khi cập nhật
-     * @throws IllegalArgumentException nếu thiếu tham số, sai người dùng phiên, không tìm thấy quan hệ, hoặc đã bị chặn trước đó
+     * @param dto DTO chứa senderId (người thực hiện chặn) và receiverId (người bị
+     *            chặn)
+     * @return Optional chứa FriendResponseDTO phản ánh trạng thái blocked sau khi
+     *         cập nhật
+     * @throws IllegalArgumentException nếu thiếu tham số, sai người dùng phiên,
+     *                                  không tìm thấy quan hệ, hoặc đã bị chặn
+     *                                  trước đó
      */
     @Transactional
     public Optional<FriendResponseDTO> blockFriend(FriendActionDTO dto) {
-        Integer senderId = dto.getSenderId();    // Người gửi lời mời ban đầu
+        Integer senderId = dto.getSenderId(); // Người gửi lời mời ban đầu
         Integer receiverId = dto.getReceiverId(); // Người nhận lời mời (đang block)
 
         if (senderId == null || receiverId == null) {
@@ -234,18 +251,18 @@ public class FriendService {
 
         // Find the friend relationship (check both directions)
         FriendId friendId1 = new FriendId();
-        friendId1.setUserId1(senderId);    // user_id_1 = sender
-        friendId1.setUserId2(receiverId);  // user_id_2 = receiver
-        
+        friendId1.setUserId1(senderId); // user_id_1 = sender
+        friendId1.setUserId2(receiverId); // user_id_2 = receiver
+
         FriendId friendId2 = new FriendId();
-        friendId2.setUserId1(receiverId);  // user_id_1 = receiver  
-        friendId2.setUserId2(senderId);    // user_id_2 = sender
+        friendId2.setUserId1(receiverId); // user_id_1 = receiver
+        friendId2.setUserId2(senderId); // user_id_2 = sender
 
         Optional<Friend> friendOpt = friendRepository.findById(friendId1);
         if (friendOpt.isEmpty()) {
             friendOpt = friendRepository.findById(friendId2);
         }
-        
+
         if (friendOpt.isEmpty()) {
             throw new IllegalArgumentException("No friend relationship found between the users");
         } else if (friendOpt.get().getStatus() == FriendStatus.blocked) {
@@ -279,11 +296,12 @@ public class FriendService {
      *
      * @param dto FriendActionDTO chứa senderId (người gửi ban đầu) và receiverId.
      * @return true nếu hủy kết bạn thành công, false nếu không tìm thấy quan hệ.
-     * @throws IllegalArgumentException nếu dữ liệu không hợp lệ hoặc không đúng user phiên.
+     * @throws IllegalArgumentException nếu dữ liệu không hợp lệ hoặc không đúng
+     *                                  user phiên.
      */
     @Transactional
     public boolean unfriend(FriendActionDTO dto) {
-        Integer senderId = dto.getSenderId();    // Người gửi lời mời ban đầu
+        Integer senderId = dto.getSenderId(); // Người gửi lời mời ban đầu
         Integer receiverId = dto.getReceiverId(); // Người nhận lời mời (đang unfriend)
 
         if (senderId == null || receiverId == null) {
@@ -297,12 +315,12 @@ public class FriendService {
 
         // Find the friend relationship (check both directions)
         FriendId friendId1 = new FriendId();
-        friendId1.setUserId1(senderId);    // user_id_1 = sender
-        friendId1.setUserId2(receiverId);  // user_id_2 = receiver
-        
+        friendId1.setUserId1(senderId); // user_id_1 = sender
+        friendId1.setUserId2(receiverId); // user_id_2 = receiver
+
         FriendId friendId2 = new FriendId();
-        friendId2.setUserId1(receiverId);  // user_id_1 = receiver  
-        friendId2.setUserId2(senderId);    // user_id_2 = sender
+        friendId2.setUserId1(receiverId); // user_id_1 = receiver
+        friendId2.setUserId2(senderId); // user_id_2 = sender
 
         if (friendRepository.existsById(friendId1)) {
             friendRepository.deleteById(friendId1);
@@ -315,10 +333,9 @@ public class FriendService {
         }
     }
 
-    
     @Transactional
     public boolean cancel_request(FriendActionDTO dto) {
-        Integer senderId = dto.getSenderId();    // Người gửi lời mời ban đầu
+        Integer senderId = dto.getSenderId(); // Người gửi lời mời ban đầu
         Integer receiverId = dto.getReceiverId(); // Người nhận lời mời (đang unfriend)
 
         if (senderId == null || receiverId == null) {
@@ -332,12 +349,12 @@ public class FriendService {
 
         // Find the friend relationship (check both directions)
         FriendId friendId1 = new FriendId();
-        friendId1.setUserId1(senderId);    // user_id_1 = sender
-        friendId1.setUserId2(receiverId);  // user_id_2 = receiver
-        
+        friendId1.setUserId1(senderId); // user_id_1 = sender
+        friendId1.setUserId2(receiverId); // user_id_2 = receiver
+
         FriendId friendId2 = new FriendId();
-        friendId2.setUserId1(receiverId);  // user_id_1 = receiver  
-        friendId2.setUserId2(senderId);    // user_id_2 = sender
+        friendId2.setUserId1(receiverId); // user_id_1 = receiver
+        friendId2.setUserId2(senderId); // user_id_2 = sender
 
         if (friendRepository.existsById(friendId1)) {
             friendRepository.deleteById(friendId1);
@@ -364,7 +381,11 @@ public class FriendService {
         }
 
         List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
-        List<UserResponseDTO> suggestions = userRepository.findSuggestions(userId, friendIds, PageRequest.of(0, 5)) // Giới hạn 5 gợi ý
+        List<UserResponseDTO> suggestions = userRepository.findSuggestions(userId, friendIds, PageRequest.of(0, 5)) // Giới
+                                                                                                                    // hạn
+                                                                                                                    // 5
+                                                                                                                    // gợi
+                                                                                                                    // ý
                 .stream()
                 .map(user -> {
                     UserResponseDTO dto = new UserResponseDTO();
@@ -382,20 +403,53 @@ public class FriendService {
 
     private FriendResponseDTO convertToResponseDTO(Friend friend, Integer currentUserId) {
         FriendResponseDTO dto = new FriendResponseDTO();
-        dto.setSenderId(friend.getId().getUserId1());    // user_id_1 = sender
-        dto.setReceiverId(friend.getId().getUserId2());  // user_id_2 = receiver
+        dto.setSenderId(friend.getId().getUserId1()); // user_id_1 = sender
+        dto.setReceiverId(friend.getId().getUserId2()); // user_id_2 = receiver
         dto.setStatus(friend.getStatus().name());
         dto.setCreatedAt(friend.getCreatedAt());
         dto.setUpdatedAt(friend.getUpdatedAt());
-        
+
         // Determine which user is the "friend" (not the current user)
         Integer friendId = friend.getId().getUserId1().equals(currentUserId)
-            ? friend.getId().getUserId2()
-            : friend.getId().getUserId1();
-            
+                ? friend.getId().getUserId2()
+                : friend.getId().getUserId1();
+
         Optional<UserResponseDTO> friendInfo = userService.getUserById(friendId);
         friendInfo.ifPresent(dto::setFriendInfo);
-        
+
         return dto;
+    }
+
+    /**
+     * Lấy danh sách bạn bè kèm trạng thái online/offline dựa trên last_seen_at
+     * 
+     * @param userId ID của người dùng cần lấy danh sách bạn bè
+     * @return Optional chứa List<FriendResponseDTO> với thông tin online status
+     */
+    public Optional<List<FriendResponseDTO>> getFriendsWithOnlineStatus(Integer userId) {
+        // Check if user exists
+        if (!userRepository.existsById(userId)) {
+            return Optional.empty();
+        }
+
+        // Get accepted friends only
+        List<Friend> friends = friendRepository.findByUserId1OrUserId2(userId)
+                .stream()
+                .filter(friend -> friend.getStatus() == FriendStatus.accepted)
+                .collect(Collectors.toList());
+
+        List<FriendResponseDTO> result = friends.stream()
+                .map(friend -> {
+                    FriendResponseDTO dto = convertToResponseDTO(friend, userId);
+
+                    // Add online status logic here if needed
+                    // The online status calculation will be done in frontend
+                    // based on last_seen_at from friend_info
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return Optional.of(result);
     }
 }

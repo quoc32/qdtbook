@@ -15,7 +15,7 @@ public boolean preHandle(HttpServletRequest request,
     Object userId = request.getSession().getAttribute("userId");
     if (userId == null) {
         System.out.println("🚫 Blocked request to " + uri + " (no session)");
-
+        
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.getWriter().write("{\"message\": \"Login required!\"}");
@@ -25,5 +25,4 @@ public boolean preHandle(HttpServletRequest request,
     System.out.println("✅ Allowed request to " + uri);
     return true;
 }
-
 }
