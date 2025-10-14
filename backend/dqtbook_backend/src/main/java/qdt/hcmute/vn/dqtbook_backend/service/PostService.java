@@ -9,6 +9,7 @@ import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostMediaRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
+import qdt.hcmute.vn.dqtbook_backend.repository.FriendRepository;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateResponseDTO;
@@ -27,14 +28,16 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostMediaRepository postMediaRepository;
+    private final FriendRepository friendRepository;
 
     @Autowired
     private HttpSession session;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository, PostMediaRepository postMediaRepository) {
+    public PostService(PostRepository postRepository, UserRepository userRepository, PostMediaRepository postMediaRepository, FriendRepository friendRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postMediaRepository = postMediaRepository;
+        this.friendRepository = friendRepository;
     }
 
     public ResponseEntity<List<PostContentResponseDTO>> getAllPosts() {
@@ -48,6 +51,7 @@ public class PostService {
                     dto.setVisibility(post.getVisibility());
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
+                    dto.setCreatedAt(post.getCreatedAt());
 
                     // map author
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
@@ -78,6 +82,196 @@ public class PostService {
 
     public Post savePost(Post post) {
         return postRepository.save(post);
+    }
+
+
+
+    public ResponseEntity<List<PostContentResponseDTO>> getPosts(Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required");
+        }
+        if (userId != (Integer)session.getAttribute("userId")) {
+            throw new IllegalArgumentException("author_id does not match the logged-in user");
+        }
+
+        List<Post> selfPosts = postRepository.findByAuthorId(userId);
+
+        List<Post> friendPosts = new ArrayList<>();
+        List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
+        for (Integer fid : friendIds) {
+            friendPosts.addAll(postRepository.findByAuthorId(fid));
+        }
+
+        List<Post> allPosts = postRepository.findAll();
+        List<Post> publicPosts = allPosts.stream() 
+                                .filter(p -> "public".equalsIgnoreCase(p.getVisibility())) 
+                                .toList();
+
+        List<Post> combinedPosts = new ArrayList<>();
+        combinedPosts.addAll(selfPosts);
+        combinedPosts.addAll(friendPosts);
+        combinedPosts.addAll(publicPosts);
+
+        combinedPosts = combinedPosts.stream()
+                            .distinct() // loại bỏ trùng lặp
+                            .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt())) // sắp xếp theo createdAt giảm dần
+                            .toList();
+
+        List<PostContentResponseDTO> dtos = combinedPosts.stream()
+                .map(post -> {
+                    PostContentResponseDTO dto = new PostContentResponseDTO();
+                    dto.setId(post.getId());
+                    dto.setContent(post.getContent());
+                    dto.setVisibility(post.getVisibility());
+                    dto.setPostType(post.getPostType());
+                    dto.setStatus(post.getStatus());
+                    dto.setCreatedAt(post.getCreatedAt());
+
+                    PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                    if (post.getAuthor() != null) {
+                        authorDto.setId(post.getAuthor().getId());
+                        authorDto.setFullName(post.getAuthor().getFullName());
+                        authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                        authorDto.setEmail(post.getAuthor().getEmail());
+                    }
+                    dto.setAuthor(authorDto);
+
+                    List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                            .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                            .toList();
+                    dto.setMedia(mediaDtos);
+
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    /**
+     * Lấy danh sách bài viết của một người dùng theo userId và ánh xạ sang PostContentResponseDTO
+     * (bao gồm thông tin tác giả và media). Trả về ResponseEntity với trạng thái 200 OK khi thành công.
+     *
+     * @param userId ID của người dùng cần lấy bài viết (không được null)
+     * @return ResponseEntity chứa danh sách PostContentResponseDTO của người dùng
+     * @throws IllegalArgumentException nếu userId là null
+     */
+    public ResponseEntity<List<PostContentResponseDTO>> getUserPosts(Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required");
+        }
+
+        List<Post> posts = postRepository.findByAuthorId(userId);
+
+        List<PostContentResponseDTO> dtos = posts.stream()
+                .map(post -> {
+                    PostContentResponseDTO dto = new PostContentResponseDTO();
+                    dto.setId(post.getId());
+                    dto.setContent(post.getContent());
+                    dto.setVisibility(post.getVisibility());
+                    dto.setPostType(post.getPostType());
+                    dto.setStatus(post.getStatus());
+                    dto.setCreatedAt(post.getCreatedAt());
+
+                    PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                    if (post.getAuthor() != null) {
+                        authorDto.setId(post.getAuthor().getId());
+                        authorDto.setFullName(post.getAuthor().getFullName());
+                        authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                        authorDto.setEmail(post.getAuthor().getEmail());
+                    }
+                    dto.setAuthor(authorDto);
+
+                    List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                            .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                            .toList();
+                    dto.setMedia(mediaDtos);
+
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    public ResponseEntity<List<PostContentResponseDTO>> getFriendPosts(Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required");
+        }
+        if (userId != (Integer)session.getAttribute("userId")) {
+            throw new IllegalArgumentException("author_id does not match the logged-in user");
+        }
+        List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
+        List<Post> posts = new ArrayList<>();
+        for (Integer fid : friendIds) {
+            posts.addAll(postRepository.findByAuthorId(fid));
+        }
+        List<PostContentResponseDTO> dtos = posts.stream()
+                .map(post -> {
+                    PostContentResponseDTO dto = new PostContentResponseDTO();
+                    dto.setId(post.getId());
+                    dto.setContent(post.getContent());
+                    dto.setVisibility(post.getVisibility());
+                    dto.setPostType(post.getPostType());
+                    dto.setStatus(post.getStatus());
+                    dto.setCreatedAt(post.getCreatedAt());
+
+                    PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                    if (post.getAuthor() != null) {
+                        authorDto.setId(post.getAuthor().getId());
+                        authorDto.setFullName(post.getAuthor().getFullName());
+                        authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                        authorDto.setEmail(post.getAuthor().getEmail());
+                    }
+                    dto.setAuthor(authorDto);
+
+                    List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                            .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                            .toList();
+                    dto.setMedia(mediaDtos);
+
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    public ResponseEntity<List<PostContentResponseDTO>> getPublicPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<Post> publicPosts = posts.stream() 
+                                .filter(p -> "public".equalsIgnoreCase(p.getVisibility())) 
+                                .toList();
+
+        List<PostContentResponseDTO> dtos = publicPosts.stream()
+                .map(post -> {
+                    PostContentResponseDTO dto = new PostContentResponseDTO();
+                    dto.setId(post.getId());
+                    dto.setContent(post.getContent());
+                    dto.setVisibility(post.getVisibility());
+                    dto.setPostType(post.getPostType());
+                    dto.setStatus(post.getStatus());
+                    dto.setCreatedAt(post.getCreatedAt());
+
+                    PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                    if (post.getAuthor() != null) {
+                        authorDto.setId(post.getAuthor().getId());
+                        authorDto.setFullName(post.getAuthor().getFullName());
+                        authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                        authorDto.setEmail(post.getAuthor().getEmail());
+                    }
+                    dto.setAuthor(authorDto);
+
+                    List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                            .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                            .toList();
+                    dto.setMedia(mediaDtos);
+
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     /**

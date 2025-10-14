@@ -84,7 +84,7 @@
     transition:var(--transition);
     position:relative;
   }
-  .card:hover { box-shadow:var(--shadow); transform:translateY(-2px); }
+  /* .card:hover { box-shadow:var(--shadow); transform:translateY(-2px); } */
   .card-header {
     background:linear-gradient(90deg,rgba(var(--c-accent-rgb),.07),transparent);
     border-bottom:1px solid var(--c-border);
@@ -107,11 +107,34 @@
     transition:var(--transition);
     pointer-events:none;
   }
+  /* Decorative separator stripe for list-group-item */
+  .list-group-flush .list-group-item {
+    border-top-color: transparent;
+  }
+  .list-group-flush .list-group-item::before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--c-accent-rgb), .15) 15%,
+      rgba(var(--c-accent-rgb), .35) 50%,
+      rgba(var(--c-accent-rgb), .15) 85%,
+      transparent 100%
+    );
+    opacity: .6;
+    pointer-events: none;
+  }
+  .list-group-flush .list-group-item:last-child::before { display: none; }
   .friend-card:hover::after,
   .list-group-item:hover::after { opacity:1; }
   .friend-card:hover {
     background:rgba(var(--c-accent-rgb),.04)!important;
-    transform:translateY(-1px);
+    /* transform:translateY(-1px); */
   }
   .avatar {
     box-shadow:0 2px 6px rgba(0,0,0,.15);
@@ -155,7 +178,7 @@
   }
   .btn-primary:hover {
     filter:brightness(1.05);
-    transform:translateY(-1px);
+    /* transform:translateY(-1px); */
   }
   .dropdown-menu {
     border-radius:var(--radius-sm);
@@ -228,7 +251,7 @@
   .fade-in {
     animation:fadeIn .5s var(--transition);
   }
-  @keyframes fadeIn { from {opacity:0; transform:translateY(6px);} to {opacity:1; transform:none;} }
+  /* @keyframes fadeIn { from {opacity:0; transform:translateY(6px);} to {opacity:1; transform:none;} } */
   /* Tag for subtle section titles */
   .section-tag {
     display:inline-block;
@@ -269,11 +292,11 @@
     border-radius:inherit;
     animation:pulseBadge 1.8s infinite;
   }
-  @keyframes pulseBadge {
+  /* @keyframes pulseBadge {
     0% { opacity:.8; transform:scale(.85); }
     70% { opacity:0; transform:scale(1.35); }
     100% { opacity:0; transform:scale(1.35); }
-  }
+  } */
   /* Responsive refinements */
   @media (max-width: 992px) {
     .card { box-shadow:var(--shadow-sm); }
@@ -306,11 +329,13 @@
               + Add
             </button>
           </div>
-          <ul class="list-group list-group-flush" id="friendsList">
+
+          <ul class="list-group list-group-flush" id="friendsList" style="min-height:200px; max-height:400px; overflow-y:auto;">
         <!-- Friends injected here -->
           </ul>
+
           <div class="card-body text-center small text-muted" id="friendsEmptyState" style="display:none;">
-        No friends yet. Add someone to get started.
+            No friends yet. Add someone to get started.
           </div>
         </div>
            

@@ -18,14 +18,14 @@ public class HomeViewController {
         if (userId == null) {
             return "redirect:/views/login";
         }
+        model.addAttribute("userId", userId.toString());
         return "index";
     }
-} 
+}
 
 @Controller
 @RequestMapping("/views")
-class LoginViewController {
-
+class ViewController {
     @GetMapping("/login")
     public String login(Model model, HttpServletRequest request) {
         Object userId = request.getSession().getAttribute("userId");
@@ -34,22 +34,12 @@ class LoginViewController {
         }
         return "login";
     }
-}
-
-@Controller
-@RequestMapping("/views")
-class RegisterViewController {
 
     @GetMapping("/register")
-    public String login(Model model) {
+    public String register(Model model) {
         System.out.println(">>> RegisterViewController called");
         return "register";
     }
-}
-
-@Controller
-@RequestMapping("/views")
-class UserViewController {
 
     @GetMapping("/user")
     public String user(HttpServletRequest request, Model model) {
@@ -58,11 +48,13 @@ class UserViewController {
             model.addAttribute("error", "You must be logged in to access this page");
             return "error";
         }
+        model.addAttribute("viewingUserId", userId.toString());
+        model.addAttribute("canDeletePost", true);
         return "user";
     }
 
     @GetMapping("/user/{id}")
-    public String getMethodName(HttpServletRequest request, @PathVariable("id") String id, Model model) {
+    public String getUserById(HttpServletRequest request, @PathVariable("id") String id, Model model) {
         Object sessionUserId = request.getSession().getAttribute("userId");
         if (sessionUserId == null) {
             model.addAttribute("error", "You must be logged in to access this page");
@@ -74,15 +66,9 @@ class UserViewController {
         model.addAttribute("viewingUserId", id);
         return "another_user";
     }
-    
-}
-
-@Controller
-@RequestMapping("/views")
-class FriendViewController {
 
     @GetMapping("/friends")
-    public String user(HttpServletRequest request, Model model) {
+    public String friends(HttpServletRequest request, Model model) {
         Object userId = request.getSession().getAttribute("userId");
         if (userId == null) {
             model.addAttribute("error", "You must be logged in to access this page");

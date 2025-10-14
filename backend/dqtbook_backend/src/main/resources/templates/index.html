@@ -142,7 +142,10 @@
                  <!-- Nhúng fragment postComposerModal -->
                 <div th:replace="fragments/postComposer :: postComposerModal"></div>
                 <!-- Nhúng fragment postSegment -->
-                <div th:replace="fragments/postSegment :: postSegment"></div>     
+                <div th:replace="~{fragments/postSegment :: postSegment(
+                    fetchUrl=@{/api/posts/suitable/{id}(id=${userId})},
+                    isSelfProfile=${'false'}
+                )}"></div>
 
             </div>
             <!-- Feed:END -->

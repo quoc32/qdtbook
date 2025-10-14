@@ -521,7 +521,10 @@
           <!-- Nhúng fragment postComposerModal -->
         <div th:replace="fragments/postComposer :: postComposerModal"></div>
         <!-- Nhúng fragment postSegment -->
-        <div th:replace="fragments/postSegment :: postSegment"></div>  
+        <div th:replace="~{fragments/postSegment :: postSegment(
+          fetchUrl=@{/api/posts/user/{id}(id=${viewingUserId})},
+          isSelfProfile=${'true'}
+        )}"></div>
 
         <!-- Infinite scroll sentinel -->
         <div id="feed-end" class="text-center text-muted py-3 small" aria-live="polite">Loading...</div>

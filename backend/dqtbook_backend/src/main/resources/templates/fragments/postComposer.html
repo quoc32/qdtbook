@@ -512,7 +512,18 @@
             const payload = {
                 author_id: (Number(JSON.parse(localStorage.getItem('auth')).user_id) || null), // from localStorage
                 content: contentEl.value.trim(),
-                visibility: 'friends',        // or 'public','private' etc. // Quốc 2
+                visibility: (function(){ // map select -> public|friends|private
+                    try{
+                        const sel = document.querySelector('#createPostModal select.form-select');
+                        const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '')
+                            .toLocaleLowerCase('vi').trim();
+                        if (raw === 'public' || raw === 'friends' || raw === 'private') return raw;
+                        if (raw.includes('công khai')) return 'public';
+                        if (raw.includes('bạn bè')) return 'friends';
+                        if (raw.includes('chỉ mình tôi')) return 'private';
+                        return 'public';
+                    }catch(_){ return 'public'; }
+                })(), // Quốc 2
                 post_type: 'normal',
                 status: 'pending',
                 media: mediaArray
@@ -559,6 +570,12 @@
             }finally{
                 uploading = false;
                 updateSubmitState();
+                setTimeout(() => {
+                    const modal = document.getElementById('createPostModal');
+                    if (modal && !modal.classList.contains('show')) {
+                        window.location.reload();
+                    }
+                }, 450);
             }
         });
 

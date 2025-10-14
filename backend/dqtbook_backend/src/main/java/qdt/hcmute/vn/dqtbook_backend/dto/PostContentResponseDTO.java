@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -15,6 +16,7 @@ public class PostContentResponseDTO {
     private String status;
     private AuthorDTO author;
     private List<MediaDTO> media;
+    private Instant createdAt;
 
     @Getter
     @Setter

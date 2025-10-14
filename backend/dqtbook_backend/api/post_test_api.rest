@@ -1,25 +1,55 @@
 ### Danh sách bài đăng
 GET http://localhost:8080/api/posts
-Cookie: JSESSIONID=4983891FBC2268DD3A0BC06E1F8F6D7D
+Cookie: JSESSIONID=E0FEAD37E511E92C2ECE48245887EBB6
+
+### Danh sách bài đăng phù hợp cho 1 user (self + friends + public)
+GET http://localhost:8080/api/posts/suitable/1
+Cookie: JSESSIONID=8CB50F1A22A16ACE608E6CDB3F97471E
 
 ### Lấy bài đăng theo id
 GET http://localhost:8080/api/posts/5
 
-### Tạo 1 bài đăng
+### Lấy bài đăng của user theo userId
+GET http://localhost:8080/api/posts/user/1
+Cookie: JSESSIONID=4060E5D2D409BB10FC7114A4DE5B1718
+
+### Lấy bài đăng của FRIENDS của 1 user theo userId
+GET http://localhost:8080/api/posts/friends/1
+Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
+
+### Lấy các bài đăng Public
+GET http://localhost:8080/api/posts/public
+Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
+
+### Tạo 1 bài đăng (Với media)
 POST http://localhost:8080/api/posts
 Content-Type: application/json
-Cookie: JSESSIONID=A54646E6AF2E0CAFB0E9D16886F5A157
+Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
 
 {
   "author_id": 1,
   "content": "Tôi đăng ảnh mới",
-  "visibility": "friends",
+  "visibility": "public",
   "post_type": "normal",
   "status": "pending",
   "media": [
     { "media_type": "image", "media_url": "http://localhost:8080/media/files/1_7f2bfaf6-af56-4ae1-960c-87fabc1cab5c_test.jpg"},
     { "media_type": "image", "media_url": "http://localhost:8080/media/files/1_46e8d03d-6d54-4da9-86cc-7212f2514710_test2.jpg"}
   ]
+}
+
+### Tạo 1 bài đăng
+POST http://localhost:8080/api/posts
+Content-Type: application/json
+Cookie: JSESSIONID=0ED90741E20F3A99FA6F2DE62C54BCF2
+
+{
+  "author_id": 1,
+  "content": "Tôi đăng ảnh mới",
+  "visibility": "publics",
+  "post_type": "normal",
+  "status": "pending",
+  "media": []
 }
 
 ### Cập nhật 1 bài đăng
@@ -37,23 +67,26 @@ Content-Type: application/json
 }
 
 ### Xóa 1 bài đăng
-DELETE http://localhost:8080/posts/16
+DELETE http://localhost:8080/api/posts/11
+Cookie: JSESSIONID=4060E5D2D409BB10FC7114A4DE5B1718
 
 ### Reactions (Like/Reaction)
-# Tạo reaction (like)
-POST http://localhost:8080/posts/1/reactions
+# Tạo reaction (like); LƯU Ý: Reaction nếu như đã tồn tại thì sẽ cập nhật lại
+POST http://localhost:8080/api/posts/2/reactions
+Cookie: JSESSIONID=142343DA77C62998C07E88F7498ACA43
 Content-Type: application/json
 
 {
   "user": { "id": 1 },
-  "type": "love"
+  "type": "like"
 }
 
 ### Lấy tất cả reactions của post
-GET http://localhost:8080/posts/1/reactions
+GET http://localhost:8080/api/posts/2/reactions/all
+Cookie: JSESSIONID=EE00B61B34D79A9DEA894E8D5FEDFDAC
 
 ### Xoá reaction (unlike) theo reaction id
-DELETE http://localhost:8080/posts/1/reactions/16
+DELETE http://localhost:8080/posts/1/reactions/1000
 
 ### Comments
 # Lấy comment cho post (có thể thêm ?page=..&size=..)
@@ -99,8 +132,6 @@ Content-Type: application/json
   "shared_text": "Mình chia sẻ bài này nha",
   "visibility": "public"
 }
-
-
 
 ### Lấy danh sách share của 1 post
 GET http://localhost:8080/posts/5/shares

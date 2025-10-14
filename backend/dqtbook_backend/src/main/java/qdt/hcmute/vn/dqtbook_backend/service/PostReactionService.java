@@ -7,6 +7,7 @@ import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostReactionRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
+import qdt.hcmute.vn.dqtbook_backend.dto.PostReactionResponseDTO;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,16 +26,32 @@ public class PostReactionService {
         this.userRepository = userRepository;
     }
 
-    public List<PostReaction> getReactionsForPost(Integer postId) {
+    public List<PostReactionResponseDTO> getReactionsForPost(Integer postId) {
         // ensure post exists
         if (!postRepository.existsById(postId)) {
             throw new qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException("Post not found");
         }
         List<PostReaction> reactions = postReactionRepository.findByPostId(postId);
         if (reactions == null || reactions.isEmpty()) {
-            throw new qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException("No reactions for this post");
+            // Trả về list rỗng thay vì ném ngoại lệ
+            return List.of();
+            // throw new qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException("No reactions for this post");
         }
-        return reactions;
+        List<PostReactionResponseDTO> dtoReactions = reactions.stream().map((reaction) -> {
+            PostReactionResponseDTO dtoReaction = new PostReactionResponseDTO();
+            dtoReaction.setId(reaction.getId());
+            dtoReaction.setReactionType(reaction.getReactionType());
+            dtoReaction.setCreatedAt(reaction.getCreatedAt());
+            if (reaction.getUser() != null) {
+                dtoReaction.setAuthorId(reaction.getUser().getId());
+            }
+            if (reaction.getPost() != null) {
+                dtoReaction.setPostId(reaction.getPost().getId());
+            }
+
+            return dtoReaction;
+        }).toList();
+        return dtoReactions;
     }
 
     @Transactional
@@ -69,7 +86,13 @@ public class PostReactionService {
         // check duplicate: same user already reacted to this post
         Optional<PostReaction> existing = postReactionRepository.findByPostIdAndUserId(postId, userOpt.get().getId());
         if (existing.isPresent()) {
-            throw new qdt.hcmute.vn.dqtbook_backend.exception.DuplicateReactionException("Reaction already exists for this user on the post");
+            // ! update existing reaction
+            PostReaction toUpdate = existing.get();
+            toUpdate.setReactionType(reaction.getReactionType());
+            toUpdate.setPost(post);
+            toUpdate.setUser(userOpt.get());
+            PostReaction saved = postReactionRepository.saveAndFlush(toUpdate);
+            return Optional.of(saved);
         }
         if (reaction.getCreatedAt() == null) reaction.setCreatedAt(Instant.now());
         PostReaction saved = postReactionRepository.saveAndFlush(reaction);

@@ -480,7 +480,10 @@
       <section class="col-12 col-lg-6 mb-4">
 
         <!-- Nhúng fragment postSegment -->
-        <div th:replace="fragments/postSegment :: postSegment"></div>  
+        <div th:replace="~{fragments/postSegment :: postSegment(
+          fetchUrl=@{/api/posts/user/{id}(id=${viewingUserId})},
+          isSelfProfile=${'false'}
+        )}"></div>
 
         <!-- Infinite scroll sentinel -->
         <div id="feed-end" class="text-center text-muted py-3 small" aria-live="polite">Loading...</div>
