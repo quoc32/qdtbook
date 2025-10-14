@@ -86,19 +86,21 @@ GET http://localhost:8080/api/posts/2/reactions/all
 Cookie: JSESSIONID=EE00B61B34D79A9DEA894E8D5FEDFDAC
 
 ### Xoá reaction (unlike) theo reaction id
-DELETE http://localhost:8080/posts/1/reactions/1000
+DELETE http://localhost:8080/api/posts/1/reactions/1000
 
 ### Comments
 # Lấy comment cho post (có thể thêm ?page=..&size=..)
-GET http://localhost:8080/posts/1/comments
+GET http://localhost:8080/api/posts/2/comments
+Cookie: JSESSIONID=F9F0885D63D75AAD505190E05F9B5454
 
 ### Tạo comment
-POST http://localhost:8080/posts/5/comments
+POST http://localhost:8080/api/posts/2/comments
+Cookie: JSESSIONID=2E2E9E4A3C0D1B98D51587D7D4131F4B
 Content-Type: application/json
 
 {
   "user": { "id": 2 },
-  "content": "Rất hay luôn!"
+  "content": "Rất hay luôn! 1"
 }
 
 ### Tạo reply (comment lồng nhau)
