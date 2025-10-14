@@ -1,0 +1,29 @@
+### Test Online Status System
+
+# 1. Test heartbeat (should return 200)
+POST http://localhost:8080/api/presence/heartbeat
+Content-Type: application/json
+
+###
+
+# 2. Get friends with online status 
+GET http://localhost:8080/api/friends/11/online-status
+Content-Type: application/json
+
+###
+
+# 3. Check specific user online status
+GET http://localhost:8080/api/presence/status/10
+Content-Type: application/json
+
+###
+
+# 4. Test with different user
+GET http://localhost:8080/api/friends/10/online-status
+Content-Type: application/json
+
+###
+
+# 5. Test basic auth endpoint
+GET http://localhost:8080/api/auth/me
+Content-Type: application/json

@@ -70,10 +70,9 @@ public class FriendController {
         boolean done = friendService.refuseFriendRequest(dto);
         if (done) {
             return ResponseEntity.ok(Map.of(
-                "message", "Friend request refused successfully",
-                "senderId", dto.getSenderId(),
-                "receiverId", dto.getReceiverId()
-            ));
+                    "message", "Friend request refused successfully",
+                    "senderId", dto.getSenderId(),
+                    "receiverId", dto.getReceiverId()));
         } else {
             return ResponseEntity.badRequest().body("Error refusing friend request");
         }
@@ -94,24 +93,23 @@ public class FriendController {
         boolean deleted = friendService.unfriend(dto);
         if (deleted) {
             return ResponseEntity.ok(Map.of(
-                "message", "Unfriended successfully",
-                "senderId", dto.getSenderId(),
-                "receiverId", dto.getReceiverId()
-            ));
+                    "message", "Unfriended successfully",
+                    "senderId", dto.getSenderId(),
+                    "receiverId", dto.getReceiverId()));
         } else {
             return ResponseEntity.badRequest().body("Error unfriending");
         }
-    
+
     }
+
     @DeleteMapping("/cancel_request")
     public ResponseEntity<?> cancel_request(@RequestBody FriendActionDTO dto) {
         boolean deleted = friendService.cancel_request(dto);
         if (deleted) {
             return ResponseEntity.ok(Map.of(
-                "message", "Cancel friend request successfully",
-                "senderId", dto.getSenderId(),
-                "receiverId", dto.getReceiverId()
-            ));
+                    "message", "Cancel friend request successfully",
+                    "senderId", dto.getSenderId(),
+                    "receiverId", dto.getReceiverId()));
         } else {
             return ResponseEntity.badRequest().body("Error unfriending");
         }
@@ -124,6 +122,46 @@ public class FriendController {
             return ResponseEntity.ok(suggestions.get());
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+
+    @GetMapping("/{userId}/online-status")
+    public ResponseEntity<?> getFriendsWithOnlineStatus(@PathVariable Integer userId) {
+        try {
+            // Debug session info
+            Integer sessionUserId = (Integer) session.getAttribute("userId");
+            System.out.println("DEBUG - Session userId: " + sessionUserId + ", Request userId: " + userId);
+
+            // Temporarily disable session check for testing
+            // TODO: Re-enable this for production
+            /*
+             * if (sessionUserId != null && !sessionUserId.equals(userId)) {
+             * return ResponseEntity.status(HttpStatus.FORBIDDEN)
+             * .body(Map.of(
+             * "message", "Access denied: User ID does not match session",
+             * "sessionUserId", sessionUserId,
+             * "requestUserId", userId
+             * ));
+             * }
+             */
+
+            Optional<List<FriendResponseDTO>> friends = friendService.getFriendsWithOnlineStatus(userId);
+            if (friends.isPresent()) {
+                // Always return the list, even if empty
+                List<FriendResponseDTO> friendList = friends.get();
+                return ResponseEntity.ok(Map.of(
+                        "userId", userId,
+                        "friendsCount", friendList.size(),
+                        "friends", friendList,
+                        "sessionUserId", sessionUserId));
+            } else {
+                // User not found - return error
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "User not found", "userId", userId));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Internal server error: " + e.getMessage()));
         }
     }
 

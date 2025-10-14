@@ -24,13 +24,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
-    
+
     @Autowired
     private HttpSession session;
 
     public UserService(UserRepository userRepository,
-                        DepartmentRepository departmentRepository,
-                        PasswordEncoder passwordEncoder) {
+            DepartmentRepository departmentRepository,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
         this.passwordEncoder = passwordEncoder;
@@ -107,7 +107,7 @@ public class UserService {
         }
 
         // Session check
-        if (id != (Integer)session.getAttribute("userId")) {
+        if (id != (Integer) session.getAttribute("userId")) {
             throw new IllegalArgumentException("id does not match the logged-in user");
         }
 
@@ -121,29 +121,52 @@ public class UserService {
         }
 
         // Update fields if provided
-        if (dto.getFullName() != null) user.setFullName(dto.getFullName());
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-        if (dto.getPasswordHash() != null) user.setPasswordHash(dto.getPasswordHash());
-        if (dto.getFirstName() != null) user.setFirstName(dto.getFirstName());
-        if (dto.getLastName() != null) user.setLastName(dto.getLastName());
-        if (dto.getGender() != null) user.setGender(dto.getGender());
-        if (dto.getDateOfBirth() != null) user.setDateOfBirth(dto.getDateOfBirth());
-        if (dto.getAvatarUrl() != null) user.setAvatarUrl(dto.getAvatarUrl());
-        if (dto.getCoverPhotoUrl() != null) user.setCoverPhotoUrl(dto.getCoverPhotoUrl());
-        if (dto.getBio() != null) user.setBio(dto.getBio());
-        if (dto.getSchoolId() != null) user.setSchoolId(dto.getSchoolId());
-        if (dto.getAcademicYear() != null) user.setAcademicYear(dto.getAcademicYear());
-        if (dto.getRole() != null) user.setRole(dto.getRole());
-        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
-        if (dto.getWebsite() != null) user.setWebsite(dto.getWebsite());
-        if (dto.getCountry() != null) user.setCountry(dto.getCountry());
-        if (dto.getCity() != null) user.setCity(dto.getCity());
-        if (dto.getEducation() != null) user.setEducation(dto.getEducation());
-        if (dto.getWorkplace() != null) user.setWorkplace(dto.getWorkplace());
-        if (dto.getFacebookUrl() != null) user.setFacebookUrl(dto.getFacebookUrl());
-        if (dto.getInstagramUrl() != null) user.setInstagramUrl(dto.getInstagramUrl());
-        if (dto.getLinkedinUrl() != null) user.setLinkedinUrl(dto.getLinkedinUrl());
-        if (dto.getTwitterUrl() != null) user.setTwitterUrl(dto.getTwitterUrl());
+        if (dto.getFullName() != null)
+            user.setFullName(dto.getFullName());
+        if (dto.getEmail() != null)
+            user.setEmail(dto.getEmail());
+        if (dto.getPasswordHash() != null)
+            user.setPasswordHash(dto.getPasswordHash());
+        if (dto.getFirstName() != null)
+            user.setFirstName(dto.getFirstName());
+        if (dto.getLastName() != null)
+            user.setLastName(dto.getLastName());
+        if (dto.getGender() != null)
+            user.setGender(dto.getGender());
+        if (dto.getDateOfBirth() != null)
+            user.setDateOfBirth(dto.getDateOfBirth());
+        if (dto.getAvatarUrl() != null)
+            user.setAvatarUrl(dto.getAvatarUrl());
+        if (dto.getCoverPhotoUrl() != null)
+            user.setCoverPhotoUrl(dto.getCoverPhotoUrl());
+        if (dto.getBio() != null)
+            user.setBio(dto.getBio());
+        if (dto.getSchoolId() != null)
+            user.setSchoolId(dto.getSchoolId());
+        if (dto.getAcademicYear() != null)
+            user.setAcademicYear(dto.getAcademicYear());
+        if (dto.getRole() != null)
+            user.setRole(dto.getRole());
+        if (dto.getPhone() != null)
+            user.setPhone(dto.getPhone());
+        if (dto.getWebsite() != null)
+            user.setWebsite(dto.getWebsite());
+        if (dto.getCountry() != null)
+            user.setCountry(dto.getCountry());
+        if (dto.getCity() != null)
+            user.setCity(dto.getCity());
+        if (dto.getEducation() != null)
+            user.setEducation(dto.getEducation());
+        if (dto.getWorkplace() != null)
+            user.setWorkplace(dto.getWorkplace());
+        if (dto.getFacebookUrl() != null)
+            user.setFacebookUrl(dto.getFacebookUrl());
+        if (dto.getInstagramUrl() != null)
+            user.setInstagramUrl(dto.getInstagramUrl());
+        if (dto.getLinkedinUrl() != null)
+            user.setLinkedinUrl(dto.getLinkedinUrl());
+        if (dto.getTwitterUrl() != null)
+            user.setTwitterUrl(dto.getTwitterUrl());
 
         // Update department if provided
         if (dto.getDepartmentId() != null) {
@@ -203,6 +226,56 @@ public class UserService {
             return Optional.of(user);
         }
         return Optional.empty();
+    }
+
+    /**
+     * Update last_seen_at của user để maintain online status
+     * 
+     * @param userId ID của user cần update
+     * @return true nếu update thành công, false nếu không
+     */
+    public boolean updateLastSeen(Integer userId) {
+        try {
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                user.setLastSeenAt(Instant.now());
+                userRepository.save(user);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            // Log error if needed
+            return false;
+        }
+    }
+
+    /**
+     * Kiểm tra user có đang online không dựa trên last_seen_at
+     * User được coi là online nếu last_seen_at trong vòng 3 phút
+     * 
+     * @param userId ID của user cần kiểm tra
+     * @return true nếu online, false nếu offline hoặc user không tồn tại
+     */
+    public boolean isUserOnline(Integer userId) {
+        try {
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                Instant lastSeen = user.getLastSeenAt();
+
+                if (lastSeen == null) {
+                    return false; // Chưa bao giờ hoạt động
+                }
+
+                // Online threshold: 3 phút
+                Instant threshold = Instant.now().minusSeconds(180); // 3 * 60 = 180 seconds
+                return lastSeen.isAfter(threshold);
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
