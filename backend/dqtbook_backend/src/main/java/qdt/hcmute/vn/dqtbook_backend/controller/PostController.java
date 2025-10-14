@@ -10,6 +10,8 @@ import qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+
 
 @RestController
 @RequestMapping("/api/posts")
@@ -20,9 +22,29 @@ public class PostController {
         this.postService = postService;
     }
 
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<List<PostContentResponseDTO>> getAllPosts() {
         return postService.getAllPosts();
+    }
+
+    @GetMapping("/suitable/{userId}")
+    public ResponseEntity<List<PostContentResponseDTO>> getPosts(@PathVariable Integer userId) {
+        return postService.getPosts(userId);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PostContentResponseDTO>> getSelfPosts(@PathVariable Integer userId) {
+        return postService.getUserPosts(userId);
+    }
+
+    @GetMapping("/friends/{userId}")
+    public ResponseEntity<List<PostContentResponseDTO>> getFriendsPosts(@PathVariable Integer userId) {
+        return postService.getFriendPosts(userId);
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<List<PostContentResponseDTO>> getPublicPosts() {
+        return postService.getPublicPosts();
     }
 
     @GetMapping("/{id}")

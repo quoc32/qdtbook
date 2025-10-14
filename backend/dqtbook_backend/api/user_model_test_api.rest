@@ -11,7 +11,7 @@ Cookie: JSESSIONID=EBCBC3B0D42823C290EDA3DA7C3623BF
 
 ### 2. Get user by ID (existing user)
 GET http://localhost:8080/api/users/2
-Cookie: JSESSIONID=EBCBC3B0D42823C290EDA3DA7C3623BF
+Cookie: JSESSIONID=3105B2387749732589F427E6B82226A0
 
 ### 3. Get user by ID (non-existing user)
 GET http://localhost:8080/users/999
