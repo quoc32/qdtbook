@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-DqtbookBackendApplication<dqtbook_backend>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "qdt.hcmute.vn.dqtbook_backend.DqtbookBackendApplication",
+            "projectName": "dqtbook_backend",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
