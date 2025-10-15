@@ -12,7 +12,6 @@ import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 
-
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {

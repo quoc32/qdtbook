@@ -93,20 +93,33 @@ public class PostService {
         if (userId != (Integer)session.getAttribute("userId")) {
             throw new IllegalArgumentException("author_id does not match the logged-in user");
         }
-
+        // >> : Lấy các bài post của chính mình
         List<Post> selfPosts = postRepository.findByAuthorId(userId);
 
+        // >> : Lấy các bài post của bạn bè đã chấp nhận (accepted) và không nhận các bài post visibility = private
         List<Post> friendPosts = new ArrayList<>();
-        List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds_all = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds = new ArrayList<>();
+        for (Integer fid : friendIds_all) {
+            String status = friendRepository.findStatusByUserIds(userId, fid);
+            if ("accepted".equalsIgnoreCase(status)) {
+                friendIds.add(fid);
+            }
+        }
+        // >> >> Duyệt từng friendId để lấy bài post, lọc bỏ bài viết private
         for (Integer fid : friendIds) {
-            friendPosts.addAll(postRepository.findByAuthorId(fid));
+            List<Post> friendPosts_all = postRepository.findByAuthorId(fid);
+            friendPosts = friendPosts_all.stream()
+                            .filter(p -> !"private".equalsIgnoreCase(p.getVisibility())) // lọc bỏ bài viết private
+                            .toList();
         }
 
+        // >> : Lấy các bài post công khai (public)
         List<Post> allPosts = postRepository.findAll();
         List<Post> publicPosts = allPosts.stream() 
                                 .filter(p -> "public".equalsIgnoreCase(p.getVisibility())) 
                                 .toList();
-
+        // >> : Gộp 3 nguồn bài post trên, loại bỏ trùng lặp, sắp xếp theo createdAt giảm dần
         List<Post> combinedPosts = new ArrayList<>();
         combinedPosts.addAll(selfPosts);
         combinedPosts.addAll(friendPosts);
@@ -195,16 +208,29 @@ public class PostService {
     }
 
     public ResponseEntity<List<PostContentResponseDTO>> getFriendPosts(Integer userId) {
+        // ! : Lấy các bài post của bạn bè đã chấp nhận (accepted), không nhận các bài post visibility = private
+
         if (userId == null) {
             throw new IllegalArgumentException("userId is required");
         }
         if (userId != (Integer)session.getAttribute("userId")) {
             throw new IllegalArgumentException("author_id does not match the logged-in user");
         }
-        List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds_all = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds = new ArrayList<>();
+        for (Integer fid : friendIds_all) {
+            String status = friendRepository.findStatusByUserIds(userId, fid);
+            if ("accepted".equalsIgnoreCase(status)) {
+                friendIds.add(fid);
+            }
+        }
         List<Post> posts = new ArrayList<>();
         for (Integer fid : friendIds) {
-            posts.addAll(postRepository.findByAuthorId(fid));
+            List<Post> friendPosts = postRepository.findByAuthorId(fid);
+            friendPosts = friendPosts.stream()
+                            .filter(p -> !"private".equalsIgnoreCase(p.getVisibility())) // lọc bỏ bài viết private
+                            .toList();
+            posts.addAll(friendPosts);
         }
         List<PostContentResponseDTO> dtos = posts.stream()
                 .map(post -> {
