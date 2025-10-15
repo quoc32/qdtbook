@@ -1,0 +1,504 @@
+<section th:fragment="marketSection" id="marketSection" style="display:none;">
+  <style>
+    /* Minimal styles for market composer/list */
+    .market-card { background:#fff; border:1px solid #ddd; border-radius:8px; }
+    .market-form .form-control, .market-form .form-select { font-size:14px; }
+    #marketProductList { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    @media (min-width: 992px){ #marketProductList{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+    .prod-card{ background:#fff; border:1px solid #ddd; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+    .prod-card img{ width:100%; height:160px; object-fit:cover; background:#f3f4f6; }
+    .prod-card .pc-body{ padding:10px; }
+    .prod-card .pc-name{ font-weight:600; font-size:14px; margin:0 0 4px; }
+    .prod-card .pc-price{ color:#e5532d; font-weight:700; }
+  .prod-card.clickable{ cursor:pointer; }
+    .thumbs{ display:flex; gap:6px; flex-wrap:wrap; }
+    .thumbs img{ width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd; }
+    .market-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .link-like{ cursor:pointer; color:#1b74e4; text-decoration:none; }
+    .link-like:hover{ text-decoration:underline; }
+  </style>
+
+  <div class="container-fluid">
+    <div class="market-toolbar">
+      <h5 class="m-0">Marketplace</h5>
+    </div>
+
+    <div class="row g-3">
+      <!-- Left filters -->
+      <div class="col-lg-3">
+        <div class="market-card p-3">
+          <div class="d-grid gap-3">
+            <button id="mk_filter_all" class="btn btn-outline-dark">Tất cả sản phẩm</button>
+            <button id="mk_filter_selling" class="btn btn-outline-dark">Đang bán</button>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- Main area -->
+      <div class="col-lg-9">
+  <!-- Composer (chỉ hiển thị khi ở tab "Đang bán") -->
+  <div id="mk_composer" class="market-card p-3 mb-3 market-form" style="display:none;">
+          <div class="row g-3">
+            <div class="col-lg-8">
+              <div class="row g-2">
+            <div class="col-sm-8">
+              <label class="form-label small mb-1">Tên sản phẩm</label>
+              <input id="mk_name" class="form-control" placeholder="Ví dụ: iPhone 13, Bàn làm việc...">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small mb-1">Giá (VNĐ)</label>
+              <input id="mk_price" type="number" min="0" class="form-control" placeholder="0">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small mb-1">Số lượng</label>
+              <input id="mk_qty" type="number" min="1" value="1" class="form-control">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small mb-1">Trạng thái</label>
+              <select id="mk_status" class="form-select">
+                <option value="available" selected>Còn hàng</option>
+                <option value="out_of_stock">Hết hàng</option>
+                <option value="hidden">Ẩn</option>
+              </select>
+            </div>
+            <div class="col-sm-8">
+              <label class="form-label small mb-1">Địa chỉ</label>
+              <input id="mk_address" class="form-control" placeholder="Quận/Huyện, Tỉnh/Thành...">
+            </div>
+            <div class="col-12">
+              <label class="form-label small mb-1">Mô tả</label>
+              <textarea id="mk_desc" rows="3" class="form-control" placeholder="Tình trạng, phụ kiện, lý do bán..."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label small mb-1">Ảnh sản phẩm</label>
+              <input id="mk_files" type="file" class="form-control" multiple accept="image/*">
+              <div id="mk_thumbs" class="thumbs mt-2"></div>
+            </div>
+          </div>
+            </div>
+            <div class="col-lg-4 d-flex align-items-end gap-2">
+              <button id="mk_submit" class="btn btn-primary flex-fill">Đăng sản phẩm</button>
+              <button id="mk_cancel_edit" class="btn btn-outline-secondary" style="display:none;">Hủy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- List -->
+        <div class="market-card p-3">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="m-0" id="mk_list_title">Tất cả sản phẩm</h6>
+            <button class="btn btn-sm btn-outline-secondary" id="mk_reload_btn">Tải lại</button>
+          </div>
+          <!-- Search bar for public list -->
+          <div class="row g-2 mb-2" id="mk_search_bar" style="display:none;">
+            <div class="col-md-5 col-12">
+              <input id="mk_search_q" class="form-control form-control-sm" placeholder="Tìm (tên, mô tả)...">
+            </div>
+            <div class="col-md-2 col-6">
+              <input id="mk_search_min" type="number" min="0" class="form-control form-control-sm" placeholder="Giá từ">
+            </div>
+            <div class="col-md-2 col-6">
+              <input id="mk_search_max" type="number" min="0" class="form-control form-control-sm" placeholder="Đến">
+            </div>
+            <div class="col-md-2 col-6">
+              <select id="mk_search_status" class="form-select form-select-sm">
+                <option value="">Còn hàng (mặc định)</option>
+                <option value="available">Còn hàng</option>
+                <option value="out_of_stock">Hết hàng</option>
+              </select>
+            </div>
+            <div class="col-md-1 col-6 d-grid">
+              <button id="mk_search_btn" class="btn btn-sm btn-primary">Tìm</button>
+            </div>
+          </div>
+          <div id="marketProductList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    if(window.MarketUI) return; // prevent redefinition
+    window.MarketUI = (function(){
+      // Auto-detect backend base URL (use absolute URL when not served from 8080)
+      const API_BASE = (window.location.port && window.location.port !== '8080') ? 'http://localhost:8080' : '';
+      let uploadedUrls = [];
+      let editingId = null; // null: create mode; number: edit mode for that product id
+
+      async function uploadFiles(files){
+        if(!files || !files.length) return [];
+        const fd = new FormData();
+        [...files].forEach(f => fd.append('files', f));
+        const res = await fetch('/api/media/market/upload', { method:'POST', body:fd, credentials:'include' });
+        if(!res.ok) throw new Error('Upload thất bại');
+        const data = await res.json();
+        return data?.urls || [];
+      }
+
+      function setEditMode(isEdit){
+        const submitBtn = document.getElementById('mk_submit');
+        const cancelBtn = document.getElementById('mk_cancel_edit');
+        if(isEdit){
+          submitBtn.textContent = 'Cập nhật sản phẩm';
+          cancelBtn.style.display = '';
+        } else {
+          submitBtn.textContent = 'Đăng sản phẩm';
+          cancelBtn.style.display = 'none';
+        }
+      }
+
+      async function submitProduct(){
+        const nameEl = document.getElementById('mk_name');
+        const priceEl = document.getElementById('mk_price');
+        const qtyEl = document.getElementById('mk_qty');
+        const addrEl = document.getElementById('mk_address');
+        const descEl = document.getElementById('mk_desc');
+  const filesEl = document.getElementById('mk_files');
+  const statusEl = document.getElementById('mk_status');
+
+        const productName = nameEl.value.trim();
+        const price = parseFloat(priceEl.value || '0');
+        const quantity = parseInt(qtyEl.value || '1');
+        const address = addrEl.value.trim();
+        const description = descEl.value.trim();
+
+        if(!productName){ alert('Nhập tên sản phẩm'); nameEl.focus(); return; }
+
+        let mediaUrls = uploadedUrls;
+        if(filesEl.files && filesEl.files.length){
+          try{ mediaUrls = await uploadFiles(filesEl.files); }
+          catch(e){ console.error(e); alert('Tải ảnh thất bại'); return; }
+        }
+
+  const status = statusEl?.value || 'available';
+  const payload = { productName, price, quantity, address, description, status, mediaUrls };
+        const url = editingId ? `/market/products/${editingId}` : '/market/products';
+        const method = editingId ? 'PUT' : 'POST';
+        const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify(payload) });
+        if(!res.ok){ const t = await res.text(); alert('Tạo sản phẩm thất bại: ' + t); return; }
+
+        // Reset form
+  nameEl.value=''; priceEl.value=''; qtyEl.value='1'; addrEl.value=''; descEl.value=''; filesEl.value=''; statusEl.value='available';
+        uploadedUrls = [];
+        document.getElementById('mk_thumbs').innerHTML = '';
+        if(editingId){ editingId = null; setEditMode(false); }
+        // Sau thao tác, nếu đang ở tab "Đang bán" thì reload danh sách đó, ngược lại load public
+        const btnSelling = document.getElementById('mk_filter_selling');
+        if(btnSelling?.classList.contains('btn-primary')) loadSelling(); else loadPublic();
+      }
+
+      async function loadPublic(){
+        const container = document.getElementById('marketProductList');
+        if(!container) return;
+        container.innerHTML = '<div class="text-center text-muted py-3">Đang tải...</div>';
+        try{
+          // Build query from search controls
+          const qEl = document.getElementById('mk_search_q');
+          const minEl = document.getElementById('mk_search_min');
+          const maxEl = document.getElementById('mk_search_max');
+          const stEl = document.getElementById('mk_search_status');
+          const params = new URLSearchParams();
+          const qv = qEl?.value?.trim();
+          if(qv) params.set('q', qv);
+          const minv = parseFloat(minEl?.value);
+          if(!Number.isNaN(minv)) params.set('min_price', String(minv));
+          const maxv = parseFloat(maxEl?.value);
+          if(!Number.isNaN(maxv)) params.set('max_price', String(maxv));
+          const stv = stEl?.value;
+          if(stv) params.set('status', stv);
+          const url = params.toString() ? `/market/products/public?${params.toString()}` : '/market/products/public';
+          const res = await fetch(url, { credentials:'include' });
+          if(!res.ok){
+            const t = await res.text().catch(()=> '');
+            console.error('Load public failed', res.status, t);
+            throw new Error('Load thất bại');
+          }
+          const list = await res.json();
+          renderList(list, { selling:false });
+        }catch(e){ console.error(e); container.innerHTML = '<div class="text-danger text-center py-3">Không tải được danh sách</div>'; }
+      }
+
+      async function loadSelling(){
+        const container = document.getElementById('marketProductList');
+        if(!container) return;
+        container.innerHTML = '<div class="text-center text-muted py-3">Đang tải...</div>';
+        try{
+          // Lấy userId từ data-attr nếu có, không cần nếu backend dùng session
+          const res = await fetch('/market/products/seller/me', { credentials:'include' });
+          if(!res.ok) throw new Error('Load thất bại');
+          const list = await res.json();
+          renderList(list, { selling:true });
+        }catch(e){ console.error(e); container.innerHTML = '<div class="text-danger text-center py-3">Không tải được danh sách</div>'; }
+      }
+
+      
+
+      function renderList(list, opts){
+        const selling = !!(opts && opts.selling);
+        const container = document.getElementById('marketProductList');
+        if(!Array.isArray(list) || list.length === 0){
+          container.innerHTML = '<div class="text-center text-muted py-3">Chưa có sản phẩm</div>';
+          return;
+        }
+        container.innerHTML = list.map(p=>{
+          const img = (p.mediaUrls && p.mediaUrls[0]) || '/img/marketplace.png';
+          const priceText = (p.price!=null) ? new Intl.NumberFormat('vi-VN').format(p.price) + '₫' : '';
+          const clickable = selling ? '' : ' clickable';
+          const onclick = selling ? '' : ` onclick=\"MarketUI._openDetail(${p.id})\"`;
+          const actions = selling ? `
+              <div class="mt-2 d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="MarketUI._startEdit(${p.id})">Sửa</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="MarketUI._deleteProduct(${p.id})">Xóa</button>
+              </div>` : '';
+          return `
+            <div class="prod-card${clickable}"${onclick}>
+              <img src="${img}" alt="${(p.productName||'Sản phẩm')}">
+              <div class="pc-body">
+                <div class="pc-name">${escapeHtml(p.productName||'Sản phẩm')}</div>
+                <div class="pc-price">${priceText}</div>
+                ${actions}
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      function onFilesChanged(input){
+        const wrap = document.getElementById('mk_thumbs');
+        wrap.innerHTML = '';
+        const files = input.files || [];
+        [...files].slice(0,6).forEach(f=>{
+          const url = URL.createObjectURL(f);
+          const img = document.createElement('img');
+          img.src = url; img.alt = f.name; wrap.appendChild(img);
+        });
+      }
+
+      // No page toggling here; Market runs as its own page
+
+      function escapeHtml(str){
+        return String(str||'')
+          .replace(/&/g,'&amp;')
+          .replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;')
+          .replace(/\"/g,'&quot;')
+          .replace(/'/g,'&#39;');
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('mk_submit');
+        btn?.addEventListener('click', (e)=>{ e.preventDefault(); submitProduct(); });
+        const cancelBtn = document.getElementById('mk_cancel_edit');
+        cancelBtn?.addEventListener('click', (e)=>{ e.preventDefault(); cancelEdit(); });
+        const filesEl = document.getElementById('mk_files');
+        filesEl?.addEventListener('change', ()=> onFilesChanged(filesEl));
+
+        const btnAll = document.getElementById('mk_filter_all');
+        const btnSelling = document.getElementById('mk_filter_selling');
+        
+        const title = document.getElementById('mk_list_title');
+  const reloadBtn = document.getElementById('mk_reload_btn');
+  const composer = document.getElementById('mk_composer');
+  const searchBar = document.getElementById('mk_search_bar');
+
+        function setActive(btn){
+          [btnAll, btnSelling].forEach(b=>b?.classList.remove('btn-primary'));
+          [btnAll, btnSelling].forEach(b=>b?.classList.add('btn-outline-dark'));
+          if(btn){ btn.classList.remove('btn-outline-dark'); btn.classList.add('btn-primary'); }
+        }
+
+        function setComposerVisible(visible){
+          if(!composer) return;
+          composer.style.display = visible ? '' : 'none';
+        }
+
+        function setSearchVisible(visible){
+          if(!searchBar) return;
+          searchBar.style.display = visible ? '' : 'none';
+        }
+
+        btnAll?.addEventListener('click', ()=>{ setActive(btnAll); title.textContent='Tất cả sản phẩm'; setComposerVisible(false); setSearchVisible(true); loadPublic(); });
+        btnSelling?.addEventListener('click', ()=>{ setActive(btnSelling); title.textContent='Sản phẩm đang bán'; setComposerVisible(true); setSearchVisible(false); loadSelling(); });
+        function resetSearchControls(){
+          const qEl = document.getElementById('mk_search_q');
+          const minEl = document.getElementById('mk_search_min');
+          const maxEl = document.getElementById('mk_search_max');
+          const stEl = document.getElementById('mk_search_status');
+          if(qEl) qEl.value = '';
+          if(minEl) minEl.value = '';
+          if(maxEl) maxEl.value = '';
+          if(stEl) stEl.value = '';// default: Còn hàng (mặc định)
+        }
+
+        reloadBtn?.addEventListener('click', ()=>{
+          if(btnAll?.classList.contains('btn-primary')){
+            resetSearchControls();
+            return loadPublic();
+          }
+          if(btnSelling?.classList.contains('btn-primary')) return loadSelling();
+          return loadPublic();
+        });
+
+        // Search actions
+        const searchBtn = document.getElementById('mk_search_btn');
+        searchBtn?.addEventListener('click', ()=>{ if(btnAll?.classList.contains('btn-primary')) loadPublic(); });
+        const inputs = ['mk_search_q','mk_search_min','mk_search_max'];
+        inputs.forEach(id => {
+          const el = document.getElementById(id);
+          el?.addEventListener('keydown', (ev)=>{
+            if(ev.key === 'Enter'){
+              ev.preventDefault();
+              if(btnAll?.classList.contains('btn-primary')) loadPublic();
+            }
+          });
+        });
+
+        // default state
+        setActive(btnAll);
+        setComposerVisible(false);
+        setSearchVisible(true);
+      });
+
+      function renderThumbsFromUrls(urls){
+        const wrap = document.getElementById('mk_thumbs');
+        wrap.innerHTML = '';
+        (urls||[]).slice(0,6).forEach(u=>{
+          const img = document.createElement('img');
+          img.src = u; img.alt = 'media'; wrap.appendChild(img);
+        });
+      }
+
+      async function _deleteProduct(id){
+        if(!confirm('Xóa sản phẩm này?')) return;
+        const res = await fetch(`/market/products/${id}`, { method:'DELETE', credentials:'include' });
+        if(!res.ok){ const t = await res.text(); alert('Xóa thất bại: ' + t); return; }
+        loadSelling();
+      }
+
+      async function _startEdit(id){
+        try{
+          const res = await fetch(`/market/products/${id}`, { credentials:'include' });
+          if(!res.ok) throw new Error('Không tải được chi tiết sản phẩm');
+          const p = await res.json();
+          editingId = id;
+          // Fill form
+          document.getElementById('mk_name').value = p.productName || '';
+          document.getElementById('mk_price').value = p.price ?? '';
+          document.getElementById('mk_qty').value = p.quantity ?? '1';
+          document.getElementById('mk_address').value = p.address || '';
+          const statusEl = document.getElementById('mk_status');
+          if(statusEl){ statusEl.value = p.status || 'available'; }
+          document.getElementById('mk_desc').value = p.description || '';
+          uploadedUrls = Array.isArray(p.mediaUrls) ? p.mediaUrls.slice() : [];
+          renderThumbsFromUrls(uploadedUrls);
+          setEditMode(true);
+          window.scrollTo({ top: 0, behavior:'smooth' });
+        }catch(e){ console.error(e); alert('Không thể vào chế độ sửa'); }
+      }
+
+      function cancelEdit(){
+        editingId = null;
+        setEditMode(false);
+        // clear form
+        document.getElementById('mk_name').value='';
+        document.getElementById('mk_price').value='';
+        document.getElementById('mk_qty').value='1';
+        document.getElementById('mk_address').value='';
+        document.getElementById('mk_desc').value='';
+  document.getElementById('mk_files').value='';
+  const statusEl2 = document.getElementById('mk_status');
+  if(statusEl2){ statusEl2.value = 'available'; }
+        uploadedUrls = [];
+        document.getElementById('mk_thumbs').innerHTML = '';
+      }
+
+      async function _openDetail(id){
+        try{
+          const res = await fetch(`/market/products/${id}`, { credentials:'include' });
+          if(!res.ok) throw new Error('Không tải được chi tiết');
+          const p = await res.json();
+          // Fill modal
+          document.getElementById('mk_detail_title').textContent = p.productName || 'Chi tiết sản phẩm';
+          const mainImg = (p.mediaUrls && p.mediaUrls[0]) || '/img/marketplace.png';
+          document.getElementById('mk_detail_main_img').src = mainImg;
+          const thumbsWrap = document.getElementById('mk_detail_thumbs');
+          thumbsWrap.innerHTML = '';
+          (p.mediaUrls||[]).forEach(u=>{
+            const img = document.createElement('img');
+            img.src = u; img.alt='thumb'; img.style.cursor='pointer';
+            img.addEventListener('click', ()=>{ document.getElementById('mk_detail_main_img').src = u; });
+            thumbsWrap.appendChild(img);
+          });
+          // Seller name links to profile page instead of loading products
+          const sellerWrap = document.getElementById('mk_detail_seller');
+          if(p.sellerId && p.sellerName){
+            sellerWrap.innerHTML = `Người bán: <a href="/views/user/${p.sellerId}" class="link-like">${escapeHtml(p.sellerName)}</a>`;
+          } else {
+            sellerWrap.textContent = p.sellerName ? ('Người bán: ' + p.sellerName) : '';
+          }
+          document.getElementById('mk_detail_price').textContent = (p.price!=null) ? new Intl.NumberFormat('vi-VN').format(p.price) + '₫' : '';
+          document.getElementById('mk_detail_address').textContent = p.address || '';
+          const qtyText = (p.quantity!=null) ? `Số lượng: ${p.quantity}` : '';
+          const statusMap = { available: 'Còn hàng', out_of_stock: 'Hết hàng', hidden: 'Ẩn' };
+          const statusLabel = p.status ? (statusMap[p.status] || p.status) : '';
+          const qtyEl = document.getElementById('mk_detail_qty');
+          const statusEl = document.getElementById('mk_detail_status');
+          if(qtyEl) qtyEl.textContent = qtyText;
+          if(statusEl) statusEl.textContent = statusLabel ? `Tình trạng: ${statusLabel}` : '';
+          document.getElementById('mk_detail_desc').textContent = p.description || '';
+
+          const msgBtn = document.getElementById('mk_detail_msg_btn');
+          msgBtn.onclick = ()=>{
+            // Placeholder: sau sẽ nối API tạo cuộc trò chuyện/nhắn tin
+            alert('Chức năng nhắn tin sẽ được bổ sung sau.');
+          };
+
+          // Show modal
+          const modalEl = document.getElementById('mkDetailModal');
+          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        }catch(e){ console.error(e); alert('Không hiển thị được chi tiết sản phẩm'); }
+      }
+
+
+      return { load: loadPublic, _deleteProduct, _startEdit, _openDetail };
+    })();
+  })();
+  </script>
+
+  <!-- Product detail modal -->
+  <div class="modal fade" id="mkDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="mk_detail_title">Chi tiết sản phẩm</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <img id="mk_detail_main_img" src="/img/marketplace.png" alt="Ảnh sản phẩm" style="width:100%;height:300px;object-fit:cover;border-radius:8px;border:1px solid #ddd;background:#f3f4f6;">
+              <div id="mk_detail_thumbs" class="thumbs mt-2"></div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-1 text-muted" id="mk_detail_seller"></div>
+              <div class="fs-5 fw-bold text-danger" id="mk_detail_price"></div>
+              <div class="small" id="mk_detail_address"></div>
+              <div class="small mt-1" id="mk_detail_qty"></div>
+              <div class="small" id="mk_detail_status"></div>
+              <hr/>
+              <div style="white-space:pre-wrap" id="mk_detail_desc"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="mk_detail_msg_btn">Nhắn tin</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</section>
+

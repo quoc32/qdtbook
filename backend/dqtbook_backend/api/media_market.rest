@@ -1,0 +1,20 @@
+### Upload file
+POST http://localhost:8080/api/media/market/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: JSESSIONID=ABC123XYZ
+
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="bike_front.jpg"
+Content-Type: image/jpeg
+
+< ./bike_front.jpg
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="bike_side.jpg"
+Content-Type: image/jpeg
+
+< ./bike_side.jpg
+--WebAppBoundary--
+
+### Get media
+GET http://localhost:8080/api/media/market/files/201_bike_front.jpg
+Cookie: JSESSIONID=ABC123XYZ

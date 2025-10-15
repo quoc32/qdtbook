@@ -1,0 +1,62 @@
+
+### API thêm sản phẩm (seller)
+POST http://localhost:8080/market/products
+Cookie: JSESSIONID=01A965D2918CC7CF1B043D5EA56E39AD
+Content-Type: application/json
+
+{
+  "productName": "Quần thể dục nam",
+  "description": "quần còn mới nha",
+  "price": 150.00,
+  "quantity": 1,
+  "address": "123 quốc lộ 1A, Vũng Tàu",
+  "status": "available",
+  "mediaUrls": [
+    "https://example.com/media/bike1.jpg"
+  ]
+}
+
+### API sửa sản phẩm (chỉ seller)
+PUT http://localhost:8080/market/products/1
+Cookie: JSESSIONID=01A965D2918CC7CF1B043D5EA56E39AD
+Content-Type: application/json
+
+{
+  "productName": "Used Bicycle - Excellent Condition",
+  "price": 140.00,
+  "quantity": 1,
+  "description": "Updated description: small scratch on frame.",
+  "address": "New address if changed",
+  "status": "available",
+  "mediaUrls": [
+    "https://example.com/media/bike3.jpg"
+  ]
+}
+
+### API xóa sản phẩm (chỉ seller)
+DELETE http://localhost:8080/market/products/1
+Cookie: JSESSIONID=01A965D2918CC7CF1B043D5EA56E39AD
+
+### API danh sách sản phẩm của chính tôi (dựa theo session)
+GET http://localhost:8080/market/products/seller/me
+Cookie: JSESSIONID=01A965D2918CC7CF1B043D5EA56E39AD
+
+### API danh sách sản phẩm public (mặc định status=available)
+GET http://localhost:8080/market/products/public
+
+### API danh sách sản phẩm public có lọc
+GET http://localhost:8080/market/products/public?status=available&q=iphone&min_price=1000000&max_price=3000000
+
+### API chi tiết sản phẩm
+GET http://localhost:8080/market/products/3
+
+### API chia sẻ sản phẩm (tạo notification sau này)
+POST http://localhost:8080/market/products/3/share
+Cookie: JSESSIONID=01A965D2918CC7CF1B043D5EA56E39AD
+Content-Type: application/json
+
+{
+  "toUserIds": [5, 7, 9],
+  "message": "Xem giúp mình sản phẩm này nhé"
+}
+

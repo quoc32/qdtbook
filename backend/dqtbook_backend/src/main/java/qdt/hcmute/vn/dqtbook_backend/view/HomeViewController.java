@@ -105,6 +105,16 @@ class ViewController {
         return "adminManager";
     }
 
+    @GetMapping("/marketplace")
+    public String market(HttpServletRequest request, Model model) {
+        Object userId = request.getSession().getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/views/login";
+        }
+        model.addAttribute("userId", userId.toString());
+        return "market";
+    }
+
 
 }
 
