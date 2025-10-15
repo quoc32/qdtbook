@@ -23,6 +23,8 @@ public class PostCreateRequestDTO {
 
     private List<MediaItem> media;
 
+    private Boolean isImportant;
+
     @Getter
     @Setter
     public static class MediaItem {

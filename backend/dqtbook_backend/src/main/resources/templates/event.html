@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>QDTBook - Event</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/qdtFavicon.png">
+    
+</head>
+
+<body>
+    <!-- Nhúng fragment navbar -->
+    <div th:replace="fragments/navbar :: navbar"></div>
+
+    
+    <!-- Main content:BEGIN -->
+    <section class="container my-4">
+        <div id="role-announment"
+             class="alert d-flex align-items-center gap-2 py-2 px-3 mb-3 small border-0"
+             th:attr="data-role=${role}"
+             role="status" aria-live="polite">
+            <span class="badge rounded-pill fw-semibold"></span>
+            <span class="message"></span>
+        </div>
+        <script>
+            (function () {
+            const wrap = document.getElementById('role-announment');
+            if (!wrap) return;
+            const role = (wrap.dataset.role || '').trim().toLowerCase();
+            const badge = wrap.querySelector('.badge');
+            const msg = wrap.querySelector('.message');
+
+            wrap.classList.remove('alert-danger','alert-warning','alert-info','alert-secondary');
+            let alertCls = 'alert-secondary';
+            let badgeCls = 'text-bg-secondary';
+            let label = 'Student';
+            let text = 'Bạn đang xem trang với quyền Student, hãy chú ý các thông báo quan trọng trong cộng đồng nhé!';
+
+            if (role === 'admin') {
+                alertCls = 'alert-danger';
+                badgeCls = 'text-bg-danger';
+                label = 'Quản trị viên';
+                text = 'Bạn đang xem trang với quyền Quản trị viên.';
+            } else if (role === 'special') {
+                alertCls = 'alert-info';
+                badgeCls = 'text-bg-info';
+                label = 'Người Đặc biệt';
+                text = 'Bạn đang xem trang với quyền Người Đặc biệt. Bạn có thể gửi thông báo quan trọng gửi đến cộng đồng.';
+            }
+
+            wrap.classList.add(alertCls);
+            badge.className = 'badge rounded-pill fw-semibold ' + badgeCls;
+            badge.textContent = label;
+            msg.textContent = text;
+            })();
+        </script>
+
+        <div th:if="${role == 'admin' or role == 'special'}">
+            <div th:replace="fragments/importantPostComposer :: importantPostComposer"></div>
+            <div th:replace="fragments/importantPostComposer :: importantPostComposerModal"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="p-3 p-md-4 rounded-3 text-white d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #dc3545, #a2131f);">
+            <div>
+                <h2 class="h4 mb-1"><i class="bi bi-exclamation-circle-fill"></i> Thông báo quan trọng</h2>
+                <p class="mb-0 opacity-75 small">Tin nhắn từ ban quản trị, cập nhật và lịch sự kiện. Hãy chú ý theo dõi các thông báo này!</p>
+            </div>
+            <button id="importantRefresh" class="btn btn-light btn-sm text-danger fw-semibold d-none">
+                <span class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
+                Tải lại
+            </button>
+        </div>
+
+        <div id="importantError" class="alert alert-warning mt-3 d-none" role="alert" aria-live="polite">
+            Không tải được danh sách thông báo.
+            <button id="importantRetry" type="button" class="btn btn-sm btn-outline-warning ms-2">Thử lại</button>
+        </div>
+
+        <div id="importantEmpty" class="alert alert-info mt-3 d-none" role="status" aria-live="polite">
+            Hiện chưa có thông báo quan trọng.
+        </div>
+
+        <div id="importantSkeletons" class="mt-3"></div>
+        <div id="importantPostsContainer" class="mt-3 vstack gap-3"></div>
+        <div id="importantLoadMoreWrap" class="text-center mt-3 d-none">
+            <button id="importantLoadMore" class="btn btn-outline-danger btn-sm">Xem thêm</button>
+        </div>
+
+        <noscript class="text-danger small">Cần bật JavaScript để xem thông báo.</noscript>
+    </section>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('importantPostsContainer');
+        const skeletonWrap = document.getElementById('importantSkeletons');
+        const emptyBox = document.getElementById('importantEmpty');
+        const errorBox = document.getElementById('importantError');
+        const retryBtn = document.getElementById('importantRetry');
+        const refreshBtn = document.getElementById('importantRefresh');
+        const refreshSpinner = refreshBtn?.querySelector('.spinner-border');
+        const loadMoreWrap = document.getElementById('importantLoadMoreWrap');
+        const loadMoreBtn = document.getElementById('importantLoadMore');
+
+        const PAGE_SIZE = 5;
+        let allPosts = [];
+        let visibleCount = 0;
+
+        refreshBtn?.classList.remove('d-none');
+        refreshBtn?.addEventListener('click', () => reload());
+        retryBtn?.addEventListener('click', () => reload());
+        loadMoreBtn?.addEventListener('click', () => {
+            renderNextChunk();
+        });
+
+        reload();
+
+        async function reload() {
+            hide(errorBox); hide(emptyBox); hide(loadMoreWrap);
+            container.innerHTML = '';
+            allPosts = [];
+            visibleCount = 0;
+            renderSkeletons(3);
+            toggleRefresh(true);
+            try {
+                const data = await fetchJson('/api/posts/important');
+                const posts = normalizeToArray(data);
+                allPosts = posts;
+                if (posts.length === 0) {
+                    show(emptyBox);
+                    return;
+                }
+                renderNextChunk(true);
+            } catch (e) {
+                show(errorBox);
+            } finally {
+                skeletonWrap.innerHTML = '';
+                toggleRefresh(false);
+            }
+        }
+
+        function renderNextChunk(reset = false) {
+            if (reset) {
+                container.innerHTML = '';
+                visibleCount = 0;
+            }
+            const fragment = document.createDocumentFragment();
+            const nextCount = Math.min(allPosts.length, visibleCount + PAGE_SIZE);
+            for (let i = visibleCount; i < nextCount; i++) {
+                fragment.appendChild(renderPost(allPosts[i]));
+            }
+            visibleCount = nextCount;
+            container.appendChild(fragment);
+            if (visibleCount < allPosts.length) {
+                show(loadMoreWrap);
+            } else {
+                hide(loadMoreWrap);
+            }
+        }
+
+        function toggleRefresh(loading) {
+            if (!refreshBtn) return;
+            if (loading) {
+                refreshBtn.setAttribute('disabled', 'true');
+                refreshSpinner?.classList.remove('d-none');
+            } else {
+                refreshBtn.removeAttribute('disabled');
+                refreshSpinner?.classList.add('d-none');
+            }
+        }
+
+        function renderSkeletons(n = 3) {
+            skeletonWrap.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            for (let i = 0; i < n; i++) {
+                const card = document.createElement('div');
+                card.className = 'card border-0 shadow-sm placeholder-glow';
+                const body = document.createElement('div');
+                body.className = 'card-body';
+                body.innerHTML = `
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="rounded-circle bg-secondary-subtle me-2" style="width:36px;height:36px;"></span>
+                        <div class="flex-grow-1">
+                            <div class="placeholder col-5 mb-1"></div>
+                            <div class="placeholder col-3"></div>
+                        </div>
+                        <span class="badge text-bg-danger ms-auto">Quan trọng</span>
+                    </div>
+                    <div class="placeholder col-12 mb-1"></div>
+                    <div class="placeholder col-10 mb-1"></div>
+                    <div class="placeholder col-8"></div>
+                `;
+                card.appendChild(body);
+                frag.appendChild(card);
+            }
+            skeletonWrap.appendChild(frag);
+        }
+
+        async function fetchJson(url) {
+            const res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        }
+
+        function normalizeToArray(data) {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (data.items && Array.isArray(data.items)) return data.items;
+            return [data];
+        }
+
+        function renderPost(post) {
+            const card = document.createElement('div');
+            card.className = 'card border-danger border-2 shadow-sm';
+
+            const body = document.createElement('div');
+            body.className = 'card-body';
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'd-flex align-items-center mb-2';
+
+            const avatar = document.createElement('img');
+            avatar.className = 'rounded-circle me-2 flex-shrink-0';
+            avatar.width = 36;
+            avatar.height = 36;
+            avatar.alt = 'Ảnh đại diện';
+            avatar.loading = 'lazy';
+            avatar.decoding = 'async';
+            avatar.referrerPolicy = 'no-referrer';
+            avatar.src = (post.author && post.author.avatarUrl) ? post.author.avatarUrl : '/default-avatar.png';
+            avatar.onerror = function () { this.onerror = null; this.src = '/default-avatar.png'; };
+
+            const meta = document.createElement('div');
+
+            const name = document.createElement('div');
+            name.className = 'fw-semibold';
+            name.textContent = post.author?.fullName || 'Người dùng';
+
+            const time = document.createElement('div');
+            time.className = 'text-muted small';
+            const d = post.createdAt ? new Date(post.createdAt) : new Date();
+            const timeEl = document.createElement('time');
+            timeEl.dateTime = d.toISOString();
+            timeEl.title = d.toLocaleString('vi-VN', { hour12: false });
+            timeEl.textContent = formatTime(d);
+            time.appendChild(timeEl);
+
+            meta.appendChild(name);
+            meta.appendChild(time);
+
+            const badge = document.createElement('span');
+            badge.className = 'ms-auto badge text-bg-danger';
+            badge.textContent = 'Quan trọng';
+
+            header.appendChild(avatar);
+            header.appendChild(meta);
+            header.appendChild(badge);
+
+            // Content
+            const content = document.createElement('p');
+            content.className = 'mb-0';
+            content.style.whiteSpace = 'pre-wrap';
+            content.appendChild(linkify(post.content || ''));
+
+            body.appendChild(header);
+            body.appendChild(content);
+
+            // Media
+            const media = renderMedia(post);
+            if (media) body.appendChild(media);
+
+            card.appendChild(body);
+            return card;
+        }
+
+        function renderMedia(post) {
+            const items = [];
+
+            // Backward compatibility
+            if (Array.isArray(post.images)) {
+                post.images.forEach(u => u && items.push({ type: 'image', url: u }));
+            }
+            if (Array.isArray(post.videos)) {
+                post.videos.forEach(u => u && items.push({ type: 'video', url: u }));
+            }
+            if (Array.isArray(post.attachments)) {
+                post.attachments.forEach(a => {
+                    if (!a) return;
+                    const url = typeof a === 'string' ? a : a.url;
+                    const mime = typeof a === 'string' ? '' : (a.mimeType || '');
+                    let type = typeof a === 'string' ? '' : (a.type || '');
+                    if (!type) {
+                        if (mime.startsWith('image/')) type = 'image';
+                        else if (mime.startsWith('video/')) type = 'video';
+                        else type = 'file';
+                    }
+                    if (url) items.push({ type, url, mimeType: mime });
+                });
+            }
+
+            // New schema: post.media = [{ mediaType, mediaUrl }]
+            if (Array.isArray(post.media)) {
+                post.media.forEach(m => {
+                    if (!m || !m.mediaUrl) return;
+                    const mt = String(m.mediaType || '').toLowerCase();
+                    let type = 'file';
+                    if (mt.includes('image')) type = 'image';
+                    else if (mt.includes('video') || mt.includes('mp4')) type = 'video';
+                    items.push({ type, url: m.mediaUrl });
+                });
+            }
+
+            if (items.length === 0) return null;
+
+            const wrap = document.createElement('div');
+            wrap.className = 'mt-3';
+
+            const row = document.createElement('div');
+            row.className = 'row g-2';
+            wrap.appendChild(row);
+
+            const images = items.filter(i => i.type === 'image');
+            const videos = items.filter(i => i.type === 'video');
+            const files  = items.filter(i => i.type === 'file');
+
+            // Images
+            images.forEach((item, idx) => {
+                const col = document.createElement('div');
+                // 1 image: full width; 2-3: thirds on md; >=4: quarters on lg
+                if (images.length === 1) col.className = 'col-12';
+                else if (images.length <= 3) col.className = 'col-6 col-md-4';
+                else col.className = 'col-6 col-md-4 col-lg-3';
+
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.className = 'd-block';
+
+                const img = document.createElement('img');
+                img.src = item.url;
+                img.alt = 'Hình ảnh';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                img.className = 'img-fluid rounded border';
+                img.onerror = function () { this.closest('a')?.remove(); };
+
+                link.appendChild(img);
+                col.appendChild(link);
+                row.appendChild(col);
+            });
+
+            // Videos
+            videos.forEach(item => {
+                const col = document.createElement('div');
+                col.className = 'col-12';
+                if (isExternalPlayer(item.url)) {
+                    const ratio = document.createElement('div');
+                    ratio.className = 'ratio ratio-16x9';
+                    const iframe = document.createElement('iframe');
+                    iframe.src = toEmbedUrl(item.url);
+                    iframe.title = 'Video';
+                    iframe.loading = 'lazy';
+                    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                    iframe.allowFullscreen = true;
+                    ratio.appendChild(iframe);
+                    col.appendChild(ratio);
+                } else {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.className = 'w-100 rounded border';
+                    video.preload = 'metadata';
+                    const source = document.createElement('source');
+                    source.src = item.url;
+                    source.type = guessVideoMime(item.url) || 'video/mp4';
+                    video.appendChild(source);
+                    col.appendChild(video);
+                }
+                row.appendChild(col);
+            });
+
+            // Files
+            files.forEach(item => {
+                const col = document.createElement('div');
+                col.className = 'col-12';
+                const a = document.createElement('a');
+                a.href = item.url;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.className = 'btn btn-sm btn-outline-secondary';
+                a.textContent = 'Tệp đính kèm';
+                col.appendChild(a);
+                row.appendChild(col);
+            });
+
+            return wrap;
+        }
+
+        function guessVideoMime(url) {
+            const ext = (url.split('.').pop() || '').toLowerCase().split('?')[0];
+            const map = { mp4: 'video/mp4', webm: 'video/webm', ogv: 'video/ogg', ogg: 'video/ogg', mov: 'video/quicktime', m3u8: 'application/vnd.apple.mpegurl' };
+            return map[ext] || '';
+        }
+
+        function isExternalPlayer(url) {
+            try {
+                const u = new URL(url, window.location.origin);
+                const h = u.hostname.toLowerCase();
+                return /(^|\.)youtube\.com$/.test(h) ||
+                       /(^|\.)youtu\.be$/.test(h) ||
+                       /(^|\.)vimeo\.com$/.test(h);
+            } catch { return false; }
+        }
+
+        function toEmbedUrl(url) {
+            try {
+                const u = new URL(url, window.location.origin);
+                const h = u.hostname.toLowerCase();
+                if (/youtu\.be$/.test(h)) {
+                    // e.g. https://youtu.be/ID or /ID?si=...
+                    const id = u.pathname.split('/').filter(Boolean)[0];
+                    return id ? 'https://www.youtube.com/embed/' + id : url;
+                }
+                if (/youtube\.com$/.test(h)) {
+                    // watch?v=, shorts/, share links
+                    if (u.pathname.startsWith('/shorts/')) {
+                        const id = u.pathname.split('/').filter(Boolean)[1];
+                        return id ? 'https://www.youtube.com/embed/' + id : url;
+                    }
+                    const id = u.searchParams.get('v');
+                    return id ? 'https://www.youtube.com/embed/' + id : url;
+                }
+                if (/vimeo\.com$/.test(h)) {
+                    const id = u.pathname.split('/').filter(Boolean)[0];
+                    return id ? 'https://player.vimeo.com/video/' + id : url;
+                }
+                return url;
+            } catch { return url; }
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const diffMs = date - now;
+            const diffSec = Math.round(diffMs / 1000);
+            const absSec = Math.abs(diffSec);
+
+            const rtf = (typeof Intl !== 'undefined' && Intl.RelativeTimeFormat)
+                ? new Intl.RelativeTimeFormat('vi', { numeric: 'auto' })
+                : null;
+
+            const units = [
+                ['year', 60 * 60 * 24 * 365],
+                ['month', 60 * 60 * 24 * 30],
+                ['day', 60 * 60 * 24],
+                ['hour', 60 * 60],
+                ['minute', 60],
+                ['second', 1],
+            ];
+
+            if (rtf && absSec < 60 * 60 * 24) {
+                for (const [unit, sec] of units) {
+                    const v = Math.trunc(diffSec / sec);
+                    if (Math.abs(v) >= 1) return rtf.format(v, unit);
+                }
+                return rtf.format(0, 'second');
+            }
+            return date.toLocaleString('vi-VN', { hour12: false });
+        }
+
+        function linkify(text) {
+            const frag = document.createDocumentFragment();
+            const urlRe = /\bhttps?:\/\/[^\s]+/gi;
+            let lastIdx = 0;
+            let m;
+            while ((m = urlRe.exec(text)) !== null) {
+                const before = text.slice(lastIdx, m.index);
+                if (before) frag.appendChild(textNodesWithBreaks(before));
+                const url = m[0];
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.textContent = url;
+                frag.appendChild(a);
+                lastIdx = m.index + url.length;
+            }
+            const rest = text.slice(lastIdx);
+            if (rest) frag.appendChild(textNodesWithBreaks(rest));
+            return frag;
+        }
+
+        function textNodesWithBreaks(s) {
+            const frag = document.createDocumentFragment();
+            const parts = String(s).split('\n');
+            parts.forEach((p, i) => {
+                if (p) frag.appendChild(document.createTextNode(p));
+                if (i < parts.length - 1) frag.appendChild(document.createElement('br'));
+            });
+            return frag;
+        }
+
+        function show(el) { if (el) el.classList.remove('d-none'); }
+        function hide(el) { if (el) el.classList.add('d-none'); }
+    });
+    </script>
+    <!-- Main content:END -->
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

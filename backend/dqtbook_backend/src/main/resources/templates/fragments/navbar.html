@@ -56,7 +56,7 @@
                 <ul class="navbar-nav mx-auto top-tabs position-relative tabs-animate">
                     <!-- Home -->
                     <li class="nav-item">
-                        <a class="nav-link active" href="/" data-page="home" aria-label="Trang chủ" title="Trang chủ">
+                        <a class="nav-link" href="/" data-page="home" aria-label="Trang chủ" title="Trang chủ">
                             <img src="/img/home-icon.png" class="nav-ico" alt="">
                         </a>
                     </li>
@@ -74,17 +74,41 @@
                     </li>
                     <!-- Marketplace -->
                     <li class="nav-item">
-                        <a class="nav-link" href="#" data-page="marketplace" aria-label="Marketplace" title="Marketplace">
+                        <a class="nav-link" href="/views/marketplace" data-page="marketplace" aria-label="Marketplace" title="Marketplace">
                             <img src="/img/marketplace-icon-2.png" class="nav-ico" alt="">
                         </a>
                     </li>
                     <!-- Event (Bài post quan trọng) -->
                     <li class="nav-item">
-                        <a class="nav-link" href="#" data-page="video" aria-label="Video" title="Video">
+                        <a class="nav-link" href="/views/event" data-page="event" aria-label="Event" title="Sự kiện đặc biệt">
                             <img src="/img/event-icon-2.png" class="nav-ico" alt="">
                         </a>
                     </li>
                     <span class="tab-indicator"></span>
+
+                    <!-- Script xử lý thêm class active cho tab dựa trên url hiện tại -->
+                     <script>
+                        (function(){
+                            const path = window.location.pathname;
+                            const pageMap = {
+                                '/': 'home',
+                                '/views/friends': 'friends',
+                                '/views/groups': 'groups',
+                                '/views/marketplace': 'marketplace',
+                                '/views/event': 'event'
+                            };
+                            const currentPage = pageMap[path] || null;
+                            if(currentPage){
+                                document.querySelectorAll('.top-tabs .nav-link').forEach(a=>{
+                                    a.classList.remove('active');
+                                    if(a.dataset.page === currentPage){
+                                        a.classList.add('active');
+                                    }
+                                });
+                            }
+                        })();
+                     </script>
+
                 </ul>
                 <style>
                     .tabs-animate .nav-link .nav-ico{
@@ -162,7 +186,8 @@
                             if(current) moveIndicator(current);
                         });
                         links.forEach(a=>{
-                            a.addEventListener('click',e=>{e.preventDefault();setActive(a);});
+                            // a.addEventListener('click',e=>{e.preventDefault();setActive(a);});
+                            a.addEventListener('click',e=>{setActive(a);});
                             a.addEventListener('keydown',e=>{
                                 if(e.key==='Enter'||e.key===' '){e.preventDefault();setActive(a);}
                             });
@@ -282,7 +307,20 @@
                             <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-sliders2"></i><span>Cài đặt & quyền riêng tư</span></a></li>
                             <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-life-preserver"></i><span>Trợ giúp & hỗ trợ</span></a></li>
                             <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-moon-stars"></i><span>Chế độ tối</span></a></li>
-                            <li><a class="dropdown-item icon-link menu-fix" href="#"><i class="bi bi-arrow-repeat"></i><span>Chuyển tài khoản</span></a></li>
+
+                            <!-- Tab chuyển sang trang quản lý của Admin -->
+                            <li><a class="dropdown-item icon-link menu-fix" href="/views/adminManager"><i class="bi bi-terminal-fill"></i><span>Đến trang quản lý cho Admin</span></a></li>
+                            <script>
+                                (function(){
+                                    const auth = JSON.parse(localStorage.getItem('auth')||'{}');
+                                    const isAdmin = (auth?.role == "admin") || false;
+                                    if(!isAdmin){
+                                        const adminLink = document.querySelector('.user-dropdown .dropdown-item[href="/views/adminManager"]');
+                                        if(adminLink) adminLink.remove();
+                                    }
+                                })();
+                            </script> 
+
                             <li><hr class="dropdown-divider my-2"></li>
                             <li>
                                 <a class="dropdown-item text-danger icon-link menu-fix" href="#" id="logoutBtn">
@@ -572,7 +610,7 @@
                    const original = btn.innerHTML;
                    btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i><span> Đang đăng xuất...</span>';
                    try{
-                     const res = await fetch('http://localhost:8080/api/auth/logout', {
+                     const res = await fetch('/api/auth/logout', {
                        method: 'POST',
                        headers: { 'Content-Type':'application/json' },
                        body: '{}',
@@ -599,7 +637,7 @@
     <script>
         document.querySelectorAll('.top-tabs .nav-link').forEach(a=>{
             a.addEventListener('click',e=>{
-                e.preventDefault();
+                // e.preventDefault();
                 document.querySelectorAll('.top-tabs .nav-link').forEach(n=>n.classList.remove('active'));
                 a.classList.add('active');
                 // TODO: load content by data-page if needed

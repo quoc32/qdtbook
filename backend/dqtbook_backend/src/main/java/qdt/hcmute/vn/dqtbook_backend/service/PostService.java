@@ -130,6 +130,11 @@ public class PostService {
                             .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt())) // sắp xếp theo createdAt giảm dần
                             .toList();
 
+        // >> : Loại các bài post important (postType = important) ra khỏi danh sách
+        combinedPosts = combinedPosts.stream()
+                            .filter(p -> !"important".equalsIgnoreCase(p.getPostType())) // lọc bỏ bài viết important
+                            .toList();
+
         List<PostContentResponseDTO> dtos = combinedPosts.stream()
                 .map(post -> {
                     PostContentResponseDTO dto = new PostContentResponseDTO();
@@ -300,6 +305,43 @@ public class PostService {
         return ResponseEntity.ok(dtos);
     }
 
+    public ResponseEntity<List<PostContentResponseDTO>> getImportantPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<Post> importantPosts = posts.stream() 
+                                .filter(p -> "important".equalsIgnoreCase(p.getPostType())) 
+                                .toList();
+
+        List<PostContentResponseDTO> dtos = importantPosts.stream()
+                .map(post -> {
+                    PostContentResponseDTO dto = new PostContentResponseDTO();
+                    dto.setId(post.getId());
+                    dto.setContent(post.getContent());
+                    dto.setVisibility(post.getVisibility());
+                    dto.setPostType(post.getPostType());
+                    dto.setStatus(post.getStatus());
+                    dto.setCreatedAt(post.getCreatedAt());
+
+                    PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                    if (post.getAuthor() != null) {
+                        authorDto.setId(post.getAuthor().getId());
+                        authorDto.setFullName(post.getAuthor().getFullName());
+                        authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                        authorDto.setEmail(post.getAuthor().getEmail());
+                    }
+                    dto.setAuthor(authorDto);
+
+                    List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                            .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                            .toList();
+                    dto.setMedia(mediaDtos);
+
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(dtos);
+    }
+
     /**
      * Chuyển đổi từ Entity Post và danh sách PostMedia đã lưu 
      * sang PostCreateResponseDTO để trả về cho client.
@@ -365,6 +407,15 @@ public class PostService {
         if (ReqDTO.getAuthorId() != (Integer)session.getAttribute("userId")) {
             throw new IllegalArgumentException("author_id does not match the logged-in user");
         }
+        // Todo: 1.2. Kiểm tra nếu isImportant = true thì chỉ có role "special", "admin" mới được tạo bài viết quan trọng
+        Boolean isImportant = ReqDTO.getIsImportant();
+        String role = (String) session.getAttribute("role");
+        if (isImportant != null && isImportant) {   // isImportant = true
+            if (role == null || !(role.equalsIgnoreCase("special") || role.equalsIgnoreCase("admin"))) {
+                throw new IllegalArgumentException("only users with role 'special' or 'admin' can create important posts");
+            }
+        }
+
         // Todo: 2. Lấy thông tin User từ DB (theo authorId).
         Optional<User> userOpt = userRepository.findById(ReqDTO.getAuthorId());
         if (userOpt.isEmpty()) throw new IllegalArgumentException("author not found for id=" + ReqDTO.getAuthorId());
@@ -375,6 +426,9 @@ public class PostService {
         p.setVisibility(ReqDTO.getVisibility());
         p.setPostType(ReqDTO.getPostType());
         p.setStatus(ReqDTO.getStatus());
+        if (isImportant != null && isImportant) {
+            p.setPostType("important");
+        }
         // Todo: 4. Nếu có media trong request thì duyệt danh sách, tạo PostMedia và lưu vào DB.
         Post savedPost = postRepository.save(p);
         List<PostMedia> savedPostMedias = new ArrayList<>();

@@ -76,6 +76,36 @@ class ViewController {
         }
         return "friends";
     }
+
+    @GetMapping("/event")
+    public String event(HttpServletRequest request, Model model) {
+        Object userId = request.getSession().getAttribute("userId");
+        String role = (String) request.getSession().getAttribute("role");
+        model.addAttribute("role", role);
+        
+        if (userId == null) {
+            model.addAttribute("error", "You must be logged in to access this page");
+            
+            return "error";
+        }
+        return "event";
+    }
+
+    @GetMapping("/adminManager")
+    public String adminManager(HttpServletRequest request, Model model) {
+        Object userId = request.getSession().getAttribute("userId");
+        String role = (String) request.getSession().getAttribute("role");
+        model.addAttribute("role", role);
+        
+        if (userId == null) {
+            model.addAttribute("error", "You must be logged in to access this page");
+            
+            return "error";
+        }
+        return "adminManager";
+    }
+
+
 }
 
 @Controller

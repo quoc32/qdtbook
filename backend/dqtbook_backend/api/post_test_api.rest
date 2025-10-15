@@ -21,6 +21,10 @@ Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
 GET http://localhost:8080/api/posts/public
 Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
 
+### Lấy các bài đăng Important
+GET http://localhost:8080/api/posts/important
+Cookie: JSESSIONID=75A8BFFFA89C6C3F5CF0ADEAF930E7A0
+
 ### Tạo 1 bài đăng (Với media)
 POST http://localhost:8080/api/posts
 Content-Type: application/json
@@ -46,11 +50,27 @@ Cookie: JSESSIONID=0ED90741E20F3A99FA6F2DE62C54BCF2
 {
   "author_id": 1,
   "content": "Tôi đăng ảnh mới",
-  "visibility": "publics",
+  "visibility": "public",
   "post_type": "normal",
   "status": "pending",
   "media": []
 }
+
+### Đăng bài đăng đặc biệt (important) - Chỉ special, admin mới được phép
+POST http://localhost:8080/api/posts
+Content-Type: application/json
+Cookie: JSESSIONID=E14658C62FE6D024190A35DF7BD36C01
+
+{
+  "author_id": 14,
+  "content": "Bài viết quan trọng nè 2",
+  "visibility": "public",
+  "post_type": "normal",
+  "status": "pending",
+  "media": [],
+  "isImportant": true
+}
+
 
 ### Cập nhật 1 bài đăng
 PUT http://localhost:8080/posts/8
@@ -140,3 +160,4 @@ GET http://localhost:8080/posts/5/shares
 
 ### Xoá 1 share
 DELETE http://localhost:8080/posts/5/shares/4
+
