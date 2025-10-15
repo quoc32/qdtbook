@@ -21,7 +21,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "/images/**",
                         "/views/**",
                         "/home",  // trang chủ
-                        "/"
+                        "/",
+                        "/qdtFavicon.png"
                 ); // bỏ qua các path không cần check session
     }
 }

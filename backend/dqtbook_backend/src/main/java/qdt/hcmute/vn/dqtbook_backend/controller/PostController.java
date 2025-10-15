@@ -46,6 +46,11 @@ public class PostController {
         return postService.getPublicPosts();
     }
 
+    @GetMapping("/important")
+    public ResponseEntity<List<PostContentResponseDTO>> getImportantPosts() {
+        return postService.getImportantPosts();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Object> getPostById(@PathVariable Integer id) {
         try {

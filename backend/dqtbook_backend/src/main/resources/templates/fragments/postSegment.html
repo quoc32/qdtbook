@@ -590,34 +590,74 @@
                 </button>
 
                   <!-- Reaction Popover -->
-                  <div class="react-popover" style="display:none;position:absolute;bottom:110%;left:100%;transform:translateX(-50%);
-                      background:#fff;border:1px solid rgba(120,150,190,.35);box-shadow:0 6px 18px rgba(30,70,140,.18);
-                      border-radius:999px;padding:6px;gap:6px;z-index:20;align-items:center;justify-content:center;">
+                    <style>
+                    .qdt-react-pop{
+                      display:none;position:absolute;bottom:110%;left:0;
+                      background:linear-gradient(180deg,#ffffffaa,#fffffff0);
+                      border:1px solid rgba(120,150,190,.35);
+                      box-shadow:0 10px 28px rgba(30,70,140,.18), inset 0 1px 0 rgba(255,255,255,.9);
+                      border-radius:999px;padding:8px 10px;gap:8px;z-index:20;
+                      align-items:center;justify-content:center;
+                      backdrop-filter:saturate(140%) blur(6px); -webkit-backdrop-filter:saturate(140%) blur(6px);
+                      animation:qdt-pop-in .16s cubic-bezier(.2,.9,.2,1);
+                    }
+                    .qdt-react-pop .rx-btn{
+                      width:44px;height:44px;border-radius:50%;
+                      border:1px solid rgba(120,150,190,.35);
+                      background:linear-gradient(180deg,#f7fbff,#eef5ff);
+                      font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;
+                      box-shadow:0 4px 10px rgba(30,70,140,.18), inset 0 1px 0 rgba(255,255,255,.9);
+                      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+                      cursor:pointer;
+                    }
+                    .qdt-react-pop .rx-btn:hover{
+                      transform:translateY(-2px) scale(1.08);
+                      box-shadow:0 10px 18px rgba(30,70,140,.25), inset 0 1px 0 rgba(255,255,255,.95);
+                      filter:saturate(1.1);
+                    }
+                    .qdt-react-pop .rx-btn:active{ transform:translateY(0) scale(.96); }
+                    .qdt-react-pop .rx-like{ background:linear-gradient(180deg,#e7f3ff,#f2f8ff); border-color:#b9d7ff; color:#1b74e4; }
+                    .qdt-react-pop .rx-love{ background:linear-gradient(180deg,#fff0f2,#ffe5ea); border-color:#ffc2cc; }
+                    .qdt-react-pop .rx-haha{ background:linear-gradient(180deg,#fff8e1,#fff2bf); border-color:#ffe29a; }
+                    .qdt-react-pop .rx-sad{  background:linear-gradient(180deg,#eaf5ff,#dff0ff); border-color:#bcdcff; }
+                    .qdt-react-pop .rx-angry{background:linear-gradient(180deg,#ffe8e5,#ffd9d3); border-color:#ffc2b8; }
+                    .qdt-react-pop .rx-arrow{
+                      position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+                      width:14px;height:14px;background:#fffffff0;border:1px solid rgba(120,150,190,.35);
+                      border-top:none;border-left:none;transform:translateX(-50%) rotate(45deg);
+                      box-shadow:2px 2px 10px rgba(30,70,140,.15);
+                    }
+                    /* @keyframes qdt-pop-in{
+                      0%{ transform:translateX(-50%) translateY(6px) scale(.96); opacity:0; }
+                      100%{ transform:translateX(-50%) translateY(0)  scale(1);    opacity:1; }
+                    } */
+                    </style>
+
+                    <div class="react-popover qdt-react-pop" role="group" aria-label="Chọn cảm xúc">
+                    <!-- <span class="rx-arrow" aria-hidden="true"></span> -->
+
                     <!-- like -->
-                    <button type="button" title="Thích" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#f7fbff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'like'); })(this)">👍</button>
+                    <button type="button" class="rx-btn rx-like" title="Thích"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'like'); })(this)">👍</button>
 
                     <!-- love -->
-                    <button type="button" title="Yêu thích" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'love'); })(this)"><i class="bi bi-heart-fill text-danger"></i></button>
+                    <button type="button" class="rx-btn rx-love" title="Yêu thích"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'love'); })(this)">
+                      <i class="bi bi-heart-fill text-danger"></i>
+                    </button>
 
                     <!-- haha -->
-                    <button type="button" title="Haha" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'haha'); })(this)">😆</button>
+                    <button type="button" class="rx-btn rx-haha" title="Haha"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'haha'); })(this)">😆</button>
 
                     <!-- sad -->
-                    <button type="button" title="Buồn" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'sad'); })(this)">😢</button>
+                    <button type="button" class="rx-btn rx-sad" title="Buồn"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'sad'); })(this)">😢</button>
 
                     <!-- angry -->
-                    <button type="button" title="Phẫn nộ" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'angry'); })(this)">😡</button>
-                  </div>
+                    <button type="button" class="rx-btn rx-angry" title="Phẫn nộ"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'angry'); })(this)">😡</button>
+                    </div>
                 </div>
 
                 <script>
@@ -1369,6 +1409,12 @@
                                   label = 'Bạn bè';
                           }
                       }
+                      // Important postType
+                      const type = (p.postType || p.type || '').toLowerCase();
+                      if(type==='important' || type==='notice' || type==='thongbao'){
+                          label = 'Thông báo Đặc biệt';
+                      }
+
                       visEl.textContent = label;
                       visEl.title = label;
                   })();
