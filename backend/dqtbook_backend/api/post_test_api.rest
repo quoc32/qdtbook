@@ -4,7 +4,7 @@ Cookie: JSESSIONID=E0FEAD37E511E92C2ECE48245887EBB6
 
 ### Danh sách bài đăng phù hợp cho 1 user (self + friends + public)
 GET http://localhost:8080/api/posts/suitable/1
-Cookie: JSESSIONID=8CB50F1A22A16ACE608E6CDB3F97471E
+Cookie: JSESSIONID=1BA2705386A00D5335815F3306F30EF1
 
 ### Lấy bài đăng theo id
 GET http://localhost:8080/api/posts/5
