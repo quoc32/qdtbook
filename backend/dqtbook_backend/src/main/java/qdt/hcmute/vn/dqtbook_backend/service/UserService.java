@@ -278,4 +278,25 @@ public class UserService {
         }
     }
 
+    @Transactional
+    public Optional<UserResponseDTO> upgradeUserRole(Integer id, String toRole) {
+        // Check user thực hiện hành động có phải admin không
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        String sessionUserRole = (String) session.getAttribute("role");
+        if (sessionUserId == null || sessionUserRole == null || !sessionUserRole.equals("admin")) {
+            throw new IllegalArgumentException("Only admin can upgrade user roles");
+        }
+
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        User user = userOpt.get();
+        user.setRole(toRole);
+        user.setUpdatedAt(Instant.now());
+        User savedUser = userRepository.save(user);
+        return Optional.of(convertToResponseDTO(savedUser));
+    }
+
 }

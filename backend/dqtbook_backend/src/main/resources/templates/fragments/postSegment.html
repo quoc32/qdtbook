@@ -84,9 +84,9 @@
                       <div class="modal-body">
                     <div class="list-group list-group-flush">
 
-                        <button type="button" class="list-group-item list-group-item-action"
-                            th:if="${canDeletePost}"
-                            onclick="(function(btn){
+            <button type="button" class="list-group-item list-group-item-action"
+              th:if="${canDeletePost}"
+              onclick="(function(btn){
                                 console.log('Delete post clicked');
                                 const isSelf = isSelfProfile;
                                 if(!isSelf){
@@ -121,6 +121,44 @@
                                 });
                             })(this);"
                         >Xóa bài viết</button>
+            <!-- Edit post button: render only on own profile -->
+            <button type="button" class="list-group-item list-group-item-action" th:if="${isSelfProfile}"
+              onclick="(function(btn){
+                const isSelf = isSelfProfile;
+                if(!isSelf){
+                  alert('Chỉ có thể sửa bài viết trên trang cá nhân của bạn.');
+                  return;
+                }
+                // Close the 'Tùy chọn bài viết' modal immediately
+                try{
+                  const currentModal = btn.closest('.pc-more-modal');
+                  if(currentModal){
+                    bootstrap.Modal.getOrCreateInstance(currentModal).hide();
+                  }
+                }catch(e){ /* no-op */ }
+                const article = btn.closest('article');
+                const postId = article.dataset.postId;
+                if(!postId){
+                  alert('Không xác định được bài viết để sửa.');
+                  return;
+                }
+                // Fetch existing post data and open composer in edit mode
+                fetch('/api/posts/' + encodeURIComponent(postId), { credentials: 'include' })
+                  .then(r => {
+                    if(!r.ok) throw new Error('Failed to fetch post');
+                    return r.json();
+                  })
+                  .then(post => {
+                    // open composer modal in edit mode
+                    if(window.openEditPost && typeof window.openEditPost === 'function'){
+                      window.openEditPost(post);
+                    }else{
+                      alert('Chức năng sửa bài hiện không khả dụng.');
+                    }
+                  })
+                  .catch(err => { console.error(err); alert('Không thể lấy dữ liệu bài viết để sửa.'); });
+              })(this);"
+            >Sửa bài viết</button>
                         <!-- Script xử lý xóa bài viết -->
                         <script>
                             
@@ -590,34 +628,74 @@
                 </button>
 
                   <!-- Reaction Popover -->
-                  <div class="react-popover" style="display:none;position:absolute;bottom:110%;left:100%;transform:translateX(-50%);
-                      background:#fff;border:1px solid rgba(120,150,190,.35);box-shadow:0 6px 18px rgba(30,70,140,.18);
-                      border-radius:999px;padding:6px;gap:6px;z-index:20;align-items:center;justify-content:center;">
+                    <style>
+                    .qdt-react-pop{
+                      display:none;position:absolute;bottom:110%;left:0;
+                      background:linear-gradient(180deg,#ffffffaa,#fffffff0);
+                      border:1px solid rgba(120,150,190,.35);
+                      box-shadow:0 10px 28px rgba(30,70,140,.18), inset 0 1px 0 rgba(255,255,255,.9);
+                      border-radius:999px;padding:8px 10px;gap:8px;z-index:20;
+                      align-items:center;justify-content:center;
+                      backdrop-filter:saturate(140%) blur(6px); -webkit-backdrop-filter:saturate(140%) blur(6px);
+                      animation:qdt-pop-in .16s cubic-bezier(.2,.9,.2,1);
+                    }
+                    .qdt-react-pop .rx-btn{
+                      width:44px;height:44px;border-radius:50%;
+                      border:1px solid rgba(120,150,190,.35);
+                      background:linear-gradient(180deg,#f7fbff,#eef5ff);
+                      font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;
+                      box-shadow:0 4px 10px rgba(30,70,140,.18), inset 0 1px 0 rgba(255,255,255,.9);
+                      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+                      cursor:pointer;
+                    }
+                    .qdt-react-pop .rx-btn:hover{
+                      transform:translateY(-2px) scale(1.08);
+                      box-shadow:0 10px 18px rgba(30,70,140,.25), inset 0 1px 0 rgba(255,255,255,.95);
+                      filter:saturate(1.1);
+                    }
+                    .qdt-react-pop .rx-btn:active{ transform:translateY(0) scale(.96); }
+                    .qdt-react-pop .rx-like{ background:linear-gradient(180deg,#e7f3ff,#f2f8ff); border-color:#b9d7ff; color:#1b74e4; }
+                    .qdt-react-pop .rx-love{ background:linear-gradient(180deg,#fff0f2,#ffe5ea); border-color:#ffc2cc; }
+                    .qdt-react-pop .rx-haha{ background:linear-gradient(180deg,#fff8e1,#fff2bf); border-color:#ffe29a; }
+                    .qdt-react-pop .rx-sad{  background:linear-gradient(180deg,#eaf5ff,#dff0ff); border-color:#bcdcff; }
+                    .qdt-react-pop .rx-angry{background:linear-gradient(180deg,#ffe8e5,#ffd9d3); border-color:#ffc2b8; }
+                    .qdt-react-pop .rx-arrow{
+                      position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+                      width:14px;height:14px;background:#fffffff0;border:1px solid rgba(120,150,190,.35);
+                      border-top:none;border-left:none;transform:translateX(-50%) rotate(45deg);
+                      box-shadow:2px 2px 10px rgba(30,70,140,.15);
+                    }
+                    /* @keyframes qdt-pop-in{
+                      0%{ transform:translateX(-50%) translateY(6px) scale(.96); opacity:0; }
+                      100%{ transform:translateX(-50%) translateY(0)  scale(1);    opacity:1; }
+                    } */
+                    </style>
+
+                    <div class="react-popover qdt-react-pop" role="group" aria-label="Chọn cảm xúc">
+                    <!-- <span class="rx-arrow" aria-hidden="true"></span> -->
+
                     <!-- like -->
-                    <button type="button" title="Thích" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#f7fbff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'like'); })(this)">👍</button>
+                    <button type="button" class="rx-btn rx-like" title="Thích"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'like'); })(this)">👍</button>
 
                     <!-- love -->
-                    <button type="button" title="Yêu thích" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'love'); })(this)"><i class="bi bi-heart-fill text-danger"></i></button>
+                    <button type="button" class="rx-btn rx-love" title="Yêu thích"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'love'); })(this)">
+                      <i class="bi bi-heart-fill text-danger"></i>
+                    </button>
 
                     <!-- haha -->
-                    <button type="button" title="Haha" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'haha'); })(this)">😆</button>
+                    <button type="button" class="rx-btn rx-haha" title="Haha"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'haha'); })(this)">😆</button>
 
                     <!-- sad -->
-                    <button type="button" title="Buồn" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'sad'); })(this)">😢</button>
+                    <button type="button" class="rx-btn rx-sad" title="Buồn"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'sad'); })(this)">😢</button>
 
                     <!-- angry -->
-                    <button type="button" title="Phẫn nộ" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(120,150,190,.35);
-                          background:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;"
-                            onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'angry'); })(this)">😡</button>
-                  </div>
+                    <button type="button" class="rx-btn rx-angry" title="Phẫn nộ"
+                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'angry'); })(this)">😡</button>
+                    </div>
                 </div>
 
                 <script>
@@ -1104,8 +1182,8 @@
           box-shadow:0 8px 26px -10px rgba(30,70,140,.25),0 3px 8px -4px rgba(30,70,140,.18),inset 0 1px 0 rgba(255,255,255,.9);
           overflow:hidden;
           /* animation:pcFade .45s cubic-bezier(.4,.65,.25,1); */
-          /* height limit */
-          --pc-max-h:600px;
+          /* height limit (increased to reduce inner scrollbar when showing media) */
+          --pc-max-h:1100px;
           display:flex;
           flex-direction:column;
           max-height:var(--pc-max-h);
@@ -1120,23 +1198,38 @@
           padding-right:.35rem;
       }
 
-      /* KEEP MEDIA RATIO (no cropping / stretching) */
-      .post-card .pc-body .post-media figure{
+    /* KEEP MEDIA RATIO (no cropping / stretching) */
+    .post-card .pc-body .post-media figure{
           position:relative;
           margin:0;
       }
-      .post-card .pc-body .post-media img,
-      .post-card .pc-body .post-media video{
-          object-fit:contain;   /* show whole media without cropping */
-          display:block;
-          background:#000;      /* letterbox background for videos / wide images */
-          border-radius:14px;
-      }
+    .post-card .pc-body .post-media img,
+    .post-card .pc-body .post-media video{
+      width:100%;
+      height:100%;
+      object-fit:contain;   /* show whole media without cropping */
+      display:block;
+      background:#000;      /* letterbox background for videos / wide images */
+      border-radius:14px;
+    }
 
       /* If a grid cell had a forced height from previous rules, let media inside adapt */
-      .post-card .pc-body .post-media figure > *{
-          max-height:100%;
-      }
+    .post-card .pc-body .post-media figure > *{
+      max-height:100%;
+    }
+
+    /* Override grid cells to have sensible heights so media fits without scrolling */
+  .post-card .pc-body .post-media.pm-grid > figure{ height: 480px; }
+  .post-card .pc-body .post-media.pm-grid.img-1 > figure{ height: 720px; }
+  .post-card .pc-body .post-media.pm-grid.img-2 > figure{ height: 520px; }
+  .post-card .pc-body .post-media.pm-grid.img-3 > figure{ height: 400px; }
+  .post-card .pc-body .post-media.pm-grid.img-4 > figure{ height: 360px; }
+  /* Important posts: keep same heights (explicit to override any later theme overrides) */
+  .post-card.post-important .pc-body .post-media.pm-grid > figure{ height: 480px; }
+  .post-card.post-important .pc-body .post-media.pm-grid.img-1 > figure{ height: 720px; }
+  .post-card.post-important .pc-body .post-media.pm-grid.img-2 > figure{ height: 520px; }
+  .post-card.post-important .pc-body .post-media.pm-grid.img-3 > figure{ height: 400px; }
+  .post-card.post-important .pc-body .post-media.pm-grid.img-4 > figure{ height: 360px; }
       .post-card .pc-body::-webkit-scrollbar{width:8px;}
       .post-card .pc-body::-webkit-scrollbar-track{background:transparent;}
       .post-card .pc-body::-webkit-scrollbar-thumb{
@@ -1197,9 +1290,8 @@
       .pm-grid>figure,.pm-grid img,.pm-grid video{width:100%;height:100%;object-fit:cover;display:block;}
       .pm-grid{grid-template-columns:repeat(var(--c),1fr);}
       .pm-grid img,.pm-grid video{border-radius:14px;box-shadow:0 4px 12px -4px rgba(0,0,0,.25);}
-      .pm-grid.img-3> :first-child{grid-column:span 2;height:320px;}
-      .pm-grid.img-4> :nth-child(1){grid-row:span 2;}
-      .pm-grid.img-4> :nth-child(1){height:100%;}
+  .pm-grid.img-3> :first-child{grid-column:span 2;}
+  .pm-grid.img-4> :nth-child(1){grid-row:span 2;}
       .pc-actions{
           display:flex;gap:8px;
           padding:.55rem .35rem .35rem;
@@ -1326,12 +1418,27 @@
                   const name = author.fullName || author.full_name || author.name || 'Ẩn danh';
                   const avatar = author.avatarUrl || author.avatar || '/img/image1.png';
                   const created = p.created_at || p.createdAt || p.created || null;
+                  const updated = p.updated_at || p.updatedAt || p.updated || null;
                   const content = (p.content || '').trim();
 
                   node.dataset.postId = postId;
                   node.querySelector('.pc-name').textContent = name;
                   node.querySelector('.pc-avatar').src = avatar;
-                  node.querySelector('.post-time').textContent = formatRelativeTime(created);
+          (function(){
+            const timeEl = node.querySelector('.post-time');
+            let label = formatRelativeTime(created);
+            // If there's a valid updatedAt newer than createdAt by > 60s, show edited time
+            if(updated){
+              const ct = new Date(created).getTime();
+              const ut = new Date(updated).getTime();
+              if(!isNaN(ut) && (isNaN(ct) || ut > ct + 60*1000)){
+                label = formatRelativeTime(updated) + ' • Đã chỉnh sửa';
+              }
+            }
+            timeEl.textContent = label;
+            const iso = (updated || created) ? new Date(updated || created).toISOString() : '';
+            if(iso) timeEl.setAttribute('datetime', iso);
+          })();
 
                   // pc-visibility
                   (function(){
@@ -1369,6 +1476,14 @@
                                   label = 'Bạn bè';
                           }
                       }
+            // Important postType
+            const type = (p.postType || p.type || '').toLowerCase();
+            if(type==='important' || type==='notice' || type==='thongbao'){
+              label = 'Thông báo Đặc biệt';
+              // Mark article for special styling if needed
+              try{ node.classList.add('post-important'); }catch(_){ }
+            }
+
                       visEl.textContent = label;
                       visEl.title = label;
                   })();
@@ -1425,7 +1540,6 @@
                               overlay.style.background='rgba(0,0,0,.45)';
                               overlay.style.backdropFilter='blur(2px)';
                               fig.style.position='relative';
-                              fig.style.maxHeight="400px";
                               fig.appendChild(overlay);
                           }
                           mediaWrap.appendChild(fig);

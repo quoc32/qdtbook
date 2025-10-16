@@ -52,6 +52,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     // map author
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
@@ -93,20 +94,33 @@ public class PostService {
         if (userId != (Integer)session.getAttribute("userId")) {
             throw new IllegalArgumentException("author_id does not match the logged-in user");
         }
-
+        // >> : Lấy các bài post của chính mình
         List<Post> selfPosts = postRepository.findByAuthorId(userId);
 
+        // >> : Lấy các bài post của bạn bè đã chấp nhận (accepted) và không nhận các bài post visibility = private
         List<Post> friendPosts = new ArrayList<>();
-        List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds_all = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds = new ArrayList<>();
+        for (Integer fid : friendIds_all) {
+            String status = friendRepository.findStatusByUserIds(userId, fid);
+            if ("accepted".equalsIgnoreCase(status)) {
+                friendIds.add(fid);
+            }
+        }
+        // >> >> Duyệt từng friendId để lấy bài post, lọc bỏ bài viết private
         for (Integer fid : friendIds) {
-            friendPosts.addAll(postRepository.findByAuthorId(fid));
+            List<Post> friendPosts_all = postRepository.findByAuthorId(fid);
+            friendPosts = friendPosts_all.stream()
+                            .filter(p -> !"private".equalsIgnoreCase(p.getVisibility())) // lọc bỏ bài viết private
+                            .toList();
         }
 
+        // >> : Lấy các bài post công khai (public)
         List<Post> allPosts = postRepository.findAll();
         List<Post> publicPosts = allPosts.stream() 
                                 .filter(p -> "public".equalsIgnoreCase(p.getVisibility())) 
                                 .toList();
-
+        // >> : Gộp 3 nguồn bài post trên, loại bỏ trùng lặp, sắp xếp theo createdAt giảm dần
         List<Post> combinedPosts = new ArrayList<>();
         combinedPosts.addAll(selfPosts);
         combinedPosts.addAll(friendPosts);
@@ -115,6 +129,11 @@ public class PostService {
         combinedPosts = combinedPosts.stream()
                             .distinct() // loại bỏ trùng lặp
                             .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt())) // sắp xếp theo createdAt giảm dần
+                            .toList();
+
+        // >> : Loại các bài post important (postType = important) ra khỏi danh sách
+        combinedPosts = combinedPosts.stream()
+                            .filter(p -> !"important".equalsIgnoreCase(p.getPostType())) // lọc bỏ bài viết important
                             .toList();
 
         List<PostContentResponseDTO> dtos = combinedPosts.stream()
@@ -126,6 +145,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
                     if (post.getAuthor() != null) {
@@ -172,6 +192,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
                     if (post.getAuthor() != null) {
@@ -195,16 +216,29 @@ public class PostService {
     }
 
     public ResponseEntity<List<PostContentResponseDTO>> getFriendPosts(Integer userId) {
+        // ! : Lấy các bài post của bạn bè đã chấp nhận (accepted), không nhận các bài post visibility = private
+
         if (userId == null) {
             throw new IllegalArgumentException("userId is required");
         }
         if (userId != (Integer)session.getAttribute("userId")) {
             throw new IllegalArgumentException("author_id does not match the logged-in user");
         }
-        List<Integer> friendIds = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds_all = friendRepository.findFriendIdsByUserId(userId);
+        List<Integer> friendIds = new ArrayList<>();
+        for (Integer fid : friendIds_all) {
+            String status = friendRepository.findStatusByUserIds(userId, fid);
+            if ("accepted".equalsIgnoreCase(status)) {
+                friendIds.add(fid);
+            }
+        }
         List<Post> posts = new ArrayList<>();
         for (Integer fid : friendIds) {
-            posts.addAll(postRepository.findByAuthorId(fid));
+            List<Post> friendPosts = postRepository.findByAuthorId(fid);
+            friendPosts = friendPosts.stream()
+                            .filter(p -> !"private".equalsIgnoreCase(p.getVisibility())) // lọc bỏ bài viết private
+                            .toList();
+            posts.addAll(friendPosts);
         }
         List<PostContentResponseDTO> dtos = posts.stream()
                 .map(post -> {
@@ -215,6 +249,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
                     if (post.getAuthor() != null) {
@@ -244,6 +279,44 @@ public class PostService {
                                 .toList();
 
         List<PostContentResponseDTO> dtos = publicPosts.stream()
+                .map(post -> {
+                    PostContentResponseDTO dto = new PostContentResponseDTO();
+                    dto.setId(post.getId());
+                    dto.setContent(post.getContent());
+                    dto.setVisibility(post.getVisibility());
+                    dto.setPostType(post.getPostType());
+                    dto.setStatus(post.getStatus());
+                    dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
+
+                    PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                    if (post.getAuthor() != null) {
+                        authorDto.setId(post.getAuthor().getId());
+                        authorDto.setFullName(post.getAuthor().getFullName());
+                        authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                        authorDto.setEmail(post.getAuthor().getEmail());
+                    }
+                    dto.setAuthor(authorDto);
+
+                    List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                            .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                            .toList();
+                    dto.setMedia(mediaDtos);
+
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    public ResponseEntity<List<PostContentResponseDTO>> getImportantPosts() {
+        List<Post> posts = postRepository.findAll();
+        List<Post> importantPosts = posts.stream() 
+                                .filter(p -> "important".equalsIgnoreCase(p.getPostType())) 
+                                .toList();
+
+        List<PostContentResponseDTO> dtos = importantPosts.stream()
                 .map(post -> {
                     PostContentResponseDTO dto = new PostContentResponseDTO();
                     dto.setId(post.getId());
@@ -339,6 +412,15 @@ public class PostService {
         if (ReqDTO.getAuthorId() != (Integer)session.getAttribute("userId")) {
             throw new IllegalArgumentException("author_id does not match the logged-in user");
         }
+        // Todo: 1.2. Kiểm tra nếu isImportant = true thì chỉ có role "special", "admin" mới được tạo bài viết quan trọng
+        Boolean isImportant = ReqDTO.getIsImportant();
+        String role = (String) session.getAttribute("role");
+        if (isImportant != null && isImportant) {   // isImportant = true
+            if (role == null || !(role.equalsIgnoreCase("special") || role.equalsIgnoreCase("admin"))) {
+                throw new IllegalArgumentException("only users with role 'special' or 'admin' can create important posts");
+            }
+        }
+
         // Todo: 2. Lấy thông tin User từ DB (theo authorId).
         Optional<User> userOpt = userRepository.findById(ReqDTO.getAuthorId());
         if (userOpt.isEmpty()) throw new IllegalArgumentException("author not found for id=" + ReqDTO.getAuthorId());
@@ -349,6 +431,9 @@ public class PostService {
         p.setVisibility(ReqDTO.getVisibility());
         p.setPostType(ReqDTO.getPostType());
         p.setStatus(ReqDTO.getStatus());
+        if (isImportant != null && isImportant) {
+            p.setPostType("important");
+        }
         // Todo: 4. Nếu có media trong request thì duyệt danh sách, tạo PostMedia và lưu vào DB.
         Post savedPost = postRepository.save(p);
         List<PostMedia> savedPostMedias = new ArrayList<>();
@@ -386,6 +471,15 @@ public class PostService {
         Optional<Post> existing = postRepository.findById(id);
         if (existing.isEmpty()) return Optional.empty();
         Post e = existing.get();
+
+        // Check that the currently logged-in user (from session) is the author of the post
+        Integer loggedUserId = (Integer) session.getAttribute("userId");
+        if (loggedUserId == null) {
+            throw new IllegalArgumentException("user is not logged in");
+        }
+        if (e.getAuthor() == null || !loggedUserId.equals(e.getAuthor().getId())) {
+            throw new IllegalArgumentException("logged-in user is not the author of the post");
+        }
 
         if (dto.getContent() != null) e.setContent(dto.getContent());
         if (dto.getVisibility() != null) e.setVisibility(dto.getVisibility());
