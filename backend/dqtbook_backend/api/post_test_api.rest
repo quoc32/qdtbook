@@ -4,7 +4,7 @@ Cookie: JSESSIONID=E0FEAD37E511E92C2ECE48245887EBB6
 
 ### Danh sách bài đăng phù hợp cho 1 user (self + friends + public)
 GET http://localhost:8080/api/posts/suitable/1
-Cookie: JSESSIONID=8CB50F1A22A16ACE608E6CDB3F97471E
+Cookie: JSESSIONID=1BA2705386A00D5335815F3306F30EF1
 
 ### Lấy bài đăng theo id
 GET http://localhost:8080/api/posts/5
@@ -20,6 +20,10 @@ Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
 ### Lấy các bài đăng Public
 GET http://localhost:8080/api/posts/public
 Cookie: JSESSIONID=F789F73C5CE44F0FAFA1C21D0B630642
+
+### Lấy các bài đăng Important
+GET http://localhost:8080/api/posts/important
+Cookie: JSESSIONID=75A8BFFFA89C6C3F5CF0ADEAF930E7A0
 
 ### Tạo 1 bài đăng (Với media)
 POST http://localhost:8080/api/posts
@@ -46,21 +50,38 @@ Cookie: JSESSIONID=0ED90741E20F3A99FA6F2DE62C54BCF2
 {
   "author_id": 1,
   "content": "Tôi đăng ảnh mới",
-  "visibility": "publics",
+  "visibility": "public",
   "post_type": "normal",
   "status": "pending",
   "media": []
 }
 
-### Cập nhật 1 bài đăng
-PUT http://localhost:8080/posts/8
+### Đăng bài đăng đặc biệt (important) - Chỉ special, admin mới được phép
+POST http://localhost:8080/api/posts
 Content-Type: application/json
+Cookie: JSESSIONID=E14658C62FE6D024190A35DF7BD36C01
+
+{
+  "author_id": 14,
+  "content": "Bài viết quan trọng nè 2",
+  "visibility": "public",
+  "post_type": "normal",
+  "status": "pending",
+  "media": [],
+  "isImportant": true
+}
+
+
+### Cập nhật 1 bài đăng
+PUT http://localhost:8080/api/posts/3
+Content-Type: application/json
+Cookie: JSESSIONID=7A64E70D3F4A3FEE99025AAE2555983D
 
 {
   "content": "Nội dung đã được chỉnh sửa rồi ok",
   "visibility": "public",
   "post_type": "normal",
-  "status": "approved",
+  "status": "pending",
   "media": [
     { "media_type": "image", "media_url": "http://example.com/image2.png" }
   ]
@@ -104,7 +125,7 @@ Content-Type: application/json
 }
 
 ### Tạo reply (comment lồng nhau)
-POST http://localhost:8080/posts/1/comments
+POST http://localhost:8080/api/posts/1/comments
 Content-Type: application/json
 
 {
@@ -114,7 +135,7 @@ Content-Type: application/json
 }
 
 ### Cập nhật comment
-PUT http://localhost:8080/posts/2/comments/4
+PUT http://localhost:8080/api/posts/2/comments/4
 Content-Type: application/json
 
 {
@@ -122,11 +143,11 @@ Content-Type: application/json
 }
 
 ### Xoá comment
-DELETE http://localhost:8080/posts/5/comments/7
+DELETE http://localhost:8080/api/posts/5/comments/7
 
 ### Shares (Chia sẻ bài viết)
 # Tạo 1 share 
-POST http://localhost:8080/posts/5/shares
+POST http://localhost:8080/api/posts/5/shares
 Content-Type: application/json
 
 {
@@ -136,7 +157,8 @@ Content-Type: application/json
 }
 
 ### Lấy danh sách share của 1 post
-GET http://localhost:8080/posts/5/shares
+GET http://localhost:8080/api/posts/5/shares
 
 ### Xoá 1 share
-DELETE http://localhost:8080/posts/5/shares/4
+DELETE http://localhost:8080/api/posts/5/shares/4
+

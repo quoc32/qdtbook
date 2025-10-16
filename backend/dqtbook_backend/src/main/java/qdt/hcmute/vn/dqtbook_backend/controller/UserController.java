@@ -10,6 +10,11 @@ import qdt.hcmute.vn.dqtbook_backend.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -78,6 +83,21 @@ public class UserController {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+
+    @PostMapping("/{id}/upgrade")
+    public ResponseEntity<?> upgradeUserRole(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        String toRole = body.get("toRole");
+        if (toRole == null || (!toRole.equals("special") && !toRole.equals("student"))) {
+            return ResponseEntity.badRequest().body("Invalid role specified");
+        }
+
+        Optional<UserResponseDTO> user = userService.upgradeUserRole(id, toRole);
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found or upgrade failed");
         }
     }
 }

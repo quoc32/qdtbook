@@ -34,7 +34,7 @@
   <body>
 
     <!-- Post Composer Fragment -->
-    <div th:fragment="postComposer" class="composer neo-composer p-3 mb-3" data-bs-toggle="modal" data-bs-target="#createPostModal">
+    <div th:fragment="importantPostComposer" class="composer neo-composer p-3 mb-3" data-bs-toggle="modal" data-bs-target="#createPostModal">
         <div class="d-flex align-items-start gap-2 mb-3">
             <div class="avatar-wrap">
                 <img id="postComposerUserAvatar" class="avatar" src="" alt="User">
@@ -54,7 +54,7 @@
             </div>
             <textarea class="form-control composer-input"
                         rows="2"
-                        placeholder="Chia sẻ điều bạn đang nghĩ..."
+                        placeholder="Bài viết đặc biệt gửi đến cộng đồng HCMUTE..."
                         readonly></textarea>
         </div>
         <div class="cp-actions d-flex flex-wrap gap-2">
@@ -246,14 +246,14 @@
 
     
     <!-- Modal tạo bài viết:BEGIN -->
-    <div th:fragment="postComposerModal">
-    <div class="modal fade" id="createPostModal" tabindex="-1" aria-hidden="true">
+    <div th:fragment="importantPostComposerModal">
+    <div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form id="createPostForm">
                     <div class="modal-header">
-                        <h5 class="modal-title fw-semibold">Tạo bài viết</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                        <h5 class="modal-title fw-semibold">Tạo bài viết Đặc biệt</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng" onclick="this.blur();"></button>
                     </div>
                     <div class="modal-body">
                         <div class="d-flex mb-3">
@@ -282,7 +282,7 @@
                                         }catch(_){}
                                     })();
                                 </script>
-                                <select class="form-select form-select-sm mt-1" style="width:auto;">
+                                <select class="form-select form-select-sm mt-1" style="width:auto;display: none;" >
                                     <option>Công khai</option>
                                     <option>Bạn bè</option>
                                     <option>Chỉ mình tôi</option>
@@ -293,7 +293,7 @@
                         <textarea class="form-control border-0 fs-5"
                                 id="postContent"
                                 rows="5"
-                                placeholder="Bạn đang nghĩ gì?"
+                                placeholder="Bài viết đặc biệt gửi đến cộng đồng HCMUTE..."
                                 style="resize:none;"></textarea>
 
                         <div id="previewArea" class="mt-3 d-none">
@@ -349,16 +349,11 @@
         const uploadBar    = document.getElementById('uploadBar');
         const uploadStatus = document.getElementById('uploadStatus');
 
-    // State
+        // State
         const MAX_FILES = 10;
         let files = [];              // File[]
         let objectURLs = [];         // revoke on cleanup
         let uploading = false;
-    // Edit mode state (hoist early so helpers can reference)
-    let editMode = false;
-    let editingPostId = null;
-    let editingPostType = 'normal';
-    let editingStatus = 'pending';
 
         // Helpers
         function revokeAll(){
@@ -367,8 +362,6 @@
         }
 
         function canSubmit(){
-            // In edit mode, always allow saving (even when only visibility/status changes)
-            if (editMode) return true;
             return (contentEl.value.trim().length > 0) || files.length > 0;
         }
 
@@ -477,7 +470,7 @@
             const intervalId = setInterval(tick, 300);
 
             try{
-                const res = await fetch('http://localhost:8080/api/media/upload', {
+                const res = await fetch('/api/media/upload', {
                     method: 'POST',
                     body: fd,
                     credentials: 'include'
@@ -540,14 +533,14 @@
                         if (raw.includes('chỉ mình tôi')) return 'private';
                         return 'public';
                     }catch(_){ return 'public'; }
-                })(), // Quốc 2
-                post_type: 'normal',
+                })(),
+                post_type: 'important', // or 'important' if needed
                 status: 'pending',
                 media: mediaArray
             };
 
             try{
-                const res = await fetch('http://localhost:8080/api/posts', {
+                const res = await fetch('/api/posts', {
                     method:'POST',
                     headers:{ 'Content-Type':'application/json' },
                     body: JSON.stringify(payload),
@@ -561,51 +554,6 @@
             }
         }
 
-        // Expose function to open modal in edit mode with existing post data
-        window.openEditPost = function(post){
-            try{
-                editMode = true;
-                editingPostId = post.id || post.ID || post.postId || null;
-                // Preserve type & status of the post being edited
-                editingPostType = (post.post_type || post.postType || post.type || 'normal');
-                editingStatus   = (post.status || 'pending');
-                // Prefill content
-                contentEl.value = post.content || '';
-                // Prefill visibility select
-                try{
-                    const sel = document.querySelector('#createPostModal select.form-select');
-                    if(sel){
-                        const vis = (post.visibility || '').toLowerCase();
-                        if(vis === 'public' || vis === 'friends' || vis === 'private') sel.value = vis;
-                    }
-                }catch(_){ }
-                // Prefill media previews if provided (post.medias or post.medias)
-                files = [];
-                revokeAll();
-                previewList.innerHTML = '';
-                if(Array.isArray(post.media) && post.media.length>0){
-                    post.media.forEach((m, idx)=>{
-                        const url = m.media_url || m.mediaUrl || m.url;
-                        if(!url) return;
-                        const box = document.createElement('div');
-                        box.className = 'media-thumb';
-                        box.innerHTML = `<img src="${url}" alt="">` + `<button type="button" class="media-remove" data-rm-existing="${idx}" aria-label="Xóa">&times;</button>`;
-                        previewList.appendChild(box);
-                    });
-                    previewArea.classList.remove('d-none');
-                }
-                // Set submit button text
-                submitBtn.textContent = 'Lưu thay đổi';
-                const inst = new bootstrap.Modal(modalEl);
-                inst.show();
-                // Ensure button state reflects edit mode
-                updateSubmitState();
-            }catch(err){
-                console.error(err);
-                alert('Không thể mở chế độ sửa bài.');
-            }
-        };
-
         form.addEventListener('submit', async e=>{
             e.preventDefault();
             if(uploading || !canSubmit()) return;
@@ -614,49 +562,7 @@
 
             try{
                 const uploadedUrls = await uploadFiles(); // array of URLs
-                if(editMode && editingPostId){
-                    // Update existing post via PUT
-                    const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
-                        .filter(Boolean)
-                        .map((url, idx) => {
-                            const f = files[idx];
-                            let media_type = 'image';
-                            if (f?.type?.startsWith('video/')) media_type = 'video';
-                            else if (f?.type?.startsWith('image/')) media_type = 'image';
-                            return {
-                                media_type,
-                                media_url: "http://localhost:8080" + url
-                            };
-                        });
-
-                    const payload = {
-                        content: contentEl.value.trim(),
-                        visibility: (function(){ try{ const sel = document.querySelector('#createPostModal select.form-select'); const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '').toLocaleLowerCase('vi').trim(); if (raw === 'public' || raw === 'friends' || raw === 'private') return raw; if (raw.includes('công khai')) return 'public'; if (raw.includes('bạn bè')) return 'friends'; if (raw.includes('chỉ mình tôi')) return 'private'; return 'public'; }catch(_){ return 'public'; } })(),
-                        post_type: editingPostType || 'normal',
-                        status: editingStatus || 'pending',
-                        media: mediaArray
-                    };
-
-                    // If no new uploads selected, omit media to preserve existing media on server
-                    if (mediaArray.length === 0) {
-                        delete payload.media;
-                    }
-
-                    try{
-                        const res = await fetch('http://localhost:8080/api/posts/' + encodeURIComponent(editingPostId), {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                            credentials: 'include'
-                        });
-                        if(!res.ok) throw new Error('Update failed: '+res.status);
-                    }catch(err){
-                        console.error(err);
-                        throw err;
-                    }
-                }else{
-                    await createPost(uploadedUrls);
-                }
+                await createPost(uploadedUrls);
                 // Reset
                 files = [];
                 revokeAll();
@@ -669,12 +575,6 @@
                 }, 350);
                 const inst = bootstrap.Modal.getInstance(modalEl);
                 if(inst) inst.hide();
-                // clear edit mode
-                editMode = false;
-                editingPostId = null;
-                editingPostType = 'normal';
-                editingStatus = 'pending';
-                submitBtn.textContent = 'Đăng';
             }catch(err){
                 // keep previews for retry
             }finally{

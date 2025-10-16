@@ -31,6 +31,7 @@ public class AuthController {
                 .map(user -> {
                     HttpSession session = httpRequest.getSession(true); // tạo session nếu chưa có
                     session.setAttribute("userId", user.getId()); // Session lưu userId
+                    session.setAttribute("role", user.getRole()); // Session lưu role
 
                     AuthResponseDTO authResponse = new AuthResponseDTO(
                             "Đăng nhập thành công",
@@ -43,7 +44,8 @@ public class AuthController {
                             user.getGender(),
                             user.getBio(),
                             user.getAvatarUrl(),
-                            user.getCoverPhotoUrl()
+                            user.getCoverPhotoUrl(),
+                            user.getRole()
                     );
 
                     return ResponseEntity.ok(authResponse);
@@ -51,6 +53,7 @@ public class AuthController {
                 .orElse(ResponseEntity.status(401).body(
                         new AuthResponseDTO(
                             "Sai email hoặc mật khẩu",
+                            null,
                             null,
                             null,
                             null,

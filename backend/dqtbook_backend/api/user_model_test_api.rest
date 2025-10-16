@@ -47,7 +47,7 @@ Content-Type: application/json
 }
 
 ### 5. Create user with minimal data (only required fields)
-POST http://localhost:8080/users
+POST http://localhost:8080/api/users/register
 Content-Type: application/json
 
 {
@@ -56,24 +56,24 @@ Content-Type: application/json
   "password_hash": "password123"
 }
 
-### 6. Create user with missing required fields (should fail)
-POST http://localhost:8080/users
+### 6. Change user Role to "special" (only for admin)
+POST http://localhost:8080/api/users/10/upgrade
+Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
 Content-Type: application/json
 
 {
-  "full_name": "Jane Doe",
-  "email": "jane@example.com"
+  "toRole": "special"
 }
 
-### 7. Create user with duplicate email (should fail)
-POST http://localhost:8080/users
+### 7. Change user Role to "student" (only for admin)
+POST http://localhost:8080/api/users/6/upgrade
+Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
 Content-Type: application/json
 
 {
-  "full_name": "Duplicate User",
-  "email": "diep@example.com",
-  "password_hash": "password123"
+  "toRole": "student"
 }
+
 
 ### 8. Update user (valid data)
 PUT http://localhost:8080/users/1
@@ -100,7 +100,7 @@ Cookie: JSESSIONID=0414ACA542F693A270B50EC8DA838EB3
 
 ### 10. GET user by email
 GET http://localhost:8080/api/users/find/by-email?email=quoc4@gmail.com
-Cookie: JSESSIONID=8A52D464FEC93052717FC6F98A22FAC7
+Cookie: JSESSIONID=D0BD83EF6612A67DFF8648F64A538D1F
 
 ### 11. Update non-existing user (should fail)
 PUT http://localhost:8080/users/999
@@ -129,6 +129,7 @@ Content-Type: application/json
   "email": "invalid@example.com",
   "password_hash": "password123"
   // Missing closing brace
+}
 
 ### 15. Test empty request body
 POST http://localhost:8080/users

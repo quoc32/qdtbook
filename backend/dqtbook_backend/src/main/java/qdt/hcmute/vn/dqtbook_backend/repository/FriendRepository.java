@@ -17,6 +17,10 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
        "UNION " +
        "SELECT f.user1.id FROM Friend f WHERE f.user2.id = :userId")
     List<Integer> findFriendIdsByUserId(Integer userId);
+
+    @Query("SELECT f.status FROM Friend f WHERE (f.user1.id = :userId1 AND f.user2.id = :userId2) " +
+           "OR (f.user1.id = :userId2 AND f.user2.id = :userId1)")
+    String findStatusByUserIds(Integer userId1, Integer userId2);
 }
 
 
