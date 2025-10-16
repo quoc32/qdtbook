@@ -349,11 +349,16 @@
         const uploadBar    = document.getElementById('uploadBar');
         const uploadStatus = document.getElementById('uploadStatus');
 
-        // State
+    // State
         const MAX_FILES = 10;
         let files = [];              // File[]
         let objectURLs = [];         // revoke on cleanup
         let uploading = false;
+    // Edit mode state (hoist early so helpers can reference)
+    let editMode = false;
+    let editingPostId = null;
+    let editingPostType = 'normal';
+    let editingStatus = 'pending';
 
         // Helpers
         function revokeAll(){
@@ -362,6 +367,8 @@
         }
 
         function canSubmit(){
+            // In edit mode, always allow saving (even when only visibility/status changes)
+            if (editMode) return true;
             return (contentEl.value.trim().length > 0) || files.length > 0;
         }
 
@@ -554,6 +561,51 @@
             }
         }
 
+        // Expose function to open modal in edit mode with existing post data
+        window.openEditPost = function(post){
+            try{
+                editMode = true;
+                editingPostId = post.id || post.ID || post.postId || null;
+                // Preserve type & status of the post being edited
+                editingPostType = (post.post_type || post.postType || post.type || 'normal');
+                editingStatus   = (post.status || 'pending');
+                // Prefill content
+                contentEl.value = post.content || '';
+                // Prefill visibility select
+                try{
+                    const sel = document.querySelector('#createPostModal select.form-select');
+                    if(sel){
+                        const vis = (post.visibility || '').toLowerCase();
+                        if(vis === 'public' || vis === 'friends' || vis === 'private') sel.value = vis;
+                    }
+                }catch(_){ }
+                // Prefill media previews if provided (post.medias or post.medias)
+                files = [];
+                revokeAll();
+                previewList.innerHTML = '';
+                if(Array.isArray(post.media) && post.media.length>0){
+                    post.media.forEach((m, idx)=>{
+                        const url = m.media_url || m.mediaUrl || m.url;
+                        if(!url) return;
+                        const box = document.createElement('div');
+                        box.className = 'media-thumb';
+                        box.innerHTML = `<img src="${url}" alt="">` + `<button type="button" class="media-remove" data-rm-existing="${idx}" aria-label="Xóa">&times;</button>`;
+                        previewList.appendChild(box);
+                    });
+                    previewArea.classList.remove('d-none');
+                }
+                // Set submit button text
+                submitBtn.textContent = 'Lưu thay đổi';
+                const inst = new bootstrap.Modal(modalEl);
+                inst.show();
+                // Ensure button state reflects edit mode
+                updateSubmitState();
+            }catch(err){
+                console.error(err);
+                alert('Không thể mở chế độ sửa bài.');
+            }
+        };
+
         form.addEventListener('submit', async e=>{
             e.preventDefault();
             if(uploading || !canSubmit()) return;
@@ -562,7 +614,49 @@
 
             try{
                 const uploadedUrls = await uploadFiles(); // array of URLs
-                await createPost(uploadedUrls);
+                if(editMode && editingPostId){
+                    // Update existing post via PUT
+                    const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
+                        .filter(Boolean)
+                        .map((url, idx) => {
+                            const f = files[idx];
+                            let media_type = 'image';
+                            if (f?.type?.startsWith('video/')) media_type = 'video';
+                            else if (f?.type?.startsWith('image/')) media_type = 'image';
+                            return {
+                                media_type,
+                                media_url: "http://localhost:8080" + url
+                            };
+                        });
+
+                    const payload = {
+                        content: contentEl.value.trim(),
+                        visibility: (function(){ try{ const sel = document.querySelector('#createPostModal select.form-select'); const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '').toLocaleLowerCase('vi').trim(); if (raw === 'public' || raw === 'friends' || raw === 'private') return raw; if (raw.includes('công khai')) return 'public'; if (raw.includes('bạn bè')) return 'friends'; if (raw.includes('chỉ mình tôi')) return 'private'; return 'public'; }catch(_){ return 'public'; } })(),
+                        post_type: editingPostType || 'normal',
+                        status: editingStatus || 'pending',
+                        media: mediaArray
+                    };
+
+                    // If no new uploads selected, omit media to preserve existing media on server
+                    if (mediaArray.length === 0) {
+                        delete payload.media;
+                    }
+
+                    try{
+                        const res = await fetch('http://localhost:8080/api/posts/' + encodeURIComponent(editingPostId), {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                            credentials: 'include'
+                        });
+                        if(!res.ok) throw new Error('Update failed: '+res.status);
+                    }catch(err){
+                        console.error(err);
+                        throw err;
+                    }
+                }else{
+                    await createPost(uploadedUrls);
+                }
                 // Reset
                 files = [];
                 revokeAll();
@@ -575,6 +669,12 @@
                 }, 350);
                 const inst = bootstrap.Modal.getInstance(modalEl);
                 if(inst) inst.hide();
+                // clear edit mode
+                editMode = false;
+                editingPostId = null;
+                editingPostType = 'normal';
+                editingStatus = 'pending';
+                submitBtn.textContent = 'Đăng';
             }catch(err){
                 // keep previews for retry
             }finally{

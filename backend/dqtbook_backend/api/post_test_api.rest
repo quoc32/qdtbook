@@ -73,14 +73,15 @@ Cookie: JSESSIONID=E14658C62FE6D024190A35DF7BD36C01
 
 
 ### Cập nhật 1 bài đăng
-PUT http://localhost:8080/posts/8
+PUT http://localhost:8080/api/posts/3
 Content-Type: application/json
+Cookie: JSESSIONID=7A64E70D3F4A3FEE99025AAE2555983D
 
 {
   "content": "Nội dung đã được chỉnh sửa rồi ok",
   "visibility": "public",
   "post_type": "normal",
-  "status": "approved",
+  "status": "pending",
   "media": [
     { "media_type": "image", "media_url": "http://example.com/image2.png" }
   ]
@@ -124,7 +125,7 @@ Content-Type: application/json
 }
 
 ### Tạo reply (comment lồng nhau)
-POST http://localhost:8080/posts/1/comments
+POST http://localhost:8080/api/posts/1/comments
 Content-Type: application/json
 
 {
@@ -134,7 +135,7 @@ Content-Type: application/json
 }
 
 ### Cập nhật comment
-PUT http://localhost:8080/posts/2/comments/4
+PUT http://localhost:8080/api/posts/2/comments/4
 Content-Type: application/json
 
 {
@@ -142,11 +143,11 @@ Content-Type: application/json
 }
 
 ### Xoá comment
-DELETE http://localhost:8080/posts/5/comments/7
+DELETE http://localhost:8080/api/posts/5/comments/7
 
 ### Shares (Chia sẻ bài viết)
 # Tạo 1 share 
-POST http://localhost:8080/posts/5/shares
+POST http://localhost:8080/api/posts/5/shares
 Content-Type: application/json
 
 {
@@ -156,8 +157,8 @@ Content-Type: application/json
 }
 
 ### Lấy danh sách share của 1 post
-GET http://localhost:8080/posts/5/shares
+GET http://localhost:8080/api/posts/5/shares
 
 ### Xoá 1 share
-DELETE http://localhost:8080/posts/5/shares/4
+DELETE http://localhost:8080/api/posts/5/shares/4
 

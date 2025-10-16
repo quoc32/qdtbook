@@ -55,7 +55,35 @@ public class PostController {
     public ResponseEntity<Object> getPostById(@PathVariable Integer id) {
         try {
             return postService.findById(id)
-                    .map(p -> ResponseEntity.ok((Object)p))
+                    .map(post -> {
+                        PostContentResponseDTO dto = new PostContentResponseDTO();
+                        dto.setId(post.getId());
+                        dto.setContent(post.getContent());
+                        dto.setVisibility(post.getVisibility());
+                        dto.setPostType(post.getPostType());
+                        dto.setStatus(post.getStatus());
+                        dto.setCreatedAt(post.getCreatedAt());
+                        dto.setUpdatedAt(post.getUpdatedAt());
+
+                        // author mapping
+                        PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+                        if (post.getAuthor() != null) {
+                            authorDto.setId(post.getAuthor().getId());
+                            authorDto.setFullName(post.getAuthor().getFullName());
+                            authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+                            authorDto.setEmail(post.getAuthor().getEmail());
+                        }
+                        dto.setAuthor(authorDto);
+
+                        // media mapping
+                        if (post.getMedias() != null) {
+                            dto.setMedia(post.getMedias().stream()
+                                    .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                                    .toList());
+                        }
+
+                        return ResponseEntity.ok((Object) dto);
+                    })
                     .orElseGet(() -> {
                         ErrorResponse err = new ErrorResponse(404, "post not found for id=" + id);
                         return ResponseEntity.status(404).body(err);
