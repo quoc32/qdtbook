@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>QDTBook - Messages</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+        body {
+            background: #f0f2f5;
+            font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        .chat-container {
+            height: calc(100vh - 90px);
+            background: #f0f2f5;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 8px;
+        }
+
+        /* Left Sidebar - Chat List */
+        .chat-sidebar {
+            background: #fff;
+            border-right: 1px solid #e4e6ea;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 320px;
+            min-width: 320px;
+            max-width: 320px;
+        }
+
+        .sidebar-header {
+            padding: 16px 16px 8px;
+            border-bottom: none;
+            background: #fff;
+            color: #050505;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header h4 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 24px;
+            color: #050505;
+        }
+
+        .chat-search {
+            padding: 8px 16px 16px;
+            border-bottom: none;
+            flex-shrink: 0;
+        }
+
+        .chat-search input {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 20px;
+            background: #f0f2f5;
+            font-size: 15px;
+            color: #050505;
+        }
+
+        .chat-search input:focus {
+            outline: none;
+            background: #e4e6ea;
+        }
+
+        .chat-search input::placeholder {
+            color: #65676b;
+        }
+
+        .chat-list {
+            padding: 0;
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #bcc0c4 transparent;
+        }
+
+        /* Custom Scrollbar for Chat List */
+        .chat-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-list::-webkit-scrollbar-thumb {
+            background: #bcc0c4;
+            border-radius: 10px;
+        }
+
+        .chat-list::-webkit-scrollbar-thumb:hover {
+            background: #8a8d91;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-bottom: none;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 8px;
+            margin: 0 8px 2px;
+        }
+
+        .chat-item:hover {
+            background: #f2f3f5;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .chat-item.active {
+            background: #e7f3ff;
+            border-radius: 8px;
+        }
+
+        .chat-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+            position: relative;
+        }
+
+        .chat-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #050505;
+        }
+
+        .chat-last-message {
+            font-size: 13px;
+            color: #65676b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-time {
+            font-size: 12px;
+            color: #65676b;
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: #31a24c;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px rgba(49, 162, 76, 0.3);
+            z-index: 1;
+        }
+
+        .offline-indicator {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: #666;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        /* Center - Chat Content */
+        .chat-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #f0f2f5;
+            border: none;
+            border-radius: 0;
+            margin: 0;
+            box-shadow: none;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e4e6ea;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 8px 8px 0 0;
+            flex-shrink: 0;
+        }
+
+        .chat-header-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .chat-header-info h5 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #050505;
+        }
+
+        .chat-header-info .status {
+            font-size: 12px;
+            color: #42b883;
+            margin-top: 2px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            height: calc(100vh - 260px);
+            max-height: calc(100vh - 260px);
+        }
+
+        /* Custom Scrollbar for Chat Messages */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #bcc0c4;
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #8a8d91;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 8px;
+            max-width: 60%;
+            align-items: flex-end;
+        }
+
+        .message.sent {
+            margin-left: auto;
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.3;
+        }
+
+        .message.sent .message-bubble {
+            background: #0084ff;
+            color: #fff;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .message.sent .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .chat-input-area {
+            padding: 16px 20px;
+            background: #fff;
+            border-top: 0px solid #e4e6ea;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            margin-top: 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f2f5;
+            border-radius: 20px;
+            padding: 8px 12px;
+            min-height: 40px;
+            border: 1px solid #e4e6ea;
+            width: 100%;
+        }
+
+        .message-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 12px;
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            color: #050505;
+            line-height: 1.4;
+        }
+
+        .message-input::placeholder {
+            color: #65676b;
+        }
+
+        .send-btn {
+            border: 0;
+            background: #0084ff;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease;
+            cursor: pointer;
+        }
+
+        .send-btn:hover {
+            background: #0073e6;
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background: #bcc0c4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Right Sidebar - Chat Info */
+        .chat-info-sidebar {
+            background: #fff;
+            border-left: 1px solid #e4e6ea;
+            height: 100%;
+            overflow-y: auto;
+            width: 280px;
+            min-width: 280px;
+            max-width: 280px;
+        }
+
+        /* Custom Scrollbar for Chat Info Sidebar */
+        .chat-info-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-info-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-info-sidebar::-webkit-scrollbar-thumb {
+            background: #bcc0c4;
+            border-radius: 10px;
+        }
+
+        .chat-info-sidebar::-webkit-scrollbar-thumb:hover {
+            background: #8a8d91;
+        }
+
+        .info-header {
+            padding: 24px 16px;
+            text-align: center;
+            border-bottom: 1px solid #e4e6ea;
+        }
+
+        .info-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 12px;
+        }
+
+        .info-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #050505;
+        }
+
+        .info-status {
+            font-size: 14px;
+            color: #42b883;
+        }
+
+        .info-section {
+            padding: 16px;
+            border-bottom: 1px solid #e4e6ea;
+        }
+
+        .info-section h6 {
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #050505;
+            font-size: 14px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            font-size: 14px;
+            color: #65676b;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 8px 8px;
+            margin: 2px 0;
+            transition: background-color 0.1s ease;
+        }
+
+        .info-item:hover {
+            background: #f2f3f5;
+        }
+
+        .info-item span:first-child {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Empty State */
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #65676b;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .empty-chat .empty-icon {
+            width: 96px;
+            height: 96px;
+            background: #f0f2f5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #bcc0c4;
+        }
+
+        .empty-chat h5 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #050505;
+        }
+
+        .empty-chat p {
+            font-size: 14px;
+            color: #65676b;
+            margin: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-info-sidebar {
+                display: none;
+            }
+
+            .chat-sidebar {
+                width: 280px;
+                min-width: 280px;
+                max-width: 280px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .chat-sidebar {
+                position: absolute;
+                left: -100%;
+                width: 100%;
+                max-width: 100%;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+
+            .chat-sidebar.show {
+                left: 0;
+            }
+        }
+
+        /* Firefox Scrollbar */
+        .chat-sidebar,
+        .chat-messages,
+        .chat-info-sidebar {
+            scrollbar-width: thin;
+            scrollbar-color: #bcc0c4 transparent;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Nhúng fragment navbar -->
+    <div th:replace="fragments/navbar :: navbar"></div>
+
+    <!-- Main Chat Container -->
+    <div class="container-fluid p-0 h-100">
+        <div class="chat-container">
+            <div class="d-flex h-100">
+
+                <!-- Left Sidebar - Chat List -->
+                <div class="chat-sidebar">
+                    <div class="sidebar-header">
+                        <h4>Tin nhắn</h4>
+                    </div>
+
+                    <div class="chat-search">
+                        <input type="text" placeholder="Tìm kiếm cuộc trò chuyện..." id="chatSearchInput">
+                    </div>
+
+                    <div class="chat-list" id="chatList">
+                        <!-- Demo chat items -->
+                        <div class="text-center py-4">
+                            <small class="text-muted">Đang tải danh sách chat...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center - Chat Content -->
+                <div class=" flex-fill">
+                    <div class="chat-content">
+                        <div id="chatArea" class="h-100 d-flex flex-column">
+                            <!-- Empty state -->
+                            <div class="empty-chat">
+                                <div class="empty-icon">💬</div>
+                                <h5>Chọn một cuộc trò chuyện</h5>
+                                <p>Chọn từ danh sách bên trái để bắt đầu trò chuyện</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar - Chat Info -->
+                <div class="chat-info-sidebar">
+                    <div id="chatInfoArea">
+                        <div class="empty-chat">
+                            <div class="empty-icon">ℹ️</div>
+                            <h6>Thông tin cuộc trò chuyện</h6>
+                            <p class="small text-muted">Chọn một cuộc trò chuyện để xem thông tin</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        let currentChatId = null;
+        let selectedChatName = '';
+        let selectedAvatarUrl = '';
+
+        // Initialize with real friend data
+        // Heartbeat mechanism để cập nhật last_seen_at
+        function startHeartbeat() {
+            // Gửi heartbeat ngay lập tức
+            sendHeartbeat();
+
+            // Sau đó gửi mỗi 2 phút
+            setInterval(() => {
+                sendHeartbeat();
+            }, 120000); // 120000ms = 2 phút
+        }
+
+        async function sendHeartbeat() {
+            try {
+                const response = await fetch('/api/presence/heartbeat', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    console.log('Heartbeat sent successfully');
+                } else {
+                    console.warn('Heartbeat failed:', response.status);
+                }
+            } catch (error) {
+                console.error('Heartbeat error:', error);
+            }
+        }
+
+        // Refresh friends list định kỳ để cập nhật online status
+        function startFriendsRefresh() {
+            setInterval(() => {
+                loadFriends();
+            }, 60000); // Refresh mỗi 1 phút
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadFriends();      // Load friends ngay lập tức
+            startHeartbeat();   // Bắt đầu heartbeat
+            startFriendsRefresh(); // Bắt đầu refresh friends
+
+            console.log('🟢 Online status system initialized in messages page!');
+            console.log('📡 Heartbeat: every 2 minutes');
+            console.log('🔄 Friends refresh: every 1 minute');
+        });
+
+        // Get current user ID from localStorage
+        // Load friends from API
+        async function loadFriends() {
+            // Get current user ID from localStorage
+            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+            const userId = auth.user_id;
+            const chatList = document.getElementById('chatList');
+
+            if (!userId) {
+                chatList.innerHTML = `
+                    <div class="text-center py-4">
+                        <small class="text-danger">User not logged in</small>
+                    </div>
+                `;
+                return;
+            }
+
+            console.log('Loading friends for userId:', userId);
+
+            // Show loading
+            chatList.innerHTML = `
+                <div class="text-center py-4">
+                    <small class="text-muted">Đang tải danh sách bạn bè...</small>
+                </div>
+            `;
+
+            try {
+                // Sử dụng API mới với online status như trong index.html
+                const apiUrl = `/api/friends/${userId}/online-status`;
+                console.log('Fetching from URL:', apiUrl);
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch friends: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Friends response:', data);
+
+                // API mới trả về object có friends array
+                const friends = data.friends || [];
+
+                // Transform friends data to chat format với online status
+                const chats = friends
+                    .filter(friendData => friendData.status === 'accepted') // Only show accepted friends
+                    .map(friendData => transformFriendToChat(friendData, userId));
+
+                displayChatList(chats);
+
+            } catch (error) {
+                console.error('Error loading friends:', error);
+                chatList.innerHTML = `
+                    <div class="text-center py-4">
+                        <small class="text-danger">Không thể tải danh sách bạn bè</small>
+                        <br>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadFriends()">
+                            Thử lại
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Calculate online status based on last_seen_at
+        function calculateOnlineStatus(lastSeenAt) {
+            if (!lastSeenAt) return false;
+
+            const lastSeen = new Date(lastSeenAt);
+            const now = new Date();
+            const diffMinutes = (now - lastSeen) / (1000 * 60);
+
+            // Online nếu last_seen_at trong vòng 3 phút
+            return diffMinutes < 3;
+        }
+
+        // Transform friend data to chat format
+        function transformFriendToChat(friendData, currentUserId) {
+            // Determine who is the friend (not the current user)
+            const friendInfo = friendData.friend_info;
+            const friendUserId = (friendData.sender_id === currentUserId) ? friendData.receiver_id : friendData.sender_id;
+
+            // Tính toán online status từ last_seen_at
+            const isOnline = calculateOnlineStatus(friendInfo.last_seen_at);
+
+            return {
+                id: friendUserId, // Use friend's user ID as chat ID for direct chat
+                friendId: friendUserId,
+                name: friendInfo.full_name || `${friendInfo.first_name} ${friendInfo.last_name}`.trim(),
+                avatar: friendInfo.avatar_url || '/img/default-avatar.png',
+                lastMessage: 'Bắt đầu cuộc trò chuyện...', // Default message
+                time: formatTime(friendData.updated_at || friendData.created_at),
+                online: isOnline // Use real online status
+            };
+        }
+
+        // Format time for display
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                return date.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } else if (diffDays === 1) {
+                return 'Hôm qua';
+            } else if (diffDays < 7) {
+                return `${diffDays} ngày trước`;
+            } else {
+                return date.toLocaleDateString('vi-VN');
+            }
+        }
+
+        // Display chat list
+        function displayChatList(chats) {
+            const chatList = document.getElementById('chatList');
+            chatList.innerHTML = '';
+
+            if (chats.length === 0) {
+                chatList.innerHTML = `
+                    <div class="text-center py-4">
+                        <small class="text-muted">Chưa có bạn bè nào</small>
+                        <br>
+                        <small class="text-muted">Hãy kết bạn để bắt đầu trò chuyện</small>
+                    </div>
+                `;
+                return;
+            }
+
+            chats.forEach(chat => {
+                const chatItem = createChatItem(chat);
+                chatList.appendChild(chatItem);
+            });
+        }
+
+        // Create chat item element
+        function createChatItem(chat) {
+            const div = document.createElement('div');
+
+            div.innerHTML = `
+                <a href="#" class="chat-item" data-chat-id="${chat.id}" data-friend-id="${chat.friendId}" data-online="${chat.online}" onclick="openChat(${chat.friendId}, '${escapeHtml(chat.name)}', '${chat.avatar}')">
+                    <div class="position-relative">
+                        <img src="${chat.avatar}" class="chat-avatar" alt="${escapeHtml(chat.name)}" onerror="this.src='/img/default-avatar.png'">
+                        ${chat.online ? '<span class="online-indicator"></span>' : '<span class="offline-indicator"></span>'}
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-name">${escapeHtml(chat.name)}</div>
+                        <div class="chat-last-message">${escapeHtml(chat.lastMessage)}</div>
+                    </div>
+                    <div class="chat-time">
+                        ${chat.time}
+                    </div>
+                </a>
+            `;
+
+            return div;
+        }
+
+        // Open chat with real API integration
+        async function openChat(friendId, chatName, avatarUrl) {
+            try {
+                // Get current user ID
+                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                const currentUserId = auth.user_id;
+
+                if (!currentUserId) {
+                    console.error('Current user ID not found');
+                    alert('Vui lòng đăng nhập lại');
+                    return;
+                }
+
+                console.log(`Opening chat: Current User ${currentUserId} with Friend ${friendId}`);
+
+                // Update active chat item
+                document.querySelectorAll('.chat-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.target.closest('.chat-item').classList.add('active');
+
+                // Show loading state
+                showChatLoadingState(chatName, avatarUrl);
+
+                // Step 1: Check if chat exists, if not create it
+                const chatId = await findOrCreateDirectChat(currentUserId, friendId);
+
+                if (chatId) {
+                    // Set current chat info
+                    currentChatId = chatId;
+                    selectedChatName = chatName;
+                    selectedAvatarUrl = avatarUrl;
+
+                    // Step 2: Load real chat content
+                    await loadRealChatContent(chatId, chatName, avatarUrl, currentUserId);
+
+                    // Step 3: Load chat info
+                    loadChatInfo(chatId, chatName, avatarUrl);
+
+                    console.log(`✅ Chat opened successfully with ID: ${chatId}`);
+                } else {
+                    throw new Error('Failed to create or find chat');
+                }
+
+            } catch (error) {
+                console.error('Error opening chat:', error);
+                showChatErrorState(chatName, avatarUrl, error.message);
+            }
+        }
+
+        // Find or create direct chat using API
+        async function findOrCreateDirectChat(userId1, userId2) {
+            try {
+                console.log(`🔍 Finding or creating chat between users ${userId1} and ${userId2}`);
+
+                const response = await fetch('/api/chats/find-or-create-direct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        userId1: userId1,
+                        userId2: userId2
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const chatData = await response.json();
+                console.log('💬 Chat data received:', chatData);
+
+                return chatData.chatId;
+
+            } catch (error) {
+                console.error('❌ Error in findOrCreateDirectChat:', error);
+                throw error;
+            }
+        }
+
+        // Show loading state while opening chat
+        function showChatLoadingState(chatName, avatarUrl) {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.innerHTML = `
+                <div class="chat-header">
+                    <img src="${avatarUrl}" class="chat-header-avatar" alt="${chatName}">
+                    <div class="chat-header-info">
+                        <h5>${chatName}</h5>
+                        <div class="status">Đang tải...</div>
+                    </div>
+                </div>
+                
+                <div class="chat-messages flex-fill overflow-auto d-flex align-items-center justify-content-center">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">Đang mở cuộc trò chuyện...</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <div class="input-container">
+                        <input type="text" class="message-input" placeholder="Đang tải..." disabled>
+                        <button class="send-btn" disabled>
+                            <span>▶</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show error state if chat fails to load
+        function showChatErrorState(chatName, avatarUrl, errorMessage) {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.innerHTML = `
+                <div class="chat-header">
+                    <img src="${avatarUrl}" class="chat-header-avatar" alt="${chatName}">
+                    <div class="chat-header-info">
+                        <h5>${chatName}</h5>
+                        <div class="status text-danger">Lỗi kết nối</div>
+                    </div>
+                </div>
+                
+                <div class="chat-messages flex-fill overflow-auto d-flex align-items-center justify-content-center">
+                    <div class="text-center">
+                        <div class="text-danger mb-3">
+                            <i class="fas fa-exclamation-triangle fa-3x"></i>
+                        </div>
+                        <h6 class="text-danger">Không thể mở cuộc trò chuyện</h6>
+                        <p class="text-muted small">${errorMessage}</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="openChat(${currentChatId}, '${escapeHtml(chatName)}', '${avatarUrl}')">
+                            Thử lại
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <div class="input-container">
+                        <input type="text" class="message-input" placeholder="Không thể gửi tin nhắn" disabled>
+                        <button class="send-btn" disabled>
+                            <span>▶</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load real chat content with messages from API
+        async function loadRealChatContent(chatId, chatName, avatarUrl, currentUserId) {
+            const chatArea = document.getElementById('chatArea');
+
+            try {
+                // Show chat interface first
+                chatArea.innerHTML = `
+                    <div class="chat-header">
+                        <img src="${avatarUrl}" class="chat-header-avatar" alt="${chatName}">
+                        <div class="chat-header-info">
+                            <h5>${chatName}</h5>
+                            <div class="status">Đang hoạt động</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages flex-fill overflow-auto" id="chatMessages">
+                        <div class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Đang tải tin nhắn...</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <div class="input-container">
+                            <input type="text" class="message-input" placeholder="Aa" id="messageInput">
+                            <button class="send-btn" onclick="sendRealMessage()">
+                                <span>▶</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Load messages from API
+                await loadMessagesFromAPI(chatId, currentUserId);
+
+                // Setup input handlers
+                const messageInput = document.getElementById('messageInput');
+                messageInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendRealMessage();
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error loading chat content:', error);
+                showChatErrorState(chatName, avatarUrl, 'Không thể tải nội dung cuộc trò chuyện');
+            }
+        }
+
+        // Load messages from API
+        async function loadMessagesFromAPI(chatId, currentUserId) {
+            try {
+                console.log(`📨 Loading messages for chat ${chatId}`);
+
+                const response = await fetch(`/api/messages/chat/${chatId}?userId=${currentUserId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load messages: ${response.status} ${response.statusText}`);
+                }
+
+                const messages = await response.json();
+                console.log('📨 Messages loaded:', messages);
+
+                // Transform API messages to display format, keep original timestamp for sorting
+                const displayMessages = messages.map(msg => ({
+                    id: msg.message_id,
+                    content: msg.content || '[Media]',
+                    mediaUrl: msg.media_url,
+                    isCurrentUser: msg.sender_id === currentUserId,
+                    time: formatMessageTime(msg.created_at),
+                    senderName: msg.sender_full_name,
+                    senderAvatar: msg.sender_avatar_url,
+                    created_at: msg.created_at // keep original timestamp for sorting
+                }));
+
+                displayRealMessages(displayMessages);
+
+            } catch (error) {
+                console.error('❌ Error loading messages:', error);
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = `
+                    <div class="text-center py-4">
+                        <small class="text-danger">Không thể tải tin nhắn</small>
+                        <br>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadMessagesFromAPI(${chatId}, ${currentUserId})">
+                            Thử lại
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Display real messages
+        function displayRealMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+
+            if (messages.length === 0) {
+                chatMessages.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="text-muted">
+                            <i class="fas fa-comments fa-2x mb-3 opacity-50"></i>
+                            <p>Chưa có tin nhắn nào</p>
+                            <small>Hãy gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện</small>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort messages by created_at (timestamp) ascending (oldest to newest)
+            messages.sort((a, b) => {
+                // Always use created_at for sorting
+                return new Date(a.created_at) - new Date(b.created_at);
+            });
+
+            messages.forEach(message => {
+                const messageDiv = createRealMessageElement(message);
+                chatMessages.appendChild(messageDiv);
+            });
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Create real message element
+        function createRealMessageElement(message) {
+            const div = document.createElement('div');
+
+            div.className = `message ${message.isCurrentUser ? 'sent' : ''}`;
+
+            let contentHtml = '';
+            if (message.content) {
+                contentHtml += `<div>${escapeHtml(message.content)}</div>`;
+            }
+            if (message.mediaUrl) {
+                contentHtml += `<div class="mt-2"><a href="${message.mediaUrl}" target="_blank" class="text-decoration-none">📎 Media</a></div>`;
+            }
+
+            div.innerHTML = `
+                <div class="message-bubble">
+                    ${contentHtml}
+                    <div class="message-time">${message.time}</div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Format message time from API timestamp
+        function formatMessageTime(timestamp) {
+            if (!timestamp) return '';
+
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                return date.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } else if (diffDays === 1) {
+                return 'Hôm qua ' + date.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } else {
+                return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        // Search functionality
+        document.getElementById('chatSearchInput').addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const chatItems = document.querySelectorAll('.chat-item');
+
+            chatItems.forEach(item => {
+                const chatName = item.querySelector('.chat-name').textContent.toLowerCase();
+                const chatMessage = item.querySelector('.chat-last-message').textContent.toLowerCase();
+
+                if (chatName.includes(searchTerm) || chatMessage.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Utility function
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Display messages
+        function displayMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+
+            messages.forEach(message => {
+                const messageDiv = createMessageElement(message);
+                chatMessages.appendChild(messageDiv);
+            });
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Create message element
+        function createMessageElement(message) {
+            const div = document.createElement('div');
+
+            div.className = `message ${message.isCurrentUser ? 'sent' : ''}`;
+            div.innerHTML = `
+                <div class="message-bubble">
+                    <div>${escapeHtml(message.content)}</div>
+                    <div class="message-time">${message.time}</div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Send real message using API
+        async function sendRealMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const content = messageInput.value.trim();
+
+            if (!content || !currentChatId) return;
+
+            // Get current user ID
+            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+            const currentUserId = auth.user_id;
+
+            if (!currentUserId) {
+                alert('Vui lòng đăng nhập lại');
+                return;
+            }
+
+            // Disable input while sending
+            messageInput.disabled = true;
+            const sendBtn = messageInput.parentElement.querySelector('.send-btn');
+            sendBtn.disabled = true;
+
+            try {
+                console.log(`📤 Sending message to chat ${currentChatId}`);
+
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        chat_id: currentChatId,
+                        sender_id: currentUserId,
+                        content: content,
+                        media_url: null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const messageData = await response.json();
+                console.log('✅ Message sent successfully:', messageData);
+
+                // Clear input
+                messageInput.value = '';
+
+                // Add message to chat immediately
+                const newMessage = {
+                    id: messageData.message_id,
+                    content: messageData.content,
+                    isCurrentUser: true,
+                    time: formatMessageTime(messageData.created_at),
+                    senderName: messageData.sender_full_name,
+                    senderAvatar: messageData.sender_avatar_url
+                };
+
+                // Add to chat
+                const chatMessages = document.getElementById('chatMessages');
+                const messageDiv = createRealMessageElement(newMessage);
+                chatMessages.appendChild(messageDiv);
+
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            } catch (error) {
+                console.error('❌ Error sending message:', error);
+                alert('Không thể gửi tin nhắn: ' + error.message);
+            } finally {
+                // Re-enable input
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        // Load chat info with real data
+        function loadChatInfo(chatId, chatName, avatarUrl) {
+            const chatInfoArea = document.getElementById('chatInfoArea');
+
+            chatInfoArea.innerHTML = `
+                <div class="info-header">
+                    <img src="${avatarUrl}" class="info-avatar" alt="${chatName}">
+                    <div class="info-name">${chatName}</div>
+                    <div class="info-status">Đang hoạt động</div>
+                </div>
+                
+                <div class="info-section">
+                    <h6>Thông tin cuộc trò chuyện</h6>
+                    <div class="info-item">
+                        <span>🔗</span>
+                        <span>Chat ID: ${chatId}</span>
+                    </div>
+                    <div class="info-item">
+                        <span>👥</span>
+                        <span>Trò chuyện riêng tư</span>
+                    </div>
+                    <div class="info-item">
+                        <span>📅</span>
+                        <span>Được tạo hôm nay</span>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h6>Tùy chọn</h6>
+                    <div class="info-item">
+                        <span>🔔</span>
+                        <span>Tắt thông báo</span>
+                    </div>
+                    <div class="info-item text-danger" onclick="confirmDeleteChat(${chatId})">
+                        <span>🗑️</span>
+                        <span>Xóa cuộc trò chuyện</span>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        // Confirm delete chat (placeholder)
+        function confirmDeleteChat(chatId) {
+            if (confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này?')) {
+                // TODO: Implement delete chat functionality
+                alert('Tính năng xóa cuộc trò chuyện sẽ được triển khai sau');
+            }
+        }
+
+        // Search functionality
+        document.getElementById('chatSearchInput').addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const chatItems = document.querySelectorAll('.chat-item');
+
+            chatItems.forEach(item => {
+                const chatName = item.querySelector('.chat-name').textContent.toLowerCase();
+                const chatMessage = item.querySelector('.chat-last-message').textContent.toLowerCase();
+
+                if (chatName.includes(searchTerm) || chatMessage.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Utility function
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

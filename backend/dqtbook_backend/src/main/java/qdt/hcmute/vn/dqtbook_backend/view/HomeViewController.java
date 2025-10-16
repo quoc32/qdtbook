@@ -76,6 +76,17 @@ class ViewController {
         }
         return "friends";
     }
+
+    @GetMapping("/messages")
+    public String messages(HttpServletRequest request, Model model) {
+        Object userId = request.getSession().getAttribute("userId");
+        if (userId == null) {
+            model.addAttribute("error", "You must be logged in to access this page");
+            return "error";
+        }
+        model.addAttribute("userId", userId.toString());
+        return "messages";
+    }
 }
 
 @Controller
