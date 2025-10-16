@@ -18,6 +18,24 @@
     
     <!-- Main content:BEGIN -->
     <section class="container my-4">
+        <style>
+        /* Match personal page image grid for consistent look */
+        .post-media{border-radius:18px;overflow:hidden;display:grid;gap:6px}
+        .pm-grid{--c:1;grid-template-columns:repeat(var(--c),1fr)}
+        .pm-grid.img-2{--c:2}
+        .pm-grid.img-3{--c:2}
+        .pm-grid.img-4{--c:2}
+        .post-media figure{position:relative;margin:0}
+        .post-media img,.post-media video{width:100%;height:100%;object-fit:contain;display:block;border-radius:14px;background:#000}
+        /* Fixed tile heights like profile feed */
+        .pm-grid > figure{height:480px}
+        .pm-grid.img-1 > figure{height:720px}
+        .pm-grid.img-2 > figure{height:520px}
+        .pm-grid.img-3 > figure{height:400px}
+        .pm-grid.img-4 > figure{height:360px}
+        .pm-grid.img-3> :first-child{grid-column:span 2}
+        .pm-grid.img-4> :nth-child(1){grid-row:span 2}
+        </style>
         <div id="role-announment"
              class="alert d-flex align-items-center gap-2 py-2 px-3 mb-3 small border-0"
              th:attr="data-role=${role}"
@@ -319,83 +337,97 @@
             const wrap = document.createElement('div');
             wrap.className = 'mt-3';
 
-            const row = document.createElement('div');
-            row.className = 'row g-2';
-            wrap.appendChild(row);
-
             const images = items.filter(i => i.type === 'image');
             const videos = items.filter(i => i.type === 'video');
             const files  = items.filter(i => i.type === 'file');
 
-            // Images
-            images.forEach((item, idx) => {
-                const col = document.createElement('div');
-                // 1 image: full width; 2-3: thirds on md; >=4: quarters on lg
-                if (images.length === 1) col.className = 'col-12';
-                else if (images.length <= 3) col.className = 'col-6 col-md-4';
-                else col.className = 'col-6 col-md-4 col-lg-3';
+            // Images: render as uniform-height grid like profile page
+            if (images.length) {
+                const grid = document.createElement('div');
+                grid.className = 'post-media pm-grid';
+                grid.classList.add(images.length <= 4 ? ('img-' + images.length) : 'img-4');
+                images.slice(0,4).forEach((item, idx) => {
+                    const fig = document.createElement('figure');
+                    const link = document.createElement('a');
+                    link.href = item.url;
+                    link.target = '_blank';
+                    link.rel = 'noopener';
+                    link.className = 'd-block w-100 h-100';
+                    const img = document.createElement('img');
+                    img.src = item.url;
+                    img.alt = 'Hình ảnh';
+                    img.loading = 'lazy';
+                    img.decoding = 'async';
+                    link.appendChild(img);
+                    fig.appendChild(link);
+                    if (idx === 3 && images.length > 4) {
+                        const overlay = document.createElement('div');
+                        overlay.textContent = '+' + (images.length - 4);
+                        overlay.style.position = 'absolute';
+                        overlay.style.inset = '0';
+                        overlay.style.display = 'flex';
+                        overlay.style.alignItems = 'center';
+                        overlay.style.justifyContent = 'center';
+                        overlay.style.fontSize = '2rem';
+                        overlay.style.fontWeight = '700';
+                        overlay.style.color = '#fff';
+                        overlay.style.background = 'rgba(0,0,0,.45)';
+                        overlay.style.backdropFilter = 'blur(2px)';
+                        fig.style.position = 'relative';
+                        fig.appendChild(overlay);
+                    }
+                    grid.appendChild(fig);
+                });
+                wrap.appendChild(grid);
+            }
 
-                const link = document.createElement('a');
-                link.href = item.url;
-                link.target = '_blank';
-                link.rel = 'noopener';
-                link.className = 'd-block';
-
-                const img = document.createElement('img');
-                img.src = item.url;
-                img.alt = 'Hình ảnh';
-                img.loading = 'lazy';
-                img.decoding = 'async';
-                img.className = 'img-fluid rounded border';
-                img.onerror = function () { this.closest('a')?.remove(); };
-
-                link.appendChild(img);
-                col.appendChild(link);
-                row.appendChild(col);
-            });
-
-            // Videos
-            videos.forEach(item => {
-                const col = document.createElement('div');
-                col.className = 'col-12';
-                if (isExternalPlayer(item.url)) {
-                    const ratio = document.createElement('div');
-                    ratio.className = 'ratio ratio-16x9';
-                    const iframe = document.createElement('iframe');
-                    iframe.src = toEmbedUrl(item.url);
-                    iframe.title = 'Video';
-                    iframe.loading = 'lazy';
-                    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-                    iframe.allowFullscreen = true;
-                    ratio.appendChild(iframe);
-                    col.appendChild(ratio);
-                } else {
-                    const video = document.createElement('video');
-                    video.controls = true;
-                    video.className = 'w-100 rounded border';
-                    video.preload = 'metadata';
-                    const source = document.createElement('source');
-                    source.src = item.url;
-                    source.type = guessVideoMime(item.url) || 'video/mp4';
-                    video.appendChild(source);
-                    col.appendChild(video);
-                }
-                row.appendChild(col);
-            });
-
-            // Files
-            files.forEach(item => {
-                const col = document.createElement('div');
-                col.className = 'col-12';
-                const a = document.createElement('a');
-                a.href = item.url;
-                a.target = '_blank';
-                a.rel = 'noopener';
-                a.className = 'btn btn-sm btn-outline-secondary';
-                a.textContent = 'Tệp đính kèm';
-                col.appendChild(a);
-                row.appendChild(col);
-            });
+            // Videos/Files: keep bootstrap row layout below images
+            if (videos.length || files.length) {
+                const row = document.createElement('div');
+                row.className = 'row g-2 mt-2';
+                // Videos
+                videos.forEach(item => {
+                    const col = document.createElement('div');
+                    col.className = 'col-12';
+                    if (isExternalPlayer(item.url)) {
+                        const ratio = document.createElement('div');
+                        ratio.className = 'ratio ratio-16x9';
+                        const iframe = document.createElement('iframe');
+                        iframe.src = toEmbedUrl(item.url);
+                        iframe.title = 'Video';
+                        iframe.loading = 'lazy';
+                        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                        iframe.allowFullscreen = true;
+                        ratio.appendChild(iframe);
+                        col.appendChild(ratio);
+                    } else {
+                        const video = document.createElement('video');
+                        video.controls = true;
+                        video.className = 'w-100 rounded border';
+                        video.preload = 'metadata';
+                        const source = document.createElement('source');
+                        source.src = item.url;
+                        source.type = guessVideoMime(item.url) || 'video/mp4';
+                        video.appendChild(source);
+                        col.appendChild(video);
+                    }
+                    row.appendChild(col);
+                });
+                // Files
+                files.forEach(item => {
+                    const col = document.createElement('div');
+                    col.className = 'col-12';
+                    const a = document.createElement('a');
+                    a.href = item.url;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                    a.className = 'btn btn-sm btn-outline-secondary';
+                    a.textContent = 'Tệp đính kèm';
+                    col.appendChild(a);
+                    row.appendChild(col);
+                });
+                wrap.appendChild(row);
+            }
 
             return wrap;
         }

@@ -52,6 +52,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     // map author
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
@@ -144,6 +145,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
                     if (post.getAuthor() != null) {
@@ -190,6 +192,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
                     if (post.getAuthor() != null) {
@@ -246,6 +249,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
                     if (post.getAuthor() != null) {
@@ -283,6 +287,7 @@ public class PostService {
                     dto.setPostType(post.getPostType());
                     dto.setStatus(post.getStatus());
                     dto.setCreatedAt(post.getCreatedAt());
+                    dto.setUpdatedAt(post.getUpdatedAt());
 
                     PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
                     if (post.getAuthor() != null) {
@@ -466,6 +471,15 @@ public class PostService {
         Optional<Post> existing = postRepository.findById(id);
         if (existing.isEmpty()) return Optional.empty();
         Post e = existing.get();
+
+        // Check that the currently logged-in user (from session) is the author of the post
+        Integer loggedUserId = (Integer) session.getAttribute("userId");
+        if (loggedUserId == null) {
+            throw new IllegalArgumentException("user is not logged in");
+        }
+        if (e.getAuthor() == null || !loggedUserId.equals(e.getAuthor().getId())) {
+            throw new IllegalArgumentException("logged-in user is not the author of the post");
+        }
 
         if (dto.getContent() != null) e.setContent(dto.getContent());
         if (dto.getVisibility() != null) e.setVisibility(dto.getVisibility());

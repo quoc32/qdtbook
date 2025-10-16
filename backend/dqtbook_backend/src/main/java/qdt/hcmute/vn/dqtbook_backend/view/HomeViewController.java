@@ -16,7 +16,8 @@ public class HomeViewController {
     public String home(Model model, HttpServletRequest request) {
         Object userId = request.getSession().getAttribute("userId");
         if (userId == null) {
-            return "redirect:/views/login";
+            model.addAttribute("error", "You must be logged in to access this page");
+            return "error";
         }
         model.addAttribute("userId", userId.toString());
         return "index";
@@ -109,7 +110,8 @@ class ViewController {
     public String market(HttpServletRequest request, Model model) {
         Object userId = request.getSession().getAttribute("userId");
         if (userId == null) {
-            return "redirect:/views/login";
+            model.addAttribute("error", "You must be logged in to access this page");
+            return "error";
         }
         model.addAttribute("userId", userId.toString());
         return "market";

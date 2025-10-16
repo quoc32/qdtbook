@@ -17,6 +17,7 @@ public class PostContentResponseDTO {
     private AuthorDTO author;
     private List<MediaDTO> media;
     private Instant createdAt;
+    private Instant updatedAt;
 
     @Getter
     @Setter
