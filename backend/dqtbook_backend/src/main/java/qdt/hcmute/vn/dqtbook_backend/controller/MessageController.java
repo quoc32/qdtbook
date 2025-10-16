@@ -8,6 +8,7 @@ import qdt.hcmute.vn.dqtbook_backend.dto.MessageResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.service.MessageService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -57,9 +58,36 @@ public class MessageController {
      */
     @PostMapping
     public ResponseEntity<?> sendMessage(@RequestBody MessageRequestDTO request) {
-        return messageService.sendMessage(request)
-                .map(message -> ResponseEntity.status(HttpStatus.CREATED).body(message))
-                .orElse(ResponseEntity.badRequest().build());
+        // Validate request
+        if (request == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Request body is required"));
+        }
+
+        if (request.getChatId() == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "chat_id is required"));
+        }
+
+        if (request.getSenderId() == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "sender_id is required"));
+        }
+
+        // At least one of content or media_url must be provided
+        if ((request.getContent() == null || request.getContent().trim().isEmpty()) &&
+                (request.getMediaUrl() == null || request.getMediaUrl().trim().isEmpty())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Either content or media_url must be provided"));
+        }
+
+        var messageOptional = messageService.sendMessage(request);
+        if (messageOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(messageOptional.get());
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Failed to send message. Please check if chat exists and you are a member."));
+        }
     }
 
     /**
