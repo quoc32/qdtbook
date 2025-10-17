@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import qdt.hcmute.vn.dqtbook_backend.model.Chat;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -72,4 +73,45 @@ public interface ChatRepository extends JpaRepository<Chat, Integer> {
             ")")
     Optional<Integer> findChatIdBetweenUsers(@Param("userId1") Integer userId1,
             @Param("userId2") Integer userId2);
+
+    /**
+     * Find a group chat with exactly the same set of members
+     * Logic đơn giản: 
+     * 1. Tìm các chat có đúng memberCount members
+     * 2. Kiểm tra tất cả members trong chat có nằm trong memberIds không
+     * 3. Kiểm tra tất cả memberIds có nằm trong chat không
+     * 
+     * @param memberIds List of user IDs in the group (đã sort)
+     * @param memberCount Number of members
+     * @return Optional containing the chat if found
+     */
+    @Query("SELECT c FROM Chat c " +
+            "WHERE c.isGroup = true " +
+            "AND c.id IN (" +
+            "  SELECT cm.chat.id FROM ChatMember cm " +
+            "  WHERE cm.user.id IN :memberIds " +
+            "  GROUP BY cm.chat.id " +
+            "  HAVING COUNT(DISTINCT cm.user.id) = :memberCount" +
+            ") " +
+            "AND c.id NOT IN (" +
+            "  SELECT cm2.chat.id FROM ChatMember cm2 " +
+            "  WHERE cm2.user.id NOT IN :memberIds" +
+            ")")
+    Optional<Chat> findGroupChatWithExactMembers(@Param("memberIds") List<Integer> memberIds,
+                                                   @Param("memberCount") Integer memberCount);
+
+    /**
+     * Find all group chats that a user is a member of
+     * 
+     * @param userId User ID
+     * @return List of group chats the user belongs to
+     */
+    @Query("SELECT c FROM Chat c " +
+            "WHERE c.isGroup = true " +
+            "AND c.id IN (" +
+            "  SELECT cm.chat.id FROM ChatMember cm " +
+            "  WHERE cm.user.id = :userId" +
+            ") " +
+            "ORDER BY c.createdAt DESC")
+    List<Chat> findGroupChatsByUserId(@Param("userId") Integer userId);
 }
