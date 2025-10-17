@@ -48,46 +48,89 @@
       </div>
     </main>
 
+    <main class="container py-4">
+      <h2 class="h5 mb-3">Quản lý báo cáo</h2>
+      <div class="card mb-4">
+        <div class="card-header">Danh sách báo cáo</div>
+        <div class="card-body">
+          <div id="reportsStatus" class="small mb-2 text-muted">Đang tải...</div>
+          <div class="table-responsive">
+            <table class="table table-sm" id="reportsTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Reporter</th>
+                  <th>Reason</th>
+                  <th>Type</th>
+                  <th>Target ID</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- rows injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
     <script>
       (function () {
         async function findUserByEmail(email) {
           const res = await fetch(`/api/users/find/by-email?email=${encodeURIComponent(email)}`, {
             credentials: 'include'
-          });
-          const contentType = res.headers.get('content-type') || '';
-          const data = contentType.includes('application/json')
-            ? await res.json().catch(() => null)
-            : await res.text();
-          if (!res.ok) {
-            throw new Error(typeof data === 'string' ? data : (data?.message || `HTTP ${res.status}`));
-          }
-          if (!data || !data.id) {
-            throw new Error('User not found by email');
-          }
-          return data;
-        }
-
-        async function upgradeRole(userId, toRole) {
-          const res = await fetch(`/api/users/${encodeURIComponent(userId)}/upgrade`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ toRole })
-          });
-          const contentType = res.headers.get('content-type') || '';
-          const data = contentType.includes('application/json')
-            ? await res.json().catch(() => ({}))
-            : await res.text();
-          if (!res.ok) {
-            throw new Error(typeof data === 'string' ? data : (data.message || `HTTP ${res.status}`));
-          }
-          return data;
-        }
-
-        function setStatus(el, msg, ok) {
-          el.textContent = msg;
-          el.className = 'small mt-3 ' + (ok ? 'text-success' : 'text-danger');
-        }
+              setContent('<div class="text-center text-muted py-2">Đang tải bình luận...</div>');
+              if(reportedPostId){
+                // fetch the post and the comments list, then find the comment by id (avoid non-existing single-comment GET)
+                const [resPost, resComments] = await Promise.all([
+                  fetch('/api/posts/'+encodeURIComponent(reportedPostId), { credentials:'include' }),
+                  fetch('/api/posts/'+encodeURIComponent(reportedPostId)+'/comments', { credentials:'include' })
+                ]);
+                if(!resPost.ok){ setContent('<div class="text-danger">Không tải được bài viết (HTTP '+resPost.status+')</div>'); }
+                else if(!resComments.ok){ setContent('<div class="text-danger">Không tải được danh sách bình luận (HTTP '+resComments.status+')</div>'); }
+                else {
+                  const post = await resPost.json();
+                  const comments = await resComments.json();
+                  // prepare author HTML: link to user profile if id present
+                  let authorHtml = '';
+                  try{
+                    const a = post.author || {};
+                    const aid = a.id || a.userId || a.user_id;
+                    const aname = a.fullName || a.full_name || a.username || a.name;
+                    if(aid){ authorHtml = `<a href="/views/user/${encodeURIComponent(aid)}" class="link-like">${escapeHtml(aname||('#'+aid))}</a>`; }
+                    else if(aname) { authorHtml = escapeHtml(aname); }
+                    else { authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+                  }catch(e){ authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+                  let comment = null;
+                  try{ if(Array.isArray(comments)) comment = comments.find(c => String(c.id || c.commentId || c.comment_id) === String(reportedCommentId)); }catch(e){}
+                  // Render post + highlighted comment
+                  const commentText = comment && (comment.content||comment.text) ? escapeHtml(comment.content||comment.text) : 'Không tìm thấy bình luận';
+                  // try to find media image from post
+                  let postImg = '/img/marketplace.png';
+                  try{ if(Array.isArray(post.media) && post.media.length && (post.media[0].mediaUrl || post.media[0].media_url)) postImg = post.media[0].mediaUrl || post.media[0].media_url; else if(Array.isArray(post.mediaUrls) && post.mediaUrls.length) postImg = post.mediaUrls[0]; }catch(e){}
+                  // avoid showing duplicate content when title equals content
+                  const showContent = (post.content && String((post.content||'').trim()) !== String((post.title||'').trim()));
+                  const html = `
+                    <div class="d-flex gap-3">
+                      <img src="${escapeHtml(postImg)}" style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                      <div class="flex-fill">
+                        <h5>Bài viết: ${escapeHtml(post.title || (post.content||'Bài viết'))}</h5>
+                        <div class="small text-muted mb-2">${authorHtml}</div>
+                        ${ showContent ? `<div style="white-space:pre-wrap;border-left:3px solid #eee;padding-left:10px;margin-bottom:10px;">${escapeHtml(post.content||'')}</div>` : '' }
+                        <hr />
+                        <h6>Bình luận được báo cáo:</h6>
+                        <div style="white-space:pre-wrap;background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;">${commentText}</div>
+                      </div>
+                    </div>`;
+                  setContent(html);
+                }
+              } else {
+                // no post id: backend does not provide a global GET /api/comments/{id} endpoint in this app.
+                // Show helpful message and raw report payload so admin can inspect.
+                setContent('<div class="text-danger">Không có postId trong báo cáo nên không thể lấy bình luận riêng lẻ. Hiển thị dữ liệu thô của báo cáo:</div><pre style="max-height:300px;overflow:auto">'+escapeHtml(JSON.stringify(r, null, 2))+'</pre>');
+                              }
 
         document.getElementById('btnSpecial').addEventListener('click', async () => {
           const email = document.getElementById('userEmailSpecial').value.trim();
@@ -124,6 +167,608 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Confirm delete modal -->
+    <div class="modal fade" id="qdt_confirm_delete_modal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Xác nhận</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="qdt_confirm_delete_text">Bạn có chắc chắn muốn xóa?</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-danger" id="qdt_confirm_delete_btn">Xóa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <!-- Admin report view modal -->
+      <div class="modal fade" id="qdt_admin_report_view_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Xem nội dung báo cáo</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="qdt_admin_report_view_content">
+                <div class="text-center text-muted py-3">Chưa có nội dung</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_comment_btn" style="display:none">Xóa comment</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_post_btn" style="display:none">Xóa bài đăng</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_product_btn" style="display:none">Xóa sản phẩm</button>
+              <button type="button" class="btn btn-danger" id="qdt_admin_report_delete_btn">Xóa báo cáo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <script>
+      (function(){
+        const statusEl = document.getElementById('reportsStatus');
+        const tbody = document.querySelector('#reportsTable tbody');
+
+  function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  // Normalize string for comparison: strip HTML tags, collapse whitespace, lowercase
+  function normalizeText(s){ if(!s) return ''; try{ return String(s).replace(/<[^>]*>/g,'').replace(/&[a-z]+;/gi,' ').replace(/\s+/g,' ').trim().toLowerCase(); }catch(e){ return String(s||'').trim().toLowerCase(); } }
+
+        async function loadReports(){
+          statusEl.textContent = 'Đang tải...';
+          try{
+            const res = await fetch('/api/reports', { credentials: 'include' });
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            const list = await res.json();
+            renderList(Array.isArray(list)?list:[]);
+            statusEl.textContent = `Đã tải ${Array.isArray(list)?list.length:0} báo cáo`;
+          }catch(e){ console.error(e); statusEl.textContent = 'Không tải được danh sách báo cáo'; }
+        }
+
+        function renderList(list){
+          tbody.innerHTML = '';
+          if(!list || list.length===0){
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted small">Chưa có báo cáo</td></tr>';
+            return;
+          }
+          // helper: recursively find a numeric id for keys matching regex
+          function findId(obj, keyRegex){
+            if(!obj || typeof obj !== 'object') return null;
+            try{
+              for(const k of Object.keys(obj)){
+                const v = obj[k];
+                if(keyRegex.test(k) && (typeof v === 'number' || (typeof v === 'string' && /^\d+$/.test(v)))) return String(v);
+                if(keyRegex.test(k) && typeof v === 'object' && v){
+                  // check nested id property
+                  if(v.id && (typeof v.id === 'number' || (typeof v.id === 'string' && /^\d+$/.test(v.id)))) return String(v.id);
+                }
+                if(typeof v === 'object' && v){
+                  const found = findId(v, keyRegex);
+                  if(found) return found;
+                }
+              }
+            }catch(e){}
+            return null;
+          }
+
+          list.forEach(r => {
+            const tr = document.createElement('tr');
+            // normalize reporter display
+            const reporter = (r.reporter && (r.reporter.fullName || r.reporter.full_name || r.reporter.username || r.reporter.email || ('#'+r.reporter.id))) || (r.reporter_id?('#'+r.reporter_id):'');
+            // normalize reported id fields (backend may return camelCase or snake_case)
+            let reportedProductId = r.reported_product_id || r.reportedProductId || r.reportedProduct || r.reportedProduct_id || null;
+            let reportedCommentId = r.reported_comment_id || r.reportedCommentId || r.reportedComment || r.reportedComment_id || null;
+            let reportedPostId = r.reported_post_id || r.reportedPostId || r.reportedPost || r.reportedPost_id || null;
+            // Fallback: scan keys for anything that looks like a post/comment/product id
+            if(!reportedPostId || !reportedCommentId || !reportedProductId){
+              try{
+                Object.keys(r || {}).forEach(k => {
+                  const v = r[k];
+                  if((reportedPostId==null) && /post/i.test(k) && (typeof v === 'number' || (typeof v === 'string' && /^\d+$/.test(v)))) reportedPostId = reportedPostId || String(v);
+                  if((reportedCommentId==null) && /comment/i.test(k) && (typeof v === 'number' || (typeof v === 'string' && /^\d+$/.test(v)))) reportedCommentId = reportedCommentId || String(v);
+                  if((reportedProductId==null) && /product/i.test(k) && (typeof v === 'number' || (typeof v === 'string' && /^\d+$/.test(v)))) reportedProductId = reportedProductId || String(v);
+                });
+              }catch(e){}
+            }
+            const type = r.status || (reportedProductId? 'product' : (reportedCommentId? 'comment' : (reportedPostId? 'post':'unknown')));
+            const targetId = reportedProductId || reportedCommentId || reportedPostId || '';
+            tr.innerHTML = `
+              <td>${escapeHtml(r.id)}</td>
+              <td>${escapeHtml(reporter)}</td>
+              <td style="max-width:320px;white-space:pre-wrap;">${escapeHtml(r.reason)}</td>
+              <td>${escapeHtml(type)}</td>
+              <td>${escapeHtml(targetId)}</td>
+              <td>${escapeHtml(r.createdAt||r.created_at||r.created)}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button class="btn btn-sm btn-outline-primary btn-view">View</button>
+                  <button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>
+                </div>
+              </td>
+            `;
+
+            const viewBtn = tr.querySelector('.btn-view');
+            const delBtn = tr.querySelector('.btn-delete');
+
+            viewBtn.addEventListener('click', async ()=>{
+              // debug: print report and normalized ids so we can see why fallback may run
+              try{ console.debug('admin: view report', {
+                id: r.id,
+                reportedProductId: reportedProductId,
+                reportedPostId: reportedPostId,
+                reportedCommentId: reportedCommentId,
+                raw: r
+              }); }catch(e){}
+              // Render the reported resource inside an admin modal instead of opening raw JSON
+              try{
+                const modalEl = document.getElementById('qdt_admin_report_view_modal');
+                const contentWrap = modalEl.querySelector('.qdt_admin_report_view_content');
+                const deleteBtn = document.getElementById('qdt_admin_report_delete_btn');
+                // helper to set modal content
+                function setContent(html){ contentWrap.innerHTML = html || '<div class="text-center text-muted py-3">Không có nội dung</div>'; }
+
+                // remember which report id is being viewed so delete from modal works
+                modalEl.dataset.viewReportId = r.id;
+
+        if(reportedProductId){
+                  setContent('<div class="text-center text-muted py-2">Đang tải thông tin sản phẩm...</div>');
+          const res = await fetch('/market/products/'+encodeURIComponent(reportedProductId), { credentials:'include' });
+                  if(!res.ok) { setContent('<div class="text-danger">Không tải được sản phẩm (HTTP '+res.status+')</div>'); }
+                  else {
+                    const p = await res.json();
+                    // render a compact product view
+                    const statusMap = { available: 'Còn hàng', out_of_stock: 'Hết hàng', hidden: 'Ẩn' };
+                    const statusLabel = p.status ? (statusMap[p.status] || p.status) : '';
+                    const sellerHtml = (p.sellerId && p.sellerName) ? `Người bán: <a href="/views/user/${p.sellerId}" class="link-like">${escapeHtml(p.sellerName)}</a>` : (p.sellerName? 'Người bán: '+escapeHtml(p.sellerName) : '');
+                    const qtyText = (p.quantity!=null) ? `Số lượng: ${p.quantity}` : '';
+                    const html = `
+                      <div class="d-flex gap-3">
+                        <img src="${escapeHtml((p.mediaUrls && p.mediaUrls[0])||'/img/marketplace.png')}" style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                        <div class="flex-fill">
+                          <h5>${escapeHtml(p.productName || 'Sản phẩm')}</h5>
+                          <div class="text-danger fw-bold">${p.price!=null? new Intl.NumberFormat('vi-VN').format(p.price)+'₫' : ''}</div>
+                          <div class="small text-muted mb-1">${sellerHtml}</div>
+                          <div class="small text-muted mb-1">${escapeHtml(qtyText)}</div>
+                          <div class="small" id="mk_detail_status">${escapeHtml(statusLabel)}</div>
+                          <div class="small text-muted">${escapeHtml(p.address||'')}</div>
+                          <hr />
+                          <div style="white-space:pre-wrap">${escapeHtml(p.description||'')}</div>
+                        </div>
+                      </div>`;
+                    setContent(html);
+                  }
+                  } else if(reportedCommentId){
+                  setContent('<div class="text-center text-muted py-2">Đang tải bình luận...</div>');
+                  if(reportedPostId){
+                    const res = await fetch('/api/posts/'+encodeURIComponent(reportedPostId), { credentials:'include' });
+                    if(!res.ok){ setContent('<div class="text-danger">Không tải được bài viết (HTTP '+res.status+')</div>'); }
+                    else {
+                      const post = await res.json();
+                      // prepare author HTML: link to user profile if id present
+                      let authorHtml = '';
+                      try{
+                        const a = post.author || {};
+                        const aid = a.id || a.userId || a.user_id;
+                        const aname = a.fullName || a.full_name || a.username || a.name;
+                        if(aid){ authorHtml = `<a href="/views/user/${encodeURIComponent(aid)}" class="link-like">${escapeHtml(aname||('#'+aid))}</a>`; }
+                        else if(aname) { authorHtml = escapeHtml(aname); }
+                        else { authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+                      }catch(e){ authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+                      // try fetch comment
+                      // fetch comments list for the post and find the reported comment (server doesn't expose single-comment GET)
+                      let comment = null;
+                      try{
+                        const cres = await fetch('/api/posts/'+encodeURIComponent(reportedPostId)+'/comments', { credentials:'include' });
+                        if(cres.ok){
+                          const commentsList = await cres.json();
+                          try{ if(Array.isArray(commentsList)) comment = commentsList.find(c => String(c.id || c.commentId || c.comment_id) === String(reportedCommentId)); }catch(e){}
+                        }
+                      }catch(e){ console.error('Failed to fetch comments list', e); }
+                      // Render post + highlighted comment (include commenter info)
+                      let commentText = comment && (comment.content||comment.text) ? escapeHtml(comment.content||comment.text) : 'Không tìm thấy bình luận';
+                      // commenter/html: prefer provided name, otherwise try to fetch user details by id
+                      let commenterHtml = '';
+                      try{
+                        const ca = comment && (comment.author || comment.user || comment.createdBy || comment.creator) || {};
+                        let cid = ca && (ca.id || ca.userId || ca.user_id || comment.userId || comment.user_id || comment.user);
+                        let cname = ca && (ca.fullName || ca.full_name || ca.username || ca.name) || comment.username || comment.userName || comment.displayName;
+                        if(!cname && cid){
+                          // fetch user details to get fullName (quietly)
+                          try{
+                            const ures = await fetch('/api/users/'+encodeURIComponent(cid), { credentials: 'include' });
+                            if(ures.ok){
+                              const u = await ures.json();
+                              cname = u.fullName || u.full_name || u.username || u.email || cname || ('#'+cid);
+                            }
+                          }catch(e){ /* ignore fetch errors */ }
+                        }
+                        if(cid){ commenterHtml = `<a href="/views/user/${encodeURIComponent(cid)}" class="link-like">${escapeHtml(cname||('#'+cid))}</a>`; }
+                        else if(cname){ commenterHtml = escapeHtml(cname); }
+                        else { commenterHtml = ''; }
+                      }catch(e){ commenterHtml = ''; }
+                      // try to find media image from post
+                      let postImg = '/img/marketplace.png';
+                      try{ if(Array.isArray(post.mediaUrls) && post.mediaUrls.length) postImg = post.mediaUrls[0]; else if(Array.isArray(post.media) && post.media[0] && (post.media[0].mediaUrl || post.media[0].url)) postImg = post.media[0].mediaUrl || post.media[0].url; }catch(e){}
+                      // hide duplicated content when title equals content
+                      const showContent = normalizeText(post.content) !== normalizeText(post.title);
+                      const html = `
+                          <div class="d-flex gap-3">
+                            <img src="${escapeHtml(postImg)}" style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                            <div class="flex-fill">
+                              <h5>Bài viết: ${escapeHtml(post.title || (post.content||'Bài viết'))}</h5>
+                              <div class="small text-muted mb-2">${authorHtml}</div>
+                              ${ showContent ? `<div style="white-space:pre-wrap;border-left:3px solid #eee;padding-left:10px;margin-bottom:10px;">${escapeHtml(post.content||'')}</div>` : '' }
+                              <hr />
+                              <h6>Bình luận được báo cáo:</h6>
+                              <div style="background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;">
+                                ${ commenterHtml ? `<div class="small text-muted mb-1">Bình luận bởi: ${commenterHtml}</div>` : '' }
+                                <div style="white-space:pre-wrap">${commentText}</div>
+                              </div>
+                            </div>
+                          </div>`;
+                      setContent(html);
+                    }
+                  } else {
+                    // no post id: backend does not provide a global GET /api/comments/{id} endpoint in this app.
+                    // If we don't have a postId in the report, try the new single-comment lookup endpoint
+                    if(!reportedPostId){
+                      // call GET /api/comments/{id} which returns a PostCommentResponseDTO (may include postId)
+                      try{
+                        const cres = await fetch('/api/comments/'+encodeURIComponent(reportedCommentId || r.reported_comment_id), { credentials:'include' });
+                        if(!cres.ok){
+                          // still fallback to raw report for inspection
+                          setContent('<div class="text-danger">Không tìm thấy bình luận (HTTP '+cres.status+'). Hiển thị dữ liệu thô của báo cáo:</div><pre style="max-height:300px;overflow:auto">'+escapeHtml(JSON.stringify(r, null, 2))+'</pre>');
+                        } else {
+                          const comment = await cres.json();
+                          // Render the comment; if the DTO contains postId, also fetch the parent post to show context
+                          let commenterHtml = '';
+                          try{
+                            const ca = comment.author || {};
+                            let cid = ca && (ca.id || ca.userId || ca.user_id || comment.authorId || comment.author_id);
+                            let cname = ca && (ca.fullName || ca.full_name || ca.username || ca.name) || comment.authorName || comment.author_name || comment.username || '';
+                            if(!cname && cid){
+                              try{
+                                const ures = await fetch('/api/users/'+encodeURIComponent(cid), { credentials:'include' });
+                                if(ures.ok){
+                                  const u = await ures.json();
+                                  cname = u.fullName || u.full_name || u.username || u.email || cname || ('#'+cid);
+                                }
+                              }catch(_){ /* ignore */ }
+                            }
+                            if(cid){ commenterHtml = `<a href="/views/user/${encodeURIComponent(cid)}" class="link-like">${escapeHtml(cname||('#'+cid))}</a>`; }
+                            else if(cname){ commenterHtml = escapeHtml(cname); }
+                          }catch(e){ commenterHtml = ''; }
+
+                          const ctext = escapeHtml(comment.content || comment.text || JSON.stringify(comment));
+
+                          if(comment.postId){
+                            // fetch parent post to provide context
+                            try{
+                              const pres = await fetch('/api/posts/'+encodeURIComponent(comment.postId), { credentials:'include' });
+                              if(pres.ok){
+                                const post = await pres.json();
+                                // find a post image
+                                let postImg = '/img/marketplace.png';
+                                try{ if(Array.isArray(post.media) && post.media[0] && (post.media[0].mediaUrl || post.media[0].media_url)) postImg = post.media[0].mediaUrl || post.media[0].media_url; else if(Array.isArray(post.mediaUrls) && post.mediaUrls.length) postImg = post.mediaUrls[0]; }catch(e){}
+                                const showContentP = normalizeText(post.content) !== normalizeText(post.title);
+                                // prepare author HTML (link to profile when id present)
+                                let authorHtml = '';
+                                try{
+                                  const a = post.author || {};
+                                  const aid = a.id || a.userId || a.user_id;
+                                  const aname = a.fullName || a.full_name || a.username || a.name;
+                                  if(aid){ authorHtml = `<a href="/views/user/${encodeURIComponent(aid)}" class="link-like">${escapeHtml(aname||('#'+aid))}</a>`; }
+                                  else if(aname){ authorHtml = escapeHtml(aname); }
+                                  else { authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+                                }catch(e){ authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+
+                                const html = `
+                                  <div class="d-flex gap-3">
+                                    <img src="${escapeHtml(postImg)}" style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                                    <div class="flex-fill">
+                                      <h5>Bài viết: ${escapeHtml(post.title || (post.content||'Bài viết'))}</h5>
+                                      <div class="small text-muted mb-2">${authorHtml}</div>
+                                      ${ showContentP ? `<div style="white-space:pre-wrap;border-left:3px solid #eee;padding-left:10px;margin-bottom:10px;">${escapeHtml(post.content||'')}</div>` : '' }
+                                      <hr />
+                                      <h6>Bình luận được báo cáo:</h6>
+                                      <div style="background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;">${ commenterHtml ? `<div class="small text-muted mb-1">Bình luận bởi: ${commenterHtml}</div>` : '' }<div style="white-space:pre-wrap">${ctext}</div></div>
+                                    </div>
+                                  </div>`;
+                                setContent(html);
+                              } else {
+                                // Unable to load post, still show comment
+                                setContent(`<div style="background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;">${ commenterHtml ? `<div class="small text-muted mb-1">Bình luận bởi: ${commenterHtml}</div>` : '' }<div style="white-space:pre-wrap">${ctext}</div></div>`);
+                              }
+                            }catch(e){
+                              setContent(`<div style="background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;">${ commenterHtml ? `<div class="small text-muted mb-1">Bình luận bởi: ${commenterHtml}</div>` : '' }<div style="white-space:pre-wrap">${ctext}</div></div>`);
+                            }
+                          } else {
+                            // No parent postId present, render comment only
+                            setContent(`<div style="background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;">${ commenterHtml ? `<div class="small text-muted mb-1">Bình luận bởi: ${commenterHtml}</div>` : '' }<div style="white-space:pre-wrap">${ctext}</div></div>`);
+                          }
+                        }
+                      }catch(e){
+                        console.error('Error fetching single comment', e);
+                        setContent('<div class="text-danger">Lỗi khi lấy bình luận. Hiển thị dữ liệu thô:</div><pre style="max-height:300px;overflow:auto">'+escapeHtml(JSON.stringify(r, null, 2))+'</pre>');
+                      }
+                    } else {
+                      // fetch comments list for the post and find the comment
+                      try{
+                        const cres = await fetch('/api/posts/'+encodeURIComponent(reportedPostId)+'/comments', { credentials:'include' });
+                        if(!cres.ok){ setContent('<div class="text-danger">Không tìm thấy bình luận (HTTP '+cres.status+')</div>'); }
+                        else {
+                          const commentsList = await cres.json();
+                          let comment = null;
+                          try{ if(Array.isArray(commentsList)) comment = commentsList.find(c => String(c.id || c.commentId || c.comment_id) === String(reportedCommentId || r.reported_comment_id)); }catch(e){}
+                          if(!comment) setContent('<div class="text-danger">Không tìm thấy bình luận trong danh sách (id='+escapeHtml(String(reportedCommentId||r.reported_comment_id))+')</div>');
+                          else {
+                            // commenter
+                            let commenterHtml = '';
+                            try{
+                              const ca = comment.author || comment.user || comment.createdBy || comment.creator || {};
+                              let cid = ca && (ca.id || ca.userId || ca.user_id || comment.userId || comment.user_id || comment.user);
+                              let cname = ca && (ca.fullName || ca.full_name || ca.username || ca.name) || comment.username || comment.userName || comment.displayName;
+                              if(!cname && cid){
+                                try{
+                                  const ures = await fetch('/api/users/'+encodeURIComponent(cid), { credentials:'include' });
+                                  if(ures.ok){ const u = await ures.json(); cname = u.fullName || u.full_name || u.username || u.email || cname || ('#'+cid); }
+                                }catch(_){ }
+                              }
+                              if(cid){ commenterHtml = `<a href="/views/user/${encodeURIComponent(cid)}" class="link-like">${escapeHtml(cname||('#'+cid))}</a>`; }
+                              else if(cname){ commenterHtml = escapeHtml(cname); }
+                              else { commenterHtml = ''; }
+                            }catch(e){ commenterHtml = ''; }
+                            const ctext = escapeHtml(comment.content||comment.text||JSON.stringify(comment));
+                            setContent(`<div style="background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;">${ commenterHtml ? `<div class="small text-muted mb-1">Bình luận bởi: ${commenterHtml}</div>` : '' }<div style="white-space:pre-wrap">${ctext}</div></div>`);
+                          }
+                        }
+                      }catch(e){ setContent('<div class="text-danger">Lỗi khi tải bình luận</div>'); }
+                    }
+                  }
+                  } else if(reportedPostId){
+                  setContent('<div class="text-center text-muted py-2">Đang tải bài viết...</div>');
+                  const res = await fetch('/api/posts/'+encodeURIComponent(reportedPostId), { credentials:'include' });
+                  if(!res.ok){ setContent('<div class="text-danger">Không tải được bài viết (HTTP '+res.status+')</div>'); }
+                  else {
+                    const post = await res.json();
+                    // prepare author HTML: link to user profile if id present
+                    let authorHtml = '';
+                    try{
+                      const a = post.author || {};
+                      const aid = a.id || a.userId || a.user_id;
+                      const aname = a.fullName || a.full_name || a.username || a.name;
+                      if(aid){ authorHtml = `<a href="/views/user/${encodeURIComponent(aid)}" class="link-like">${escapeHtml(aname||('#'+aid))}</a>`; }
+                      else if(aname) { authorHtml = escapeHtml(aname); }
+                      else { authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+                    }catch(e){ authorHtml = 'ID:'+ escapeHtml(post.id||post.post_id||''); }
+                    // try to find an image for the post
+                    let postImg = '/img/marketplace.png';
+                    try{ if(Array.isArray(post.media) && post.media.length && (post.media[0].mediaUrl || post.media[0].media_url)) postImg = post.media[0].mediaUrl || post.media[0].media_url; else if(Array.isArray(post.mediaUrls) && post.mediaUrls.length) postImg = post.mediaUrls[0]; }catch(e){}
+                    // hide content paragraph if it's identical to the title to avoid duplicate line (normalize)
+                    const showContentMain = normalizeText(post.content) !== normalizeText(post.title);
+                    const html = `
+                      <div class="d-flex gap-3">
+                        <img src="${escapeHtml(postImg)}" style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                        <div class="flex-fill">
+                          <h5>${escapeHtml((post.title||post.content||'Bài viết'))}</h5>
+                          <div class="small text-muted">${authorHtml}</div>
+                          
+                        </div>
+                      </div>`;
+                    setContent(html);
+                  }
+                } else {
+                  setContent('<pre>'+escapeHtml(JSON.stringify(r, null, 2))+'</pre>');
+                }
+
+                const bs = new bootstrap.Modal(modalEl);
+                bs.show();
+
+                // show/hide and wire resource-level delete buttons
+                const delCommentBtn = document.getElementById('qdt_admin_delete_comment_btn');
+                const delPostBtn = document.getElementById('qdt_admin_delete_post_btn');
+                const delProductBtn = document.getElementById('qdt_admin_delete_product_btn');
+
+                // helper to show the existing Bootstrap confirm modal and await user's choice
+                function showBootstrapConfirm(message){
+                  return new Promise(resolve => {
+                    const modalElConfirm = document.getElementById('qdt_confirm_delete_modal');
+                    const modalText = document.getElementById('qdt_confirm_delete_text');
+                    const confirmBtn = document.getElementById('qdt_confirm_delete_btn');
+                    let bsConfirm = null;
+                    try{
+                      modalText.textContent = message || 'Xác nhận?';
+                      // ensure modal is appended to body so it can stack above other modals
+                      try{ document.body.appendChild(modalElConfirm); }catch(_){}
+                      bsConfirm = new bootstrap.Modal(modalElConfirm);
+                    }catch(e){ console.error('Bootstrap confirm modal init failed', e); return resolve(window.confirm(message)); }
+
+                    // increase z-index so it appears above other open modals
+                    try{
+                      modalElConfirm.style.zIndex = 12000;
+                    }catch(_){}
+
+                    // one-time handlers
+                    const onConfirm = function(){ cleanup(); resolve(true); };
+                    const onHide = function(){ cleanup(); resolve(false); };
+                    function cleanup(){
+                      try{ confirmBtn.removeEventListener('click', onConfirm); }catch(_){}
+                      try{ modalElConfirm.removeEventListener('hidden.bs.modal', onHide); }catch(_){}
+                      // remove any adjusted backdrop marker
+                      try{
+                        document.querySelectorAll('.modal-backdrop[data-qdt-adjusted]').forEach(b => { b.removeAttribute('data-qdt-adjusted'); b.style.zIndex = ''; });
+                      }catch(_){}
+                      try{ bsConfirm.hide(); }catch(_){}
+                    }
+
+                    confirmBtn.addEventListener('click', onConfirm);
+                    modalElConfirm.addEventListener('hidden.bs.modal', onHide);
+
+                    // when shown, find the backdrop and raise its z-index slightly below the modal
+                    modalElConfirm.addEventListener('shown.bs.modal', ()=>{
+                      try{
+                        const backdrops = document.querySelectorAll('.modal-backdrop:not([data-qdt-adjusted])');
+                        backdrops.forEach(b => {
+                          b.style.zIndex = 11990;
+                          b.setAttribute('data-qdt-adjusted','1');
+                        });
+                      }catch(e){ /* ignore */ }
+                    }, { once: true });
+
+                    bsConfirm.show();
+                  });
+                }
+
+                // helper to confirm and call delete endpoint using bootstrap confirm modal
+                async function confirmAndDeleteResource(label, url){
+                  const ok = await showBootstrapConfirm(`Xác nhận xóa ${label}?`);
+                  if(!ok) return false;
+                  try{
+                    const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
+                    if(res.status === 204 || res.ok){
+                      showToast(`${label} đã bị xóa`, 'success');
+                      try{ tr.remove(); }catch(e){}
+                      bs.hide();
+                      return true;
+                    } else {
+                      const j = await res.json().catch(()=>({}));
+                      showToast(`${label} xóa thất bại: ${j.message || res.statusText}`, 'danger');
+                      return false;
+                    }
+                  }catch(e){ console.error(e); showToast(`Lỗi khi xóa ${label}`, 'danger'); return false; }
+                }
+
+                // reset visibility
+                delCommentBtn.style.display = 'none';
+                delPostBtn.style.display = 'none';
+                delProductBtn.style.display = 'none';
+
+                // If report targets a comment/post/product, show corresponding delete button(s)
+                if(reportedCommentId){ delCommentBtn.style.display = ''; }
+                if(reportedPostId){ delPostBtn.style.display = ''; }
+                if(reportedProductId){ delProductBtn.style.display = ''; }
+
+                // remove old listeners to avoid duplication
+                delCommentBtn.replaceWith(delCommentBtn.cloneNode(true));
+                delPostBtn.replaceWith(delPostBtn.cloneNode(true));
+                delProductBtn.replaceWith(delProductBtn.cloneNode(true));
+                // re-query buttons
+                const delCommentBtn2 = document.getElementById('qdt_admin_delete_comment_btn');
+                const delPostBtn2 = document.getElementById('qdt_admin_delete_post_btn');
+                const delProductBtn2 = document.getElementById('qdt_admin_delete_product_btn');
+
+                if(reportedCommentId){
+                  delCommentBtn2.addEventListener('click', async ()=>{
+                    // prefer comment id from normalized variable, fallback to raw
+                    const cid = reportedCommentId || r.reported_comment_id;
+                    // Determine postId: prefer reportedPostId, otherwise ask the server via GET /api/comments/{id}
+                    let pid = reportedPostId || r.reported_post_id;
+                    if(!pid){
+                      try{
+                        const cres = await fetch('/api/comments/'+encodeURIComponent(cid), { credentials:'include' });
+                        if(cres.ok){
+                          const cobj = await cres.json();
+                          pid = cobj.postId || cobj.post_id || cobj.post || null;
+                        }
+                      }catch(e){ console.error('Failed to lookup comment for delete', e); }
+                    }
+                    if(!pid){
+                      showToast('Không thể xác định bài viết chứa bình luận. Không thể xóa.', 'danger');
+                      return;
+                    }
+                    await confirmAndDeleteResource('Bình luận', '/api/posts/'+encodeURIComponent(pid)+'/comments/'+encodeURIComponent(cid));
+                  });
+                }
+                if(reportedPostId){
+                  delPostBtn2.addEventListener('click', async ()=>{
+                    const pid = reportedPostId || r.reported_post_id;
+                    await confirmAndDeleteResource('Bài đăng', '/api/posts/'+encodeURIComponent(pid));
+                  });
+                }
+                if(reportedProductId){
+                  delProductBtn2.addEventListener('click', async ()=>{
+                    const pid = reportedProductId || r.reported_product_id;
+                    await confirmAndDeleteResource('Sản phẩm', '/market/products/'+encodeURIComponent(pid));
+                  });
+                }
+
+                // wire delete btn in modal: delete the report id
+                function onDeleteFromModal(){
+                  const reportId = modalEl.dataset.viewReportId;
+                  if(!reportId) return;
+                  deleteBtn.disabled = true;
+                  fetch('/api/reports/'+encodeURIComponent(reportId), { method:'DELETE', credentials:'include' })
+                    .then(res => {
+                      if(res.status === 204 || res.ok){
+                        showToast('Đã xóa báo cáo #' + reportId, 'success');
+                        // remove row if present
+                        try{ tr.remove(); }catch(e){}
+                        bs.hide();
+                      } else {
+                        res.json().then(j=> showToast('Xóa thất bại: ' + (j.message || res.statusText), 'danger')).catch(()=> showToast('Xóa thất bại', 'danger'));
+                      }
+                    }).catch(e=>{ console.error(e); showToast('Lỗi khi xóa báo cáo', 'danger'); })
+                    .finally(()=>{ deleteBtn.disabled = false; });
+                }
+                deleteBtn.removeEventListener('click', onDeleteFromModal);
+                deleteBtn.addEventListener('click', onDeleteFromModal);
+              }catch(e){ console.error(e); alert('Lỗi khi hiển thị báo cáo'); }
+            });
+
+            delBtn.addEventListener('click', async ()=>{
+              // show Bootstrap confirm modal
+              try{
+                const modalEl = document.getElementById('qdt_confirm_delete_modal');
+                const modalText = document.getElementById('qdt_confirm_delete_text');
+                const confirmBtn = document.getElementById('qdt_confirm_delete_btn');
+                modalText.textContent = 'Xác nhận xóa báo cáo #' + r.id + '?';
+                const bs = new bootstrap.Modal(modalEl);
+                let handler = null;
+                handler = async function(){
+                  confirmBtn.disabled = true;
+                  try{
+                    const res = await fetch('/api/reports/'+encodeURIComponent(r.id), { method:'DELETE', credentials:'include' });
+                    if(res.status === 204 || res.ok){
+                      showToast('Đã xóa báo cáo #' + r.id, 'success');
+                      tr.remove();
+                      bs.hide();
+                    } else {
+                      const j = await res.json().catch(()=>({}));
+                      showToast('Xóa thất bại: ' + (j.message || res.statusText), 'danger');
+                    }
+                  }catch(e){ console.error(e); showToast('Lỗi khi xóa báo cáo', 'danger'); }
+                  confirmBtn.disabled = false;
+                  confirmBtn.removeEventListener('click', handler);
+                };
+                confirmBtn.addEventListener('click', handler);
+                bs.show();
+              }catch(e){ console.error(e); alert('Lỗi khi mở hộp xác nhận'); }
+            });
+
+            tbody.appendChild(tr);
+          });
+        }
+
+        // small toast helper in case showToast not present on the page
+        if(typeof window.showToast !== 'function'){
+          (function(){
+            function _escape(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+            if(!document.getElementById('qdt_toast_container')){
+              const div = document.createElement('div'); div.id='qdt_toast_container'; div.style.position='fixed'; div.style.right='20px'; div.style.bottom='20px'; div.style.zIndex='10800'; document.body.appendChild(div);
+            }
+            window.showToast = function(message, type){ type = type || 'info'; const id='t'+Date.now(); const wrap=document.getElementById('qdt_toast_container'); const tmp=document.createElement('div'); tmp.innerHTML = `<div id="${id}" class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000"><div class="d-flex"><div class="toast-body">${_escape(message)}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>`; wrap.appendChild(tmp.firstChild); const el=document.getElementById(id); const bs=new bootstrap.Toast(el); bs.show(); el.addEventListener('hidden.bs.toast', ()=>{ try{ el.remove(); }catch(_){} }); };
+          })();
+        }
+
+        // initial load
+        loadReports();
+      })();
+    </script>
 </body>
 
 </html>

@@ -14,4 +14,5 @@ public class PostCommentResponseDTO {
     private Integer parentCommentId;
     private String content;
     private Instant createdAt;
+    private Instant updatedAt;
 }
