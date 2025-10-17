@@ -360,6 +360,16 @@
         setSearchVisible(true);
       });
 
+      // deep-link: if URL has ?productId=... open its detail modal automatically
+      try{
+        const params = new URL(window.location.href).searchParams;
+        const productId = params.get('productId') || params.get('productid');
+        if(productId){
+          // wait for MarketUI to be ready
+          setTimeout(function(){ try{ if(window.MarketUI && typeof window.MarketUI._openDetail === 'function'){ window.MarketUI._openDetail(Number(productId)); } }catch(e){} }, 300);
+        }
+      }catch(e){}
+
       function renderThumbsFromUrls(urls){
         const wrap = document.getElementById('mk_thumbs');
         wrap.innerHTML = '';
@@ -457,6 +467,71 @@
           // Show modal
           const modalEl = document.getElementById('mkDetailModal');
           const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          // attach report handler to button (set later when modal filled)
+          try{
+            const rptBtn = document.getElementById('mk_detail_report_btn');
+            if(rptBtn){
+              rptBtn.onclick = function(){
+                try{
+                  // ensure shared modal exists; if not, create it dynamically to avoid missing modal on Market page
+                  var shared = document.getElementById('qdt_report_modal');
+                  if(!shared){
+                    try{
+                      var tpl = document.createElement('div');
+                      tpl.innerHTML = '\n<div class="modal fade" id="qdt_report_modal" tabindex="-1" aria-hidden="true">\n  <div class="modal-dialog modal-dialog-centered">\n    <div class="modal-content">\n      <div class="modal-header">\n        <h5 class="modal-title">Báo cáo nội dung</h5>\n        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>\n      </div>\n      <div class="modal-body">\n        <div class="mb-2">Lý do báo cáo (tùy chọn):</div>\n        <textarea class="form-control report-reason" rows="4" placeholder="Nhập lý do..."></textarea>\n      </div>\n      <div class="modal-footer">\n        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>\n        <button type="button" class="btn btn-danger" id="qdt_report_submit_btn">Gửi báo cáo</button>\n      </div>\n    </div>\n  </div>\n</div>\n';
+                      document.body.appendChild(tpl);
+                      // move children into body (tpl contains wrapper div)
+                      var created = document.getElementById('qdt_report_modal');
+                      shared = created;
+                      // wire submit handler
+                      var submitBtn = document.getElementById('qdt_report_submit_btn');
+                      if(submitBtn){
+                        submitBtn.addEventListener('click', async function(){
+                          try{
+                            var modal = document.getElementById('qdt_report_modal');
+                            var reason = (modal.querySelector('textarea.report-reason').value || '').trim();
+                            if(!reason){ try{ showToast('Vui lòng nhập lý do báo cáo.', 'danger'); }catch(e){ alert('Vui long nhap ly do bao cao.'); } return; }
+                            var t = modal.dataset.targetType || '';
+                            var id = modal.dataset.targetId || '';
+                            var url = '';
+                            if(t === 'comment') url = '/api/reports/comments/'+encodeURIComponent(id);
+                            else if(t === 'post') url = '/api/reports/posts/'+encodeURIComponent(id);
+                            else if(t === 'product') url = '/api/reports/market/'+encodeURIComponent(id);
+                            if(!url){ showToast('Không xác định loại báo cáo', 'danger'); return; }
+                            var bs = bootstrap.Modal.getInstance(modal);
+                            var res = await fetch(url, { method:'POST', credentials:'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ reason: reason }) });
+                            if(res.ok || res.status === 201){ try{ bs.hide(); }catch(_){ } showToast('Cảm ơn, báo cáo đã được gửi.', 'success'); }
+                            else { var j = await res.json().catch(()=>({})); showToast('Báo cáo thất bại: ' + (j.message || res.statusText), 'danger'); }
+                          }catch(e){ console.error(e); showToast('Lỗi khi gửi báo cáo', 'danger'); }
+                        });
+                      }
+                    }catch(e){ console.error('create modal failed', e); }
+                  }
+                  if(shared){
+                    shared.dataset.targetType = 'product';
+                    shared.dataset.targetId = String(p.id);
+                    var ta = shared.querySelector('textarea.report-reason'); if(ta) ta.value = '';
+                    bootstrap.Modal.getOrCreateInstance(shared).show();
+                    return;
+                  }
+                }catch(e){ console.error(e); }
+                // fallback to prompt if anything fails
+                (async function(){
+                  var reason = prompt('Lý do báo cáo (tùy chọn):');
+                  reason = (reason || '').trim();
+                  if(!reason){ try{ showToast('Vui lòng nhập lý do báo cáo.', 'danger'); }catch(e){ alert('Vui long nhap ly do bao cao.'); } return; }
+                  try{
+                    var r = await fetch('/api/reports/market/'+encodeURIComponent(p.id),{
+                      method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'},
+                      body: JSON.stringify({ reason: reason })
+                    });
+                    if(r.status === 201 || r.ok){ showToast('Cảm ơn, báo cáo đã được gửi.', 'success'); }
+                    else { var j = await r.json().catch(()=>({})); showToast('Báo cáo thất bại: ' + (j.message || r.statusText), 'danger'); }
+                  }catch(e){ console.error(e); showToast('Lỗi mạng khi gửi báo cáo', 'danger'); }
+                })();
+              };
+            }
+          }catch(e){ console.error(e); }
           modal.show();
         }catch(e){ console.error(e); alert('Không hiển thị được chi tiết sản phẩm'); }
       }
@@ -465,6 +540,32 @@
       return { load: loadPublic, _deleteProduct, _startEdit, _openDetail };
     })();
   })();
+  </script>
+
+  <script>
+  // Provide a fallback showToast implementation when postSegment.html wasn't included on the page
+  if(typeof window.showToast !== 'function'){
+    (function(){
+      function _escapeHtml(s){ if(s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+      if(!document.getElementById('qdt_toast_container')){
+        var div = document.createElement('div');
+        div.id = 'qdt_toast_container';
+        div.style.position = 'fixed'; div.style.right = '20px'; div.style.bottom = '20px'; div.style.zIndex = '10800';
+        document.body.appendChild(div);
+      }
+      window.showToast = function(message, type){
+        type = type || 'info';
+        var toastId = 'qdt_toast_'+Date.now();
+        var wrapper = document.getElementById('qdt_toast_container');
+        var html = '<div id="'+toastId+'" class="toast align-items-center text-bg-'+type+' border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">'+
+                   '<div class="d-flex"><div class="toast-body">'+_escapeHtml(message)+'</div>'+
+                   '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>';
+        var tmp = document.createElement('div'); tmp.innerHTML = html; wrapper.appendChild(tmp.firstChild);
+        var tEl = document.getElementById(toastId); var bs = new bootstrap.Toast(tEl); bs.show();
+        tEl.addEventListener('hidden.bs.toast', function(){ try{ tEl.remove(); }catch(_){} });
+      };
+    })();
+  }
   </script>
 
   <!-- Product detail modal -->
@@ -493,6 +594,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-danger" id="mk_detail_report_btn">Báo cáo</button>
           <button type="button" class="btn btn-primary" id="mk_detail_msg_btn">Nhắn tin</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
         </div>

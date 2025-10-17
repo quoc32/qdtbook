@@ -1,0 +1,36 @@
+### Report a post (will set reported_post_id)
+POST http://localhost:8080/api/reports/posts/4
+Content-Type: application/json
+Cookie: JSESSIONID=C35202CB48336FF84CC2456DDB70FC0F
+
+{
+  "reason": "Nội dung vi phạm bản quyền nha"
+}
+
+### Report a comment (will set reported_comment_id)
+POST http://localhost:8080/api/reports/comments/4
+Content-Type: application/json
+Cookie: JSESSIONID=C35202CB48336FF84CC2456DDB70FC0F
+
+{
+  "reason": "Lời lẽ xúc phạm nha"
+}
+
+### Report a market item (will set reported_product_id)
+POST http://localhost:8080/api/reports/market/3
+Content-Type: application/json
+Cookie: JSESSIONID=C35202CB48336FF84CC2456DDB70FC0F
+
+{
+  "reason": "Hàng giả / lừa đảo nha"
+}
+
+### Get all reports
+GET http://localhost:8080/api/reports
+Content-Type: application/json
+Cookie: JSESSIONID=19FFB4FA7221B19C6D148F1324BB2E23
+
+### Delete a report
+DELETE http://localhost:8080/api/reports/7
+Content-Type: application/json
+Cookie: JSESSIONID=19FFB4FA7221B19C6D148F1324BB2E23
