@@ -255,7 +255,7 @@
             <div class="col-lg-3 right-col">
                 <div class="sidebar-sticky">
                     <div class="right-card p-3 mb-3">
-                        <h6 class="fw-semibold mb-3">Bạn bè (Online)</h6>
+                        <h6 class="fw-semibold mb-3">Bạn bè</h6>
                         <ul class="list-unstyled mb-0 small" id="friendList">
                             <!-- Danh sách bạn bè sẽ được load từ API -->
                             <li class="text-center py-2" id="friendListLoading">
@@ -329,78 +329,190 @@
                 .chat-window {
                     position: fixed;
                     bottom: 0;
-                    width: 300px;
+                    width: 360px;
                     background: #fff;
-                    border: 1px solid #cfd0d3;
-                    border-radius: 12px 12px 0 0;
-                    box-shadow: 0 4px 18px -4px rgba(0, 0, 0, .25);
+                    border: 1px solid #e1e3e6;
+                    border-radius: 16px 16px 0 0;
+                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
                     display: flex;
                     flex-direction: column;
                     overflow: hidden;
-                    animation: popIn .18s ease;
+                    animation: popIn .25s cubic-bezier(0.34, 1.56, 0.64, 1);
                     z-index: 1040;
+                    max-height: 680px;
                 }
 
                 @keyframes popIn {
                     from {
-                        transform: translateY(12px);
+                        transform: translateY(20px) scale(0.95);
                         opacity: 0
                     }
 
                     to {
-                        transform: translateY(0);
+                        transform: translateY(0) scale(1);
                         opacity: 1
                     }
                 }
 
                 .chat-header {
-                    padding: 6px 10px;
+                    padding: 12px 16px;
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    background: #f5f6f8;
+                    gap: 10px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
                     cursor: pointer;
                     user-select: none;
+                    position: relative;
+                }
+
+                .chat-header::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(255, 255, 255, 0.1);
+                    opacity: 0;
+                    transition: opacity 0.2s;
+                }
+
+                .chat-header:hover::before {
+                    opacity: 1;
                 }
 
                 .chat-header img {
-                    width: 32px;
-                    height: 32px;
+                    width: 36px;
+                    height: 36px;
                     border-radius: 50%;
                     object-fit: cover;
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                }
+
+                .chat-header .user-info {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .chat-header .user-name {
+                    font-weight: 600;
+                    font-size: 14px;
+                    margin-bottom: 2px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .chat-header .user-status {
+                    font-size: 11px;
+                    opacity: 0.8;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+
+                .chat-header .status-dot {
+                    width: 6px;
+                    height: 6px;
+                    background: #4ade80;
+                    border-radius: 50%;
+                    animation: pulse 2s infinite;
+                }
+
+                .chat-header .status-dot-inline {
+                    display: inline-block;
+                    width: 8px;
+                    height: 8px;
+                    background: #4ade80;
+                    border-radius: 50%;
+                    margin-left: 6px;
+                    animation: pulse 2s infinite;
+                    vertical-align: middle;
+                }
+
+                @keyframes pulse {
+
+                    0%,
+                    100% {
+                        opacity: 1;
+                    }
+
+                    50% {
+                        opacity: 0.5;
+                    }
                 }
 
                 .chat-header .actions {
-                    margin-left: auto;
                     display: flex;
                     gap: 4px;
+                    z-index: 1;
                 }
 
                 .chat-header button {
                     border: 0;
-                    background: transparent;
+                    background: rgba(255, 255, 255, 0.2);
+                    color: white;
                     width: 28px;
                     height: 28px;
-                    border-radius: 6px;
-                    font-size: 14px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                    backdrop-filter: blur(10px);
                 }
 
                 .chat-header button:hover {
-                    background: #e4e6eb;
+                    background: rgba(255, 255, 255, 0.3);
+                    transform: scale(1.1);
                 }
 
                 .chat-body {
-                    padding: 8px 10px 54px;
+                    padding: 16px 12px 60px;
                     overflow-y: auto;
                     flex: 1;
                     font-size: 14px;
-                    background: #fff;
+                    background: #fafbfc;
+                    min-height: 300px;
+                    max-height: 450px;
+                }
+
+                .chat-body::-webkit-scrollbar {
+                    width: 4px;
+                }
+
+                .chat-body::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                .chat-body::-webkit-scrollbar-thumb {
+                    background: #e1e3e6;
+                    border-radius: 2px;
+                }
+
+                .chat-body::-webkit-scrollbar-thumb:hover {
+                    background: #c1c7cd;
                 }
 
                 .chat-msg {
-                    margin-bottom: 6px;
+                    margin-bottom: 12px;
                     display: flex;
-                    max-width: 80%;
+                    max-width: 85%;
+                    animation: slideIn 0.3s ease;
+                }
+
+                @keyframes slideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
 
                 .chat-msg.you {
@@ -409,15 +521,41 @@
                 }
 
                 .chat-bubble {
-                    background: #f0f2f5;
-                    padding: 6px 10px;
-                    border-radius: 16px;
-                    line-height: 1.3;
+                    background: #ffffff;
+                    padding: 10px 14px;
+                    border-radius: 18px;
+                    line-height: 1.4;
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                    position: relative;
+                    border: 1px solid #e1e3e6;
+                    word-wrap: break-word;
                 }
 
                 .chat-msg.you .chat-bubble {
-                    background: #1b74e4;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: #fff;
+                    border: none;
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                }
+
+                .chat-bubble::before {
+                    content: '';
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                    border: 6px solid transparent;
+                }
+
+                .chat-msg:not(.you) .chat-bubble::before {
+                    left: -11px;
+                    top: 12px;
+                    border-right-color: #ffffff;
+                }
+
+                .chat-msg.you .chat-bubble::before {
+                    right: -11px;
+                    top: 12px;
+                    border-left-color: #667eea;
                 }
 
                 .chat-input-wrap {
@@ -425,33 +563,130 @@
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    padding: 6px 8px 8px;
+                    padding: 12px;
                     background: #fff;
-                    border-top: 1px solid #e1e2e4;
+                    border-top: 1px solid #e1e3e6;
                     display: flex;
-                    gap: 6px;
+                    gap: 8px;
+                    align-items: flex-end;
                 }
 
-                .chat-input-wrap input {
+                .chat-input-container {
                     flex: 1;
-                    border: 1px solid #d0d2d5;
-                    border-radius: 20px;
-                    padding: 6px 12px;
-                    font-size: 14px;
+                    position: relative;
+                    background: #f8f9fa;
+                    border-radius: 24px;
+                    border: 1px solid #e1e3e6;
+                    display: flex;
+                    align-items: center;
+                    transition: all 0.2s;
                 }
 
-                .chat-input-wrap input:focus {
+                .chat-input-container:focus-within {
+                    border-color: #667eea;
+                    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                }
+
+                .chat-input-container input {
+                    flex: 1;
+                    border: none;
+                    background: transparent;
+                    padding: 10px 16px;
+                    font-size: 14px;
                     outline: none;
-                    border-color: #1b74e4;
+                    resize: none;
+                    max-height: 80px;
                 }
 
-                .chat-input-wrap button {
+                .emoji-btn {
+                    padding: 8px 12px;
+                    border: none;
+                    background: transparent;
+                    font-size: 18px;
+                    cursor: pointer;
+                    border-radius: 50%;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                }
+
+                .emoji-btn:hover {
+                    background: rgba(102, 126, 234, 0.1);
+                }
+
+                .send-btn {
                     border: 0;
-                    background: #1b74e4;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: #fff;
-                    padding: 0 14px;
-                    border-radius: 20px;
-                    font-size: 14px;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    font-size: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                }
+
+                .send-btn:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                }
+
+                .send-btn:active {
+                    transform: scale(0.95);
+                }
+
+                /* Emoji picker */
+                .emoji-picker {
+                    position: absolute;
+                    bottom: 60px;
+                    right: 12px;
+                    background: white;
+                    border: 1px solid #e1e3e6;
+                    border-radius: 12px;
+                    padding: 12px;
+                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+                    display: none;
+                    grid-template-columns: repeat(6, 1fr);
+                    gap: 8px;
+                    z-index: 1050;
+                    max-width: 280px;
+                }
+
+                .emoji-picker.show {
+                    display: grid;
+                    animation: fadeInUp 0.2s ease;
+                }
+
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .emoji-item {
+                    padding: 8px;
+                    font-size: 20px;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    text-align: center;
+                    transition: background 0.2s;
+                    user-select: none;
+                }
+
+                .emoji-item:hover {
+                    background: #f0f2f5;
                 }
 
                 .chat-window.minimized .chat-body,
@@ -463,9 +698,13 @@
                     height: auto;
                 }
 
+                .chat-window.minimized .chat-header {
+                    border-radius: 16px;
+                }
+
                 @media (max-width: 992px) {
                     .chat-window {
-                        width: 260px;
+                        width: 280px;
                     }
                 }
             </style>
@@ -474,6 +713,23 @@
                 (function () {
                     const MAX_WINDOWS = 2; // max chat windows open
                     const OPEN = new Map(); // friendId -> windowEl
+                    const CHAT_CACHE = new Map(); // "userId-friendId" -> {chatId, chatName} to prevent duplicate creation
+
+                    // Clear cache when page loads (in case of user change)
+                    function clearCacheOnUserChange() {
+                        const currentAuth = JSON.parse(localStorage.getItem('auth') || '{}');
+                        const lastUserId = localStorage.getItem('lastChatUserId');
+
+                        if (lastUserId && lastUserId !== String(currentAuth.user_id)) {
+                            console.log('🔄 User changed, clearing chat cache');
+                            CHAT_CACHE.clear();
+                        }
+
+                        localStorage.setItem('lastChatUserId', String(currentAuth.user_id || ''));
+                    }
+
+                    // Call on load
+                    clearCacheOnUserChange();
 
                     function calcPositions() {
                         const wins = [...OPEN.values()];
@@ -492,7 +748,7 @@
                             closeWindow(firstKey);
                         }
 
-                        const FIXED_HEIGHT = 420; // constant chat window height (px)
+                        const FIXED_HEIGHT = 480; // constant chat window height (px)
 
                         const wrap = document.createElement('div');
                         wrap.className = 'chat-window';
@@ -501,25 +757,77 @@
                         wrap.innerHTML = `
                         <div class="chat-header" data-role="header">
                             <img src="${friend.avatar}" alt="">
-                            <div class="small fw-semibold">${friend.name}</div>
+                            <div class="user-info">
+                                <div class="user-name">
+                                    ${friend.name}
+                                    <span class="status-dot-inline"></span>
+                                </div>
+                                <div class="user-status">
+                                    <span>Đang hoạt động</span>
+                                </div>
+                            </div>
                             <div class="actions">
-                                <button data-action="min" title="Thu nhỏ">_</button>
-                                <button data-action="close" title="Đóng">&times;</button>
+                                <button data-action="min" title="Thu nhỏ">−</button>
+                                <button data-action="close" title="Đóng">×</button>
                             </div>
                         </div>
                         <div class="chat-body" data-role="body">
-                            <div class="chat-msg">
-                                <div class="chat-bubble">Chào ${friend.name} 👋</div>
+                            <div class="text-center py-3">
+                                <small class="text-muted">Đang tải cuộc trò chuyện...</small>
                             </div>
                         </div>
                         <div class="chat-input-wrap">
-                            <input type="text" placeholder="Nhắn tin..." data-role="input">
-                            <button data-role="send">Gửi</button>
+                            <div class="chat-input-container">
+                                <input type="text" placeholder="Nhắn tin..." data-role="input">
+                                <button class="emoji-btn" data-role="emoji" title="Chọn emoji">😊</button>
+                            </div>
+                            <button class="send-btn" data-role="send" title="Gửi">➤</button>
+                            <div class="emoji-picker" data-role="emoji-picker">
+                                <div class="emoji-item">😊</div>
+                                <div class="emoji-item">😂</div>
+                                <div class="emoji-item">😍</div>
+                                <div class="emoji-item">😢</div>
+                                <div class="emoji-item">😮</div>
+                                <div class="emoji-item">😡</div>
+                                <div class="emoji-item">👍</div>
+                                <div class="emoji-item">👎</div>
+                                <div class="emoji-item">❤️</div>
+                                <div class="emoji-item">💔</div>
+                                <div class="emoji-item">🔥</div>
+                                <div class="emoji-item">⭐</div>
+                                <div class="emoji-item">🎉</div>
+                                <div class="emoji-item">🎊</div>
+                                <div class="emoji-item">💯</div>
+                                <div class="emoji-item">✅</div>
+                                <div class="emoji-item">❌</div>
+                                <div class="emoji-item">⚡</div>
+                                <div class="emoji-item">🌟</div>
+                                <div class="emoji-item">🚀</div>
+                                <div class="emoji-item">💖</div>
+                                <div class="emoji-item">🌈</div>
+                                <div class="emoji-item">🎯</div>
+                                <div class="emoji-item">🏆</div>
+                            </div>
                         </div>
                     `;
                         document.body.appendChild(wrap);
                         OPEN.set(friend.id, wrap);
                         calcPositions();
+
+                        // Update online status for the inline status dot
+                        const statusDotInline = wrap.querySelector('.status-dot-inline');
+                        if (statusDotInline) {
+                            if (friend.isOnline) {
+                                statusDotInline.style.background = '#4ade80'; // Green for online
+                                wrap.querySelector('.user-status span').textContent = 'Đang hoạt động';
+                            } else {
+                                statusDotInline.style.background = '#666'; // Gray for offline
+                                wrap.querySelector('.user-status span').textContent = 'Không hoạt động';
+                            }
+                        }
+
+                        // Load chat messages
+                        loadChatMessages(wrap, friend);
 
                         wrap.querySelector('[data-action="close"]').addEventListener('click', e => {
                             e.stopPropagation();
@@ -529,36 +837,365 @@
                             e.stopPropagation();
                             wrap.classList.toggle('minimized');
                         });
-                        wrap.querySelector('[data-role="header"]').addEventListener('click', e => {
-                            if (e.target.closest('button')) return;
-                            wrap.classList.toggle('minimized');
+                        // Removed header click event - no more minimize on header click
+
+                        setupChatInputHandlers(wrap, friend);
+                    }
+
+                    // Load chat messages from API
+                    async function loadChatMessages(wrap, friend) {
+                        const body = wrap.querySelector('[data-role="body"]');
+                        const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                        const currentUserId = parseInt(auth.user_id);
+                        const friendId = parseInt(friend.id);
+
+                        // Create cache key for this user pair (always smaller ID first)
+                        const cacheKey = `${Math.min(currentUserId, friendId)}-${Math.max(currentUserId, friendId)}`;
+                        console.log('🔑 Cache key for chat:', cacheKey);
+                        console.log('🔑 Current User ID:', currentUserId, 'Friend ID:', friendId);
+
+                        try {
+                            // Step 1: Check cache first
+                            let chatInfo = CHAT_CACHE.get(cacheKey);
+                            console.log('💾 Cached chatInfo:', chatInfo);
+
+                            if (!chatInfo) {
+                                // Step 2: Find existing chat between users
+                                console.log('🔍 Searching for existing chat between users...');
+                                chatInfo = await findChatBetweenUsers(currentUserId, friendId);
+                                console.log('🔍 Found chatInfo from search:', chatInfo);
+                            }
+
+                            if (!chatInfo) {
+                                // Step 3: Create new chat if none exists
+                                console.log('🆕 Tạo chat mới...');
+                                const chatId = await createChatBetweenUsers(currentUserId, friendId, friend.name);
+                                console.log('🆕 Created new chatId:', chatId);
+
+                                if (!chatId) {
+                                    throw new Error('Không thể tạo chat mới');
+                                }
+
+                                // Create chat info object
+                                const currentUserName = auth.full_name || auth.email || 'Người dùng';
+                                chatInfo = {
+                                    chatId: chatId,
+                                    chatName: `${currentUserName} & ${friend.name}`
+                                };
+                            }
+
+                            // Step 4: Cache the chatInfo for future use
+                            if (chatInfo) {
+                                CHAT_CACHE.set(cacheKey, chatInfo);
+                                console.log('💾 Cached chatInfo:', chatInfo, 'with key:', cacheKey);
+                            }
+
+                            // Step 5: Save chatId and chatName to window and load messages
+                            wrap.dataset.chatId = chatInfo.chatId;
+                            wrap.dataset.chatName = chatInfo.chatName;
+
+                            console.log('💾 Set wrap.dataset.chatId to:', wrap.dataset.chatId);
+
+                            await loadMessagesForChat(body, chatInfo.chatId, currentUserId, friend);
+
+                        } catch (error) {
+                            console.error('❌ Lỗi khi load chat:', error);
+                            displayNoMessages(body, friend);
+                        }
+                    }
+
+                    // Tìm chat hiện có giữa 2 users
+                    async function findChatBetweenUsers(currentUserId, friendId) {
+                        try {
+                            console.log('🔍 findChatBetweenUsers called with:', currentUserId, 'and', friendId);
+
+                            // Thử tìm chat từ cả 2 users để đảm bảo không miss
+                            const chatIds = new Set();
+
+                            // Tìm chats của currentUser
+                            const currentUserResponse = await fetch(`/api/chats/user/${currentUserId}`, {
+                                method: 'GET',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+
+                            if (currentUserResponse.ok) {
+                                const currentUserChats = await currentUserResponse.json();
+                                console.log('🔍 Current user chats:', currentUserChats);
+
+                                // Kiểm tra từng chat của current user
+                                for (const chat of currentUserChats) {
+                                    if (chat.is_group === false || chat.is_group === null) {
+                                        if (chat.members && Array.isArray(chat.members) && chat.members.length === 2) {
+                                            const memberIds = chat.members.map(member => {
+                                                return parseInt(member.userId || member.user_id || member.id || member.memberId);
+                                            }).filter(id => !isNaN(id));
+
+                                            console.log('🔍 Chat', chat.id, 'member IDs:', memberIds);
+
+                                            // Kiểm tra có đủ 2 user: currentUser và friend
+                                            if (memberIds.includes(currentUserId) && memberIds.includes(friendId)) {
+                                                console.log('✅ Tìm thấy chat hiện có:', chat.id, 'với tên:', chat.chat_name);
+                                                return {
+                                                    chatId: chat.id,
+                                                    chatName: chat.chat_name || 'Private Chat'
+                                                };
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            console.log('❌ Không tìm thấy chat giữa 2 users - sẽ tạo mới');
+                            return null;
+                        } catch (error) {
+                            console.error('❌ Lỗi khi tìm chat:', error);
+                            return null;
+                        }
+                    }
+
+                    // Tạo chat mới giữa 2 users
+                    async function createChatBetweenUsers(currentUserId, friendId, friendName) {
+                        try {
+                            console.log('🆕 Tạo chat mới giữa:', currentUserId, 'và', friendId);
+
+                            // Get current user info for chat name
+                            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                            const currentUserName = auth.full_name || auth.email || 'Người dùng';
+
+                            // Tạo tên chat private giữa 2 người
+                            const chatName = `${currentUserName} & ${friendName}`;
+
+                            const chatData = {
+                                chat_name: chatName, // Tên chat cho private chat
+                                is_group: false,
+                                creator_id: parseInt(currentUserId),
+                                member_ids: [parseInt(currentUserId), parseInt(friendId)]
+                            };
+
+                            console.log('🆕 Chat data gửi lên server:', chatData);
+
+                            const response = await fetch('/api/chats', {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(chatData)
+                            });
+
+                            if (response.ok) {
+                                const newChat = await response.json();
+                                console.log('✅ Tạo chat mới thành công:', newChat);
+                                console.log('✅ Chat name:', newChat.chat_name || chatName);
+                                return newChat.id;
+                            } else {
+                                const errorText = await response.text();
+                                console.error('❌ Lỗi tạo chat:', response.status, errorText);
+                                return null;
+                            }
+                        } catch (error) {
+                            console.error('❌ Lỗi khi tạo chat:', error);
+                            return null;
+                        }
+                    }
+
+                    // Load tin nhắn của 1 chat cụ thể
+                    async function loadMessagesForChat(body, chatId, currentUserId, friend) {
+                        try {
+                            const response = await fetch(`/api/messages/chat/${chatId}?userId=${currentUserId}`, {
+                                method: 'GET',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+
+                            if (response.ok) {
+                                const messages = await response.json();
+                                console.log(`Loaded ${messages.length} tin nhắn cho chat ${chatId}`);
+
+                                if (messages.length > 0) {
+                                    displayMessages(body, messages, currentUserId, friend);
+                                } else {
+                                    displayNoMessages(body, friend);
+                                }
+                            } else {
+                                console.log('Không có tin nhắn hoặc lỗi khi load');
+                                displayNoMessages(body, friend);
+                            }
+                        } catch (error) {
+                            console.error('Lỗi khi load tin nhắn:', error);
+                            displayNoMessages(body, friend);
+                        }
+                    }                    // Display messages in chat body
+                    function displayMessages(body, messages, currentUserId, friend) {
+                        body.innerHTML = ''; // Clear loading indicator
+
+                        if (!messages || messages.length === 0) {
+                            displayNoMessages(body, friend);
+                            return;
+                        }
+
+                        console.log('🔍 DEBUG - displayMessages called');
+                        console.log('🔍 DEBUG - currentUserId:', currentUserId, 'type:', typeof currentUserId);
+
+                        messages.forEach((message, index) => {
+                            console.log(`🔍 DEBUG - Message ${index}:`, message);
+                            console.log(`🔍 DEBUG - message.senderId:`, message.senderId, 'type:', typeof message.senderId);
+
+                            // Convert both to integers for comparison
+                            const isCurrentUser = parseInt(message.senderId) === parseInt(currentUserId);
+                            const messageClass = isCurrentUser ? 'you' : '';
+
+                            console.log(`🔍 DEBUG - isCurrentUser:`, isCurrentUser, 'messageClass:', messageClass);
+
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = `chat-msg ${messageClass}`;
+                            messageDiv.innerHTML = `<div class="chat-bubble">${escapeHtml(message.content)}</div>`;
+
+                            body.appendChild(messageDiv);
                         });
 
+                        // Scroll to bottom
+                        body.scrollTop = body.scrollHeight;
+                    }
+
+                    // Display no messages placeholder
+                    function displayNoMessages(body, friend) {
+                        body.innerHTML = `
+                            <div class="chat-msg">
+                                <div class="chat-bubble">Bạn và ${friend.name} đã kết bạn. Hãy bắt đầu cuộc trò chuyện! 👋</div>
+                            </div>
+                        `;
+                    }
+
+                    // Escape HTML to prevent XSS
+                    function escapeHtml(text) {
+                        const map = {
+                            '&': '&amp;',
+                            '<': '&lt;',
+                            '>': '&gt;',
+                            '"': '&quot;',
+                            "'": '&#039;'
+                        };
+                        return text.replace(/[&<>"']/g, m => map[m]);
+                    }
+
+                    // Setup chat input handlers
+                    function setupChatInputHandlers(wrap, friend) {
                         const input = wrap.querySelector('[data-role="input"]');
                         const body = wrap.querySelector('[data-role="body"]');
+                        const emojiBtn = wrap.querySelector('[data-role="emoji"]');
+                        const emojiPicker = wrap.querySelector('[data-role="emoji-picker"]');
 
-                        function send() {
+                        // Emoji picker functionality
+                        emojiBtn.addEventListener('click', e => {
+                            e.stopPropagation();
+                            emojiPicker.classList.toggle('show');
+                        });
+
+                        // Hide emoji picker when clicking outside
+                        document.addEventListener('click', e => {
+                            if (!wrap.contains(e.target)) {
+                                emojiPicker.classList.remove('show');
+                            }
+                        });
+
+                        // Handle emoji selection
+                        emojiPicker.addEventListener('click', e => {
+                            if (e.target.classList.contains('emoji-item')) {
+                                const emoji = e.target.textContent;
+                                const cursorPos = input.selectionStart;
+                                const textBefore = input.value.substring(0, cursorPos);
+                                const textAfter = input.value.substring(cursorPos);
+
+                                input.value = textBefore + emoji + textAfter;
+                                input.focus();
+                                input.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+
+                                emojiPicker.classList.remove('show');
+                            }
+                        });
+
+                        // Send message function
+                        async function send() {
                             const txt = input.value.trim();
                             if (!txt) return;
-                            body.insertAdjacentHTML('beforeend',
-                                `<div class="chat-msg you"><div class="chat-bubble"></div></div>`);
-                            body.lastElementChild.querySelector('.chat-bubble').textContent = txt;
-                            input.value = '';
-                            body.scrollTop = body.scrollHeight;
-                            setTimeout(() => {
-                                body.insertAdjacentHTML('beforeend',
-                                    `<div class="chat-msg"><div class="chat-bubble">Đã nhận: ${txt}</div></div>`);
-                                body.scrollTop = body.scrollHeight;
-                            }, 700);
+
+                            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                            const currentUserId = auth.user_id;
+                            const chatId = wrap.dataset.chatId;
+
+                            console.log('🚀 SEND MESSAGE DEBUG:');
+                            console.log('🚀 Current User ID:', currentUserId);
+                            console.log('🚀 Chat ID from dataset:', chatId);
+                            console.log('🚀 Friend ID:', friend.id);
+                            console.log('🚀 Message content:', txt);
+
+                            if (!chatId) {
+                                console.error('❌ No chatId found, cannot send message');
+                                alert('Lỗi: Không tìm thấy ID cuộc trò chuyện. Vui lòng đóng và mở lại chat!');
+                                return;
+                            }
+
+                            try {
+                                // Send message via API
+                                const messageData = {
+                                    chat_id: parseInt(chatId),
+                                    sender_id: parseInt(currentUserId),
+                                    content: txt,
+                                    message_type: 'TEXT'
+                                };
+
+                                console.log('🚀 Message data being sent:', messageData);
+
+                                const response = await fetch('/api/messages', {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify(messageData)
+                                });
+
+                                if (response.ok) {
+                                    const savedMessage = await response.json();
+                                    console.log('✅ Message sent successfully:', savedMessage);
+                                    console.log('✅ Saved message chat_id:', savedMessage.chat_id || savedMessage.chatId);
+
+                                    // Add message to UI immediately
+                                    body.insertAdjacentHTML('beforeend',
+                                        `<div class="chat-msg you">
+                                            <div class="chat-bubble">${escapeHtml(txt)}</div>
+                                        </div>`);
+
+                                    input.value = '';
+                                    body.scrollTop = body.scrollHeight;
+                                } else {
+                                    const errorText = await response.text();
+                                    console.error('❌ Failed to send message:', response.status, errorText);
+
+                                    // Show error message to user
+                                    alert('Không thể gửi tin nhắn. Vui lòng thử lại!');
+                                }
+
+                            } catch (error) {
+                                console.error('❌ Error sending message:', error);
+                                alert('Lỗi kết nối. Vui lòng kiểm tra mạng và thử lại!');
+                            }
                         }
 
                         wrap.querySelector('[data-role="send"]').addEventListener('click', send);
                         input.addEventListener('keydown', e => {
-                            if (e.key === 'Enter') {
+                            if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 send();
                             }
                         });
+
                         input.focus();
                     }
 
@@ -583,7 +1220,8 @@
                         createChatWindow({
                             id: btn.dataset.fid,
                             name: btn.dataset.name,
-                            avatar: btn.dataset.avatar
+                            avatar: btn.dataset.avatar,
+                            isOnline: btn.dataset.online === 'true'
                         });
                     });
 

@@ -4,6 +4,78 @@
 ### Tip: In VS Code/JetBrains REST Client, place cursor on a request and Run
 ### ===========================================
 
+### ===========================================
+### NEW CHAT APIs - 3 chức năng chính
+### ===========================================
+
+### 1. Kiểm tra xem đã có đoạn chat giữa 2 user chưa
+POST http://localhost:8080/api/chats/check-direct-chat
+Content-Type: application/json
+
+{
+    "userId1": 10,
+    "userId2": 11
+}
+
+###
+
+### 2. Tạo đoạn chat giữa 2 user (hoặc lấy nếu đã tồn tại)
+POST http://localhost:8080/api/chats/find-or-create-direct
+Content-Type: application/json
+
+{
+    "userId1": 10,
+    "userId2": 11
+}
+
+###
+
+### 3. Lấy chat_id của 2 user
+POST http://localhost:8080/api/chats/get-chat-id
+Content-Type: application/json
+
+{
+    "userId1": 1,
+    "userId2": 2
+}
+
+###
+
+### Test với user không tồn tại
+POST http://localhost:8080/api/chats/check-direct-chat
+Content-Type: application/json
+
+{
+    "userId1": 999,
+    "userId2": 1000
+}
+
+###
+
+### Test với userId giống nhau (sẽ lỗi)
+POST http://localhost:8080/api/chats/check-direct-chat
+Content-Type: application/json
+
+{
+    "userId1": 1,
+    "userId2": 1
+}
+
+###
+
+### Test với dữ liệu không hợp lệ
+POST http://localhost:8080/api/chats/check-direct-chat
+Content-Type: application/json
+
+{
+    "userId1": null,
+    "userId2": 2
+}
+
+### ===========================================
+### CÁC API CŨ (giữ nguyên)
+### ===========================================
+
 ### 0. (Optional) Create sample users first (adjust as needed)
 POST http://localhost:8080/users
 Content-Type: application/json
