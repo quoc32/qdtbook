@@ -37,8 +37,12 @@ class ViewController {
 
     @GetMapping("/register")
     public String register(Model model) {
-        System.out.println(">>> RegisterViewController called");
         return "register";
+    }
+
+    @GetMapping("/forgot-password")
+    public String forgotPassword(Model model) {
+        return "forgotPassword";
     }
 
     @GetMapping("/user")
