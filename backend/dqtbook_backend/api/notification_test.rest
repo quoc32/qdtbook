@@ -1,0 +1,7 @@
+### 1. Lấy tất cả các thông báo của user với ID 1
+GET http://localhost:8080/api/notifications/3/all
+Cookie: JSESSIONID=80210EB9D81854FED152807A44A5DBE7
+
+### 3. Xóa thông báo ("Đánh dấu đã đọc") với ID 5
+DELETE http://localhost:8080/api/notifications/2
+Cookie: JSESSIONID=F46253F19DACFAA6738E832415268FDF

@@ -190,7 +190,7 @@
                         </li>
                         <!-- Sự kiện -->
                         <li>
-                            <a href="#" class="side-link">
+                            <a href="/views/event" class="side-link">
                                 <img class="side-ico" src="/img/event-icon-2.png" alt="Events">
                                 <span>Sự kiện</span>
                             </a>
@@ -784,6 +784,69 @@
     </div>
     <!-- Main content:END -->
 
+    <!-- Kéo xuống bài post -->
+    <script>
+        (function () {
+            function smoothScrollToId(id, timeoutMs = 8000) {
+                if (!id) return;
+                const start = performance.now();
+
+                const tryScroll = () => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        return true;
+                    }
+                    return false;
+                };
+
+                if (tryScroll()) return;
+
+                // Wait for content rendered later (e.g., posts loaded async)
+                const observer = new MutationObserver(() => {
+                    if (tryScroll() || performance.now() - start > timeoutMs) {
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+                setTimeout(() => observer.disconnect(), timeoutMs);
+            }
+
+            function handleHash() {
+                const raw = window.location.hash.slice(1);
+                if (!raw) return;
+                const id = decodeURIComponent(raw);
+                smoothScrollToId(id);
+            }
+
+            // Scroll when page loads with a hash
+            window.addEventListener('DOMContentLoaded', handleHash);
+
+            // Scroll when hash changes on the same page
+            window.addEventListener('hashchange', handleHash);
+
+            // Intercept same-page links like href="#id" or href="/#id" to smooth scroll
+            document.addEventListener('click', (e) => {
+                const a = e.target.closest('a[href]');
+                if (!a) return;
+
+                const href = a.getAttribute('href');
+                if (!href) return;
+
+                const url = new URL(href, window.location.href);
+
+                // Same origin + same path + has hash => smooth scroll instead of default jump
+                if (url.origin === window.location.origin &&
+                    url.pathname === window.location.pathname &&
+                    url.hash) {
+                    e.preventDefault();
+                    const id = decodeURIComponent(url.hash.slice(1));
+                    smoothScrollToId(id);
+                    history.pushState(null, '', `#${encodeURIComponent(id)}`);
+                }
+            });
+        })();
+    </script>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

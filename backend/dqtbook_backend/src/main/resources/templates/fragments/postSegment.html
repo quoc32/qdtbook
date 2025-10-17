@@ -1422,23 +1422,25 @@
                   const content = (p.content || '').trim();
 
                   node.dataset.postId = postId;
+                  node.id = 'post-'+postId;
                   node.querySelector('.pc-name').textContent = name;
                   node.querySelector('.pc-avatar').src = avatar;
-          (function(){
-            const timeEl = node.querySelector('.post-time');
-            let label = formatRelativeTime(created);
-            // If there's a valid updatedAt newer than createdAt by > 60s, show edited time
-            if(updated){
-              const ct = new Date(created).getTime();
-              const ut = new Date(updated).getTime();
-              if(!isNaN(ut) && (isNaN(ct) || ut > ct + 60*1000)){
-                label = formatRelativeTime(updated) + ' • Đã chỉnh sửa';
-              }
-            }
-            timeEl.textContent = label;
-            const iso = (updated || created) ? new Date(updated || created).toISOString() : '';
-            if(iso) timeEl.setAttribute('datetime', iso);
-          })();
+
+                  (function(){
+                    const timeEl = node.querySelector('.post-time');
+                    let label = formatRelativeTime(created);
+                    // If there's a valid updatedAt newer than createdAt by > 60s, show edited time
+                    if(updated){
+                      const ct = new Date(created).getTime();
+                      const ut = new Date(updated).getTime();
+                      if(!isNaN(ut) && (isNaN(ct) || ut > ct + 60*1000)){
+                        label = formatRelativeTime(updated) + ' • Đã chỉnh sửa';
+                      }
+                    }
+                    timeEl.textContent = label;
+                    const iso = (updated || created) ? new Date(updated || created).toISOString() : '';
+                    if(iso) timeEl.setAttribute('datetime', iso);
+                  })();
 
                   // pc-visibility
                   (function(){
@@ -1487,8 +1489,6 @@
                       visEl.textContent = label;
                       visEl.title = label;
                   })();
-
-
 
                   const contentEl = node.querySelector('.post-content');
                   contentEl.textContent = content;

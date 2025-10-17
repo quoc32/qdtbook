@@ -8,6 +8,7 @@ import qdt.hcmute.vn.dqtbook_backend.repository.PostReactionRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostReactionResponseDTO;
+import qdt.hcmute.vn.dqtbook_backend.repository.NotificationRepository;
 
 import java.time.Instant;
 import java.util.List;
@@ -19,11 +20,16 @@ public class PostReactionService {
     private final PostReactionRepository postReactionRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
 
-    public PostReactionService(PostReactionRepository postReactionRepository, PostRepository postRepository, UserRepository userRepository) {
+    public PostReactionService(PostReactionRepository postReactionRepository, 
+                                PostRepository postRepository, 
+                                UserRepository userRepository,
+                                NotificationRepository notificationRepository) {
         this.postReactionRepository = postReactionRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     public List<PostReactionResponseDTO> getReactionsForPost(Integer postId) {
@@ -96,6 +102,14 @@ public class PostReactionService {
         }
         if (reaction.getCreatedAt() == null) reaction.setCreatedAt(Instant.now());
         PostReaction saved = postReactionRepository.saveAndFlush(reaction);
+
+        // Thêm Notification cho tác giả bài viết khi có reaction mới
+        if (!post.getAuthor().getId().equals(userOpt.get().getId())) {
+            String notificationContent = userOpt.get().getFullName() + " đã phản ứng về bài viết của bạn.";
+            String type = "new_reaction";
+            notificationRepository.createNotification(post.getAuthor().getId(), notificationContent, type, post.getId());
+        }
+
         return Optional.of(saved);
     }
 

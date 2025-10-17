@@ -15,19 +15,20 @@ public class Notification {
     @Column(name = "notification_id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipient_id", nullable = false)
-    private User recipient;
+    private Integer recipientId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
-    private User sender;
+    private Integer senderId;
 
     @Column(name = "type", length = 50, nullable = false)
     private String type;
 
     @Column(name = "source_id")
     private Integer sourceId;
+
+    @Column(name = "content", length = 500)
+    private String content;
 
     @Column(name = "is_read")
     private Boolean isRead;

@@ -13,8 +13,10 @@ import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.model.Friend;
 import qdt.hcmute.vn.dqtbook_backend.model.FriendId;
 import qdt.hcmute.vn.dqtbook_backend.model.FriendStatus;
+import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.repository.FriendRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
+import qdt.hcmute.vn.dqtbook_backend.repository.NotificationRepository;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,14 +28,20 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
     private final UserService userService;
+    private final NotificationRepository notificationRepository;
 
     @Autowired
     private HttpSession session;
 
-    public FriendService(FriendRepository friendRepository, UserRepository userRepository, UserService userService) {
+    public FriendService(FriendRepository friendRepository, 
+                        UserRepository userRepository, 
+                        UserService userService,
+                        NotificationRepository notificationRepository) {
         this.friendRepository = friendRepository;
         this.userRepository = userRepository;
         this.userService = userService;
+        this.notificationRepository = notificationRepository;
+
     }
 
     /**
@@ -128,6 +136,12 @@ public class FriendService {
         friend.setCreatedAt(Instant.now());
         friend.setUpdatedAt(Instant.now());
 
+        // Create notification for receiver
+        User sender = userRepository.findById(senderId).get();
+        String notificationContent = "Bạn có lời mời kết bạn đến từ: " + sender.getFullName();
+        String type = "friend_request";
+        notificationRepository.createNotification(receiverId, notificationContent, type, null);
+
         Friend savedFriend = friendRepository.save(friend);
         return Optional.of(convertToResponseDTO(savedFriend, senderId));
     }
@@ -174,6 +188,12 @@ public class FriendService {
         friend.setStatus(FriendStatus.accepted);
         friend.setUpdatedAt(Instant.now());
 
+        // Create notification for receiver
+        User sender = userRepository.findById(senderId).get();
+        String notificationContent = sender.getFullName() + " đã chấp nhận lời mời kết bạn. Bây giờ hai bạn đã là bạn bè!";
+        String type = "friend_request_accepted";
+        notificationRepository.createNotification(receiverId, notificationContent, type, null);
+
         Friend savedFriend = friendRepository.save(friend);
         return Optional.of(convertToResponseDTO(savedFriend, receiverId));
     }
@@ -205,6 +225,12 @@ public class FriendService {
         FriendId friendId2 = new FriendId();
         friendId2.setUserId1(receiverId); // user_id_1 = receiver
         friendId2.setUserId2(senderId); // user_id_2 = sender
+
+        // Create notification for receiver
+        User receiver = userRepository.findById(receiverId).get();
+        String notificationContent = receiver.getFullName() + " đã từ chối lời mời kết bạn.";
+        String type = "friend_request_refused";
+        notificationRepository.createNotification(receiverId, notificationContent, type, null);
 
         if (friendRepository.existsById(friendId1)) {
             friendRepository.deleteById(friendId1);

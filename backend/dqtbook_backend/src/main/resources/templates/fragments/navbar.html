@@ -202,46 +202,219 @@
                 <!-- Phần bên phải: Thông báo, Avatar -->
                 <ul class="navbar-nav ms-auto align-items-center gap-3 enhanced-userbar">
 
-                    <!-- Notifications -->
+                    <!-- Notifications:BEGIN -->
                     <li class="nav-item dropdown position-relative">
-                        <button class="btn-reset notif-btn-neo" id="notifBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thông báo (3 mới)">
+                        <button class="btn-reset notif-btn-neo" id="notifBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Thông báo">
                             <span class="notif-ring"></span>
                             <img src="/img/bell-icon.png" alt="" width="22" height="22" draggable="false">
-                            <span class="notif-badge pulse" data-count="3">3</span>
+                            <span class="notif-badge pulse" id="notifBadge" data-count="0">0</span>
                         </button>
+
                         <div class="dropdown-menu notif-menu dropdown-menu-end shadow-lg border-0 p-0" aria-labelledby="notifBtn">
                             <div class="nm-header d-flex align-items-center">
                                 <span class="fw-semibold">Thông báo</span>
-                                <button class="btn-mark-read" id="markAllNotif" title="Đánh dấu đã đọc">Đã đọc</button>
+                                <!-- Dùng id khác để không dính handler cũ -->
+                                <button class="btn-mark-read" id="markAllNotif2" title="Đánh dấu đã đọc">Đã đọc</button>
                             </div>
                             <div class="nm-list" id="notifList">
-                                <a href="#" class="nm-item new">
-                                    <div class="dot"></div>
-                                    <div class="txt">
-                                        <strong>Linh Trần</strong> đã thích bài viết của bạn
-                                        <div class="time">2 phút trước</div>
-                                    </div>
-                                </a>
-                                <a href="#" class="nm-item new">
-                                    <div class="dot"></div>
-                                    <div class="txt">
-                                        <strong>An Nguyễn</strong> đã bình luận: "OK nhé!"
-                                        <div class="time">10 phút trước</div>
-                                    </div>
-                                </a>
-                                <a href="#" class="nm-item new">
-                                    <div class="dot"></div>
-                                    <div class="txt">
-                                        Bạn có 1 lời mời kết bạn mới
-                                        <div class="time">30 phút trước</div>
-                                    </div>
-                                </a>
+                                <div class="px-3 py-2 text-muted small">Đang tải...</div>
                             </div>
-                            <div class="nm-footer">
-                                <a href="#" class="view-all">Xem tất cả</a>
-                            </div>
+                            <!-- "Xem tất cả" removed as requested -->
                         </div>
                     </li>
+                    <script>
+                        (function(){
+                          const btn = document.getElementById('notifBtn');
+                          const list = document.getElementById('notifList');
+                          const badge = document.getElementById('notifBadge');
+                          const markAllBtn = document.getElementById('markAllNotif2');
+                          let items = [];
+
+                          function getUserId(){
+                            try{
+                              const a = JSON.parse(localStorage.getItem('auth')||'{}');
+                              return a?.id || a?.user_id || a?.userId || a?.user?.id || null;
+                            }catch(_){ return null; }
+                          }
+
+                          function setBadge(n){
+                            if(!badge) return;
+                            if(n>0){
+                              badge.classList.add('pulse');
+                              badge.textContent = String(n);
+                              badge.dataset.count = String(n);
+                              badge.style.background = '';
+                              btn?.setAttribute('aria-label', `Thông báo (${n} mới)`);
+                            }else{
+                              badge.classList.remove('pulse');
+                              badge.textContent = '0';
+                              badge.dataset.count = '0';
+                              badge.style.background = '#6c757d';
+                              btn?.setAttribute('aria-label', 'Thông báo');
+                            }
+                          }
+
+                          function emptyList(msg){
+                            list.innerHTML = '';
+                            const d = document.createElement('div');
+                            d.className = 'px-3 py-2 text-muted small';
+                            d.textContent = msg || 'Không có thông báo';
+                            list.appendChild(d);
+                          }
+
+                          function timeAgo(iso){
+                            if(!iso) return '';
+                            const d = new Date(iso);
+                            if(isNaN(d)) return '';
+                            const s = Math.floor((Date.now()-d.getTime())/1000);
+                            if(s<60) return `${s}s trước`;
+                            const m = Math.floor(s/60);
+                            if(m<60) return `${m} phút trước`;
+                            const h = Math.floor(m/60);
+                            if(h<24) return `${h} giờ trước`;
+                            const day = Math.floor(h/24);
+                            return `${day} ngày trước`;
+                          }
+
+                          function render(){
+                            list.innerHTML = '';
+                            if(!items.length){ emptyList('Không có thông báo'); setBadge(0); return; }
+
+                            const typeStyles = {
+                              new_comment:   { color:'#1b74e4', border:'rgba(27,116,228,.35)', glow:'rgba(27,116,228,.18)' },
+                              new_post:      { color:'#198754', border:'rgba(25,135,84,.35)', glow:'rgba(25,135,84,.18)' },
+                              friend_request:{ color:'#fd7e14', border:'rgba(253,126,20,.35)', glow:'rgba(253,126,20,.20)' }
+                            };
+                            const pickStyle = (t)=> typeStyles[t] || typeStyles.new_comment;
+
+                            items.forEach(n=>{
+                              const sty = pickStyle(n.type);
+                              const srcId = n.sourceId ?? n.source_id ?? '';
+                              const postUrl = srcId ? `http://localhost:8080/#post-${srcId}` : 'http://localhost:8080';
+
+                              const a = document.createElement('a');
+                              a.href = n.type === 'friend_request' ? '/views/friends' : postUrl;
+                              a.className = 'nm-item new d-flex align-items-start justify-content-between';
+                              a.dataset.id = n.id;
+                              a.dataset.type = n.type || '';
+                              // Colorize per type
+                              a.style.border = `1px solid ${sty.border}`;
+                              a.style.borderLeft = `4px solid ${sty.color}`;
+                              a.style.background = `linear-gradient(145deg,var(--neo-bg),var(--neo-bg)) padding-box,
+                                                    linear-gradient(145deg,${sty.border},rgba(0,0,0,0)) border-box`;
+
+                              const left = document.createElement('div');
+                              left.style.display = 'flex';
+                              left.style.gap = '.75rem';
+                              left.style.flex = '1';
+                              left.style.alignItems = 'flex-start';
+
+                              const dot = document.createElement('div');
+                              dot.className='dot';
+                              dot.style.background = sty.color;
+                              dot.style.boxShadow = `0 0 0 4px ${sty.glow}`;
+
+                              const txt = document.createElement('div'); txt.className='txt flex-grow-1';
+
+                              const content = n.content || '';
+                              const contentNode = document.createElement('div');
+                              contentNode.textContent = content;
+                              const tm = document.createElement('div'); tm.className='time'; tm.textContent=timeAgo(n.createdAt);
+
+                              txt.appendChild(contentNode);
+                              txt.appendChild(tm);
+
+                              left.appendChild(dot);
+                              left.appendChild(txt);
+
+                              // delete button
+                              const delBtn = document.createElement('button');
+                              delBtn.type = 'button';
+                              delBtn.className = 'btn btn-sm btn-outline-danger ms-2 align-self-start';
+                              delBtn.title = 'Xóa';
+                              delBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                              delBtn.addEventListener('click', async (e)=>{
+                                e.stopPropagation();
+                                e.preventDefault();
+                                try{
+                                  await removeOne(n.id, a);
+                                }catch(_){}
+                              });
+
+                              a.addEventListener('click', async (e)=>{
+                                e.preventDefault();
+                                if(n.type === 'friend_request'){
+                                  try{ await removeOne(n.id, a); }catch(_){}
+                                  window.location.href = '/views/friends';
+                                }else{
+                                  const url = postUrl;
+                                  try{ await removeOne(n.id, a); }catch(_){}
+                                  window.location.href = url;
+                                }
+                              });
+
+                              a.appendChild(left);
+                              a.appendChild(delBtn);
+
+                              list.appendChild(a);
+                            });
+                            setBadge(items.length);
+                          }
+
+                          async function fetchAll(){
+                            const uid = getUserId();
+                            if(!uid){ emptyList('Không xác định người dùng'); setBadge(0); return; }
+                            try{
+                              list.innerHTML = '<div class="px-3 py-2 text-muted small">Đang tải...</div>';
+                              const res = await fetch(`/api/notifications/${encodeURIComponent(uid)}/all`, { credentials:'include' });
+                              if(!res.ok) throw new Error('HTTP '+res.status);
+                              items = await res.json();
+                              render();
+                            }catch(_){
+                              emptyList('Lỗi tải thông báo');
+                              setBadge(0);
+                            }
+                          }
+
+                          async function removeOne(id, el){
+                            try{
+                              const res = await fetch(`/api/notifications/${encodeURIComponent(id)}`, { method:'DELETE', credentials:'include' });
+                              if(!res.ok) throw new Error('HTTP '+res.status);
+                              items = items.filter(x=>x.id!==id);
+                              el?.remove();
+                              setBadge(items.length);
+                              if(!items.length) emptyList('Đã đọc hết thông báo');
+                            }catch(_){
+                              // If delete failed, try to revert UI or show error (silent here)
+                            }
+                          }
+
+                          markAllBtn?.addEventListener('click', async (e)=>{
+                            e.preventDefault();
+                            if(!items.length){ emptyList('Không có thông báo'); setBadge(0); return; }
+                            const snapshot = [...items];
+                            // Optimistic UI
+                            list.querySelectorAll('.nm-item').forEach(n=>n.remove());
+                            setBadge(0);
+                            emptyList('Đang đánh dấu đã đọc...');
+                            for(const it of snapshot){
+                              try{ await fetch(`/api/notifications/${encodeURIComponent(it.id)}`, { method:'DELETE', credentials:'include' }); }catch(_){}
+                            }
+                            items = [];
+                            emptyList('Đã đọc hết thông báo');
+                          });
+
+                          // Preload and also refresh on dropdown open
+                          fetchAll();
+                          document.addEventListener('shown.bs.dropdown', e=>{
+                            if(e.target.contains(btn)){
+                              // Refresh when opening to get latest
+                              fetchAll();
+                            }
+                          });
+                        })();
+                    </script>
+                    <!-- Notifications:END -->
 
                     <!-- User avatar / menu -->
                     <li class="nav-item dropdown user-dropdown">

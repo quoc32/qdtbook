@@ -54,8 +54,10 @@ public class PostShareService {
             User postOwner = post.getAuthor();
             if (postOwner != null && !postOwner.getId().equals(userOpt.get().getId())) {
                 Notification n = new Notification();
-                n.setRecipient(postOwner);
-                n.setSender(userOpt.get());
+                // n.setRecipient(postOwner); // !: recipient is user id now
+                n.setRecipientId(postOwner.getId());
+                // n.setSender(userOpt.get()); // !: sender is user id now
+                n.setSenderId(userOpt.get().getId());
                 n.setType("post_share");
                 n.setSourceId(saved.getId());
                 n.setIsRead(false);
