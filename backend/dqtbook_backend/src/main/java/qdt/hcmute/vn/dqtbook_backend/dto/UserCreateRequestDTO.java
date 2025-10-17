@@ -58,6 +58,8 @@ public class UserCreateRequestDTO {
     private String education;
     
     private String workplace;
+
+    private String otp;
     
     @JsonProperty("facebook_url")
     private String facebookUrl;

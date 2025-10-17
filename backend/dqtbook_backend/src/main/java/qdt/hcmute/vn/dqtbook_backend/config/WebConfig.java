@@ -13,8 +13,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")              // áp dụng cho tất cả các request
                 .excludePathPatterns(
                         "/api/auth/login", 
-                        "/api/auth/logout",  // cho phép logout mà không cần session
+                        "/api/auth/logout",     // cho phép logout mà không cần session
                         "/api/users/register",  // đăng ký tài khoản
+                        "/api/users/send-otp",  // gửi OTP cho đăng ký tài khoản
+                        "/api/users/forgot-password", // quên mật khẩu
+                        "/api/users/send-otp/forgot-password", // gửi OTP cho quên mật khẩu
                         "/error", 
                         "/css/**", 
                         "/js/**", 
