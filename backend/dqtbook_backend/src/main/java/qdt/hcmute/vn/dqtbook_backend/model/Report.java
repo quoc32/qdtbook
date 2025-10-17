@@ -19,11 +19,15 @@ public class Report {
     @JoinColumn(name = "reporter_id", nullable = false)
     private User reporter;
 
-    @Column(name = "reported_content_type", length = 20, nullable = false)
-    private String reportedContentType;
+    // store specific foreign key depending on type
+    @Column(name = "reported_post_id")
+    private Integer reportedPostId;
 
-    @Column(name = "reported_content_id", nullable = false)
-    private Integer reportedContentId;
+    @Column(name = "reported_comment_id")
+    private Integer reportedCommentId;
+
+    @Column(name = "reported_product_id")
+    private Integer reportedProductId;
 
     @Lob
     @Column(name = "reason", nullable = false)
