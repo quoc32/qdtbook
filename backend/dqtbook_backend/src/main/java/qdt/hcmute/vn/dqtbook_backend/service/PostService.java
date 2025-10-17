@@ -10,6 +10,7 @@ import qdt.hcmute.vn.dqtbook_backend.repository.PostRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostMediaRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.FriendRepository;
+import qdt.hcmute.vn.dqtbook_backend.repository.NotificationRepository;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateResponseDTO;
@@ -29,15 +30,21 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMediaRepository postMediaRepository;
     private final FriendRepository friendRepository;
+    private final NotificationRepository notificationRepository;
 
     @Autowired
     private HttpSession session;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository, PostMediaRepository postMediaRepository, FriendRepository friendRepository) {
+    public PostService(PostRepository postRepository, 
+                        UserRepository userRepository, 
+                        PostMediaRepository postMediaRepository, 
+                        FriendRepository friendRepository,
+                        NotificationRepository notificationRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postMediaRepository = postMediaRepository;
         this.friendRepository = friendRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     public ResponseEntity<List<PostContentResponseDTO>> getAllPosts() {
@@ -449,6 +456,28 @@ public class PostService {
                 savedPostMedias.add(savedPostMedia);
             }
         }
+
+        // Tạo Notification cho các bạn bè của user (author) về bài viết mới, nếu bài viết không phải là private
+        if ("private".equalsIgnoreCase(savedPost.getVisibility())) {
+            return Optional.of(toPostCreateResponseDTO(savedPost, savedPostMedias));
+        }
+
+        // Nếu không
+        List<Integer> friendIds_all = friendRepository.findFriendIdsByUserId(ReqDTO.getAuthorId());
+        List<Integer> friendIds = new ArrayList<>();
+        for (Integer fid : friendIds_all) {
+            String status = friendRepository.findStatusByUserIds(ReqDTO.getAuthorId(), fid);
+            if ("accepted".equalsIgnoreCase(status)) {
+                friendIds.add(fid);
+            }
+        }
+        for (Integer fid : friendIds) {
+            String notificationContent = "Bạn bè của bạn " + userOpt.get().getFullName() + " vừa đăng một bài viết mới.";
+            String type = "new_post";
+            notificationRepository.createNotification(fid, notificationContent, type, savedPost.getId());
+        }
+
+
         PostCreateResponseDTO ResDTO = toPostCreateResponseDTO(savedPost, savedPostMedias);
         
         return Optional.of(ResDTO);

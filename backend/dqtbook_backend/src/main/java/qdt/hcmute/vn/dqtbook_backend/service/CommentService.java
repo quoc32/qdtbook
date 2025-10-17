@@ -9,6 +9,7 @@ import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.repository.CommentRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.PostRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
+import qdt.hcmute.vn.dqtbook_backend.repository.NotificationRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,11 +23,16 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
 
-    public CommentService(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository) {
+    public CommentService(CommentRepository commentRepository, 
+                        PostRepository postRepository, 
+                        UserRepository userRepository,
+                        NotificationRepository notificationRepository) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     public List<PostCommentResponseDTO> getCommentsForPost(Integer postId) {
@@ -73,6 +79,15 @@ public class CommentService {
             Optional<Comment> parentOpt = commentRepository.findById(comment.getParentCommentId());
             if (parentOpt.isEmpty()) return Optional.empty();
             comment.setParentComment(parentOpt.get());
+        }
+
+        // Thêm Notification cho tác giả bài viết khi có bình luận mới
+        if (!post.getAuthor().getId().equals(userOpt.get().getId())) {
+            String notificationContent = userOpt.get().getFullName() + " đã bình luận về bài viết của bạn.";
+            String type = "new_comment";
+            // Gọi phương thức tạo thông báo
+            // Giả sử sourceId là ID của bài viết
+            notificationRepository.createNotification(post.getAuthor().getId(), notificationContent, type, post.getId());
         }
 
         comment.setPost(post);

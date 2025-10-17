@@ -16,8 +16,7 @@ public class HomeViewController {
     public String home(Model model, HttpServletRequest request) {
         Object userId = request.getSession().getAttribute("userId");
         if (userId == null) {
-            model.addAttribute("error", "You must be logged in to access this page");
-            return "error";
+            return "redirect:/views/login";
         }
         model.addAttribute("userId", userId.toString());
         return "index";
