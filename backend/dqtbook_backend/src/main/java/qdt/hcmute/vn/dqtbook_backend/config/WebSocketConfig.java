@@ -1,6 +1,7 @@
 package qdt.hcmute.vn.dqtbook_backend.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -24,10 +25,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Đăng ký endpoint '/ws' mà client sẽ kết nối đến
-        // Cho phép CORS từ tất cả các nguồn (*) để dễ phát triển
-        // Trong môi trường sản xuất, bạn nên giới hạn những nguồn được phép
+        // Thêm HttpSessionHandshakeInterceptor để xác thực user từ HTTP session
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns("*") // CHỈNH LẠI
+                .addInterceptors(new HttpSessionHandshakeInterceptor()) // Xác thực khi handshake
                 .withSockJS(); // Hỗ trợ SockJS cho các trình duyệt không hỗ trợ WebSocket natively
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        // Thêm interceptor để xác thực mỗi message từ client
+        registration.interceptors(new AuthChannelInterceptor());
     }
 }

@@ -8,6 +8,10 @@
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/favicon.png">
+    
+    <!-- WebSocket Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <style>
         body {
             background: #f0f2f5;
@@ -597,6 +601,14 @@
         let currentChatId = null;
         let selectedChatName = '';
         let selectedAvatarUrl = '';
+        
+        // ============================================
+        // WEBSOCKET CONFIGURATION
+        // ============================================
+        let stompClient = null;  // STOMP client cho WebSocket
+        let currentSubscription = null;  // Subscription hiện tại cho chat
+        let currentReadStatusSubscription = null;  // Subscription cho read status
+        let isWebSocketConnected = false;  // Trạng thái kết nối WebSocket
 
         // Initialize with real friend data
         // Heartbeat mechanism để cập nhật last_seen_at
@@ -641,11 +653,260 @@
             loadFriends();      // Load friends ngay lập tức
             startHeartbeat();   // Bắt đầu heartbeat
             startFriendsRefresh(); // Bắt đầu refresh friends
+            connectWebSocket(); // Kết nối WebSocket
 
             console.log('🟢 Online status system initialized in messages page!');
             console.log('📡 Heartbeat: every 2 minutes');
             console.log('🔄 Friends refresh: every 1 minute');
         });
+        
+        // ============================================
+        // WEBSOCKET CONNECTION
+        // ============================================
+        
+        /**
+         * Kết nối WebSocket sử dụng SockJS và STOMP
+         */
+        function connectWebSocket() {
+            console.log('🔌 Đang kết nối WebSocket...');
+            
+            // Tạo SockJS connection
+            const socket = new SockJS('/ws');
+            
+            // Tạo STOMP client từ SockJS
+            stompClient = Stomp.over(socket);
+            
+            // Tắt debug log (bật lại nếu cần debug)
+            stompClient.debug = null;
+            
+            // Kết nối đến WebSocket server
+            stompClient.connect({}, 
+                function onConnected(frame) {
+                    isWebSocketConnected = true;
+                    console.log('✅ WebSocket connected:', frame);
+                    console.log('🎉 Sẵn sàng chat realtime!');
+                },
+                function onError(error) {
+                    isWebSocketConnected = false;
+                    console.error('❌ WebSocket connection error:', error);
+                    console.log('⚠️ Sẽ thử kết nối lại sau 5 giây...');
+                    
+                    // Thử kết nối lại sau 5 giây
+                    setTimeout(connectWebSocket, 5000);
+                }
+            );
+        }
+        
+        /**
+         * Subscribe vào topic của chat để nhận tin nhắn realtime và read status
+         * @param {number} chatId - ID của chat cần subscribe
+         */
+        function subscribeToChat(chatId) {
+            if (!stompClient || !isWebSocketConnected) {
+                console.warn('⚠️ WebSocket chưa kết nối, không thể subscribe');
+                return;
+            }
+            
+            // Unsubscribe chat cũ nếu có
+            if (currentSubscription) {
+                currentSubscription.unsubscribe();
+                console.log('📤 Unsubscribed từ chat cũ');
+            }
+            if (currentReadStatusSubscription) {
+                currentReadStatusSubscription.unsubscribe();
+                console.log('📤 Unsubscribed từ read status cũ');
+            }
+            
+            // 1. Subscribe vào topic tin nhắn
+            const messageTopic = '/topic/chat.' + chatId;
+            console.log('📥 Subscribing to messages:', messageTopic);
+            
+            currentSubscription = stompClient.subscribe(messageTopic, function(message) {
+                // Nhận tin nhắn từ server
+                const messageData = JSON.parse(message.body);
+                console.log('📨 Nhận tin nhắn mới:', messageData);
+                
+                // Hiển thị tin nhắn lên UI
+                displayReceivedMessage(messageData);
+                
+                // Tự động đánh dấu đã đọc nếu không phải tin nhắn của mình
+                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                const currentUserId = auth.user_id;
+                if (messageData.senderId !== currentUserId) {
+                    // Đợi 500ms để đảm bảo tin nhắn đã hiển thị
+                    setTimeout(() => {
+                        markMessageAsRead(messageData.id, chatId);
+                    }, 500);
+                }
+            });
+            
+            // 2. Subscribe vào topic read status
+            const readStatusTopic = '/topic/chat.' + chatId + '.readStatus';
+            console.log('📥 Subscribing to read status:', readStatusTopic);
+            
+            currentReadStatusSubscription = stompClient.subscribe(readStatusTopic, function(message) {
+                // Nhận thông báo read status từ server
+                const readStatus = JSON.parse(message.body);
+                console.log('👁️ Nhận read status:', readStatus);
+                
+                // Cập nhật UI hiển thị checkmark
+                updateMessageReadStatus(readStatus);
+            });
+            
+            console.log('✅ Đã subscribe vào chat:', chatId);
+        }
+        
+        /**
+         * Hiển thị tin nhắn nhận được từ WebSocket
+         * @param {object} messageData - Dữ liệu tin nhắn từ server
+         */
+        function displayReceivedMessage(messageData) {
+            // Lấy userId hiện tại
+            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+            const currentUserId = auth.user_id;
+            
+            // Kiểm tra xem tin nhắn có phải của mình không
+            const isCurrentUser = (messageData.senderId === currentUserId);
+            
+            // Tạo object tin nhắn
+            const newMessage = {
+                id: messageData.id,
+                content: messageData.content,
+                isCurrentUser: isCurrentUser,
+                time: formatMessageTime(messageData.timestamp),
+                senderName: messageData.senderName,
+                senderAvatar: messageData.senderAvatar
+            };
+            
+            // Thêm tin nhắn vào UI
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                const messageDiv = createRealMessageElement(newMessage);
+                chatMessages.appendChild(messageDiv);
+                
+                // Scroll xuống cuối
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+        
+        // ============================================
+        // READ RECEIPTS (ĐÃ XEM TIN NHẮN)
+        // ============================================
+        
+        /**
+         * Đánh dấu tin nhắn là đã đọc và gửi qua WebSocket
+         * @param {number} messageId - ID của tin nhắn
+         * @param {number} chatId - ID của chat
+         */
+        function markMessageAsRead(messageId, chatId) {
+            if (!stompClient || !isWebSocketConnected) {
+                console.warn('⚠️ WebSocket chưa kết nối, không thể gửi read status');
+                return;
+            }
+            
+            // Lấy userId hiện tại
+            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+            const currentUserId = auth.user_id;
+            
+            if (!currentUserId) {
+                return;
+            }
+            
+            try {
+                console.log(`👁️ Đánh dấu tin nhắn ${messageId} là đã đọc`);
+                
+                // Tạo read status payload
+                const readStatusPayload = {
+                    chatId: chatId,
+                    userId: currentUserId,
+                    messageId: messageId
+                };
+                
+                // Gửi read status qua WebSocket
+                stompClient.send(
+                    '/app/chat.readStatus',
+                    {},
+                    JSON.stringify(readStatusPayload)
+                );
+                
+                console.log('✅ Read status đã được gửi');
+                
+            } catch (error) {
+                console.error('❌ Lỗi khi gửi read status:', error);
+            }
+        }
+        
+        /**
+         * Cập nhật UI hiển thị checkmark khi nhận read status
+         * Chỉ hiển thị checkmark ở tin nhắn mới nhất, xóa checkmark cũ
+         * @param {object} readStatus - Dữ liệu read status từ server
+         */
+        function updateMessageReadStatus(readStatus) {
+            // Lấy userId hiện tại
+            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+            const currentUserId = auth.user_id;
+            
+            // Chỉ hiển thị checkmark cho tin nhắn của mình (sent messages)
+            const chatMessages = document.getElementById('chatMessages');
+            if (!chatMessages) return;
+            
+            // Xóa tất cả checkmark cũ (nếu có)
+            const oldIndicators = chatMessages.querySelectorAll('.read-indicator');
+            oldIndicators.forEach(indicator => indicator.remove());
+            
+            // Tìm tin nhắn mới nhất của mình (sent)
+            const sentMessages = chatMessages.querySelectorAll('.message.sent');
+            if (sentMessages.length === 0) return;
+            
+            // Lấy tin nhắn mới nhất
+            const lastSentMessage = sentMessages[sentMessages.length - 1];
+            
+            // Thêm checkmark vào tin nhắn mới nhất
+            const messageTime = lastSentMessage.querySelector('.message-time');
+            if (messageTime) {
+                // Tạo read indicator mới
+                const readIndicator = document.createElement('span');
+                readIndicator.className = 'read-indicator';
+                readIndicator.style.fontSize = '11px';
+                readIndicator.style.marginLeft = '5px';
+                readIndicator.innerHTML = ' ✓✓';
+                readIndicator.style.color = '#000';
+                
+                messageTime.appendChild(readIndicator);
+                
+                console.log(`✅ Hiển thị checkmark ở tin nhắn mới nhất`);
+            }
+        }
+        
+        /**
+         * Đánh dấu CHI TIN NHẮN MỚI NHẤT của người khác là đã đọc
+         * (Thay vì đánh dấu tất cả để giao diện đẹp hưn)
+         */
+        function markAllVisibleMessagesAsRead() {
+            if (!currentChatId) return;
+            
+            // Lấy userId hiện tại
+            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+            const currentUserId = auth.user_id;
+            
+            // Tìm tất cả tin nhắn KHÔNG phải của mình
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                const messageElements = chatMessages.querySelectorAll('.message:not(.sent)');
+                
+                if (messageElements.length > 0) {
+                    // Lấy tin nhắn cuối cùng (mới nhất)
+                    const lastMessage = messageElements[messageElements.length - 1];
+                    const messageId = lastMessage.getAttribute('data-message-id');
+                    
+                    if (messageId) {
+                        console.log(`👁️ Chỉ đánh dấu tin nhắn mới nhất: ${messageId}`);
+                        // Chỉ đánh dấu tin nhắn mới nhất
+                        markMessageAsRead(parseInt(messageId), currentChatId);
+                    }
+                }
+            }
+        }
 
         // Get current user ID from localStorage
         // Load friends from API
@@ -1007,6 +1268,9 @@
 
                 // Load messages from API
                 await loadMessagesFromAPI(chatId, currentUserId);
+                
+                // Subscribe vào WebSocket topic của chat này để nhận tin nhắn realtime
+                subscribeToChat(chatId);
 
                 // Setup input handlers
                 const messageInput = document.getElementById('messageInput');
@@ -1103,6 +1367,12 @@
 
             // Scroll to bottom
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Tự động đánh dấu tất cả tin nhắn của người khác là đã đọc
+            // Đợi 1s để đảm bảo UI đã render xong
+            setTimeout(() => {
+                markAllVisibleMessagesAsRead();
+            }, 1000);
         }
 
         // Create real message element
@@ -1110,6 +1380,8 @@
             const div = document.createElement('div');
 
             div.className = `message ${message.isCurrentUser ? 'sent' : ''}`;
+            // Thêm data-message-id để có thể tìm và cập nhật read status sau
+            div.setAttribute('data-message-id', message.id);
 
             let contentHtml = '';
             if (message.content) {
@@ -1214,14 +1486,20 @@
             return div;
         }
 
-        // Send real message using API
-        async function sendRealMessage() {
+        // ============================================
+        // GỬI TIN NHẮN QUA WEBSOCKET
+        // ============================================
+        
+        /**
+         * Gửi tin nhắn sử dụng WebSocket (thay vì REST API)
+         */
+        function sendRealMessage() {
             const messageInput = document.getElementById('messageInput');
             const content = messageInput.value.trim();
 
             if (!content || !currentChatId) return;
 
-            // Get current user ID
+            // Lấy userId hiện tại
             const auth = JSON.parse(localStorage.getItem('auth') || '{}');
             const currentUserId = auth.user_id;
 
@@ -1229,63 +1507,49 @@
                 alert('Vui lòng đăng nhập lại');
                 return;
             }
+            
+            // Kiểm tra WebSocket đã kết nối chưa
+            if (!stompClient || !isWebSocketConnected) {
+                alert('WebSocket chưa kết nối. Vui lòng đợi...');
+                return;
+            }
 
-            // Disable input while sending
+            // Disable input trong khi gửi
             messageInput.disabled = true;
             const sendBtn = messageInput.parentElement.querySelector('.send-btn');
             sendBtn.disabled = true;
 
             try {
-                console.log(`📤 Sending message to chat ${currentChatId}`);
+                console.log(`📤 Gửi tin nhắn qua WebSocket đến chat ${currentChatId}`);
 
-                const response = await fetch('/api/messages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        chat_id: currentChatId,
-                        sender_id: currentUserId,
-                        content: content,
-                        media_url: null
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const messageData = await response.json();
-                console.log('✅ Message sent successfully:', messageData);
-
-                // Clear input
-                messageInput.value = '';
-
-                // Add message to chat immediately
-                const newMessage = {
-                    id: messageData.message_id,
-                    content: messageData.content,
-                    isCurrentUser: true,
-                    time: formatMessageTime(messageData.created_at),
-                    senderName: messageData.sender_full_name,
-                    senderAvatar: messageData.sender_avatar_url
+                // Tạo message object theo format ChatMessageDTO
+                const messagePayload = {
+                    chatId: currentChatId,
+                    senderId: currentUserId,
+                    content: content,
+                    messageType: 'TEXT'
                 };
+                
+                // Gửi tin nhắn qua WebSocket đến endpoint /app/chat.sendMessage
+                stompClient.send(
+                    '/app/chat.sendMessage',
+                    {},  // Headers (để trống)
+                    JSON.stringify(messagePayload)  // Body
+                );
+                
+                console.log('✅ Tin nhắn đã được gửi qua WebSocket');
 
-                // Add to chat
-                const chatMessages = document.getElementById('chatMessages');
-                const messageDiv = createRealMessageElement(newMessage);
-                chatMessages.appendChild(messageDiv);
-
-                // Scroll to bottom
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                // Xóa nội dung input
+                messageInput.value = '';
+                
+                // Lưu ý: Tin nhắn sẽ được hiển thị khi nhận lại từ server qua subscription
+                // Không cần thêm vào UI ngay lập tức
 
             } catch (error) {
-                console.error('❌ Error sending message:', error);
+                console.error('❌ Lỗi khi gửi tin nhắn:', error);
                 alert('Không thể gửi tin nhắn: ' + error.message);
             } finally {
-                // Re-enable input
+                // Bật lại input
                 messageInput.disabled = false;
                 sendBtn.disabled = false;
                 messageInput.focus();
