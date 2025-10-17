@@ -91,31 +91,46 @@ class ViewController {
         return "event";
     }
 
-    @GetMapping("/adminManager")
-    public String adminManager(HttpServletRequest request, Model model) {
-        Object userId = request.getSession().getAttribute("userId");
-        String role = (String) request.getSession().getAttribute("role");
-        model.addAttribute("role", role);
-        
-        if (userId == null) {
-            model.addAttribute("error", "You must be logged in to access this page");
-            
-            return "error";
-        }
-        return "adminManager";
+    @GetMapping("/messages")
+public String messages(HttpServletRequest request, Model model) {
+    Object userId = request.getSession().getAttribute("userId");
+    String role = (String) request.getSession().getAttribute("role");
+    model.addAttribute("role", role);
+
+    if (userId == null) {
+        model.addAttribute("error", "You must be logged in to access this page");
+        return "error";
     }
 
-    @GetMapping("/marketplace")
-    public String market(HttpServletRequest request, Model model) {
-        Object userId = request.getSession().getAttribute("userId");
-        if (userId == null) {
-            model.addAttribute("error", "You must be logged in to access this page");
-            return "error";
-        }
-        model.addAttribute("userId", userId.toString());
-        return "market";
+    return "messages";
+}
+
+@GetMapping("/adminManager")
+public String adminManager(HttpServletRequest request, Model model) {
+    Object userId = request.getSession().getAttribute("userId");
+    String role = (String) request.getSession().getAttribute("role");
+    model.addAttribute("role", role);
+
+    if (userId == null) {
+        model.addAttribute("error", "You must be logged in to access this page");
+        return "error";
     }
 
+    return "adminManager";
+}
+
+@GetMapping("/marketplace")
+public String marketplace(HttpServletRequest request, Model model) {
+    Object userId = request.getSession().getAttribute("userId");
+
+    if (userId == null) {
+        model.addAttribute("error", "You must be logged in to access this page");
+        return "error";
+    }
+
+    model.addAttribute("userId", userId.toString());
+    return "market";
+}
 
 }
 

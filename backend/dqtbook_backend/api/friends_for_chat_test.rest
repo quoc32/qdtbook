@@ -1,0 +1,21 @@
+### Test Friend API for Chat - User 10 (Current logged in user)
+GET http://localhost:8080/api/friends/10
+Content-Type: application/json
+
+### Test Friend API for Chat - User 1 
+GET http://localhost:8080/api/friends/1
+Content-Type: application/json
+
+### Test with different user ID
+GET http://localhost:8080/api/friends/2
+Content-Type: application/json
+
+### Note:
+# This API will return friends for the specified user ID
+# The response will include:
+# - sender_id: ID of the user who sent the friend request
+# - receiver_id: ID of the user who received the friend request  
+# - status: 'pending', 'accepted', 'refused', 'blocked'
+# - friend_info: Complete user information of the friend
+#
+# Only friends with status 'accepted' will be shown in the chat list
