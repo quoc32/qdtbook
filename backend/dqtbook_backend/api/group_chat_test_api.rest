@@ -1,0 +1,72 @@
+### Test API for Group Chat - Luôn có chatName
+
+### 1. Tạo group chat mới với 3 thành viên
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11, 12],
+  "chatName": "Nhóm học tập"
+}
+# Kết quả: 201 Created
+# isNewlyCreated: true
+# Trả về chatId mới
+
+###
+
+### 2. Tìm group chat đã tồn tại (cùng memberIds)
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11, 12],
+  "chatName": "Tên khác nhau" 
+}
+# Kết quả: 200 OK
+# isNewlyCreated: false
+# Trả về chatId giống với request 1 (vì cùng members)
+# chatName vẫn là "Nhóm học tập" (không thay đổi)
+
+###
+
+### 3. Tạo group chat với thứ tự memberIds khác (nhưng cùng members)
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [11, 12, 10],
+  "chatName": "Nhóm test"
+}
+# Kết quả: 200 OK
+# isNewlyCreated: false
+# Trả về chatId giống với request 1 (vì sau khi sort: [1,2,3])
+
+###
+
+### 4. Tạo group chat với members khác
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11, 13],
+  "chatName": "Nhóm dự án"
+}
+# Kết quả: 201 Created
+# isNewlyCreated: true
+# Tạo group chat mới (vì có member khác: user 4 thay vì user 3)
+
+###
+
+### 5. Tạo group chat 4 người
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11, 12, 13],
+  "chatName": "Nhóm bạn thân"
+}
+# Kết quả: 201 Created
+# isNewlyCreated: true
+
+###
+

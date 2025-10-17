@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import qdt.hcmute.vn.dqtbook_backend.dto.*;
 import qdt.hcmute.vn.dqtbook_backend.service.ChatService;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -103,5 +104,68 @@ public class ChatController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * Find or create a group chat with specific members
+     * This ensures uniqueness - only one group chat exists for a specific set of users
+     * If a group with the exact same members exists, return that chat
+     * Otherwise, create a new group chat
+     * 
+     * @param request The group chat request DTO containing member IDs and optional chat name
+     * @return Group chat response with chat information
+     */
+    @PostMapping("/find-or-create-group")
+    public ResponseEntity<?> findOrCreateGroupChat(@RequestBody GroupChatRequestDTO request) {
+        // Validate request
+        if (request == null || request.getMemberIds() == null || request.getMemberIds().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Member IDs are required"));
+        }
+
+        // Validate minimum members (at least 3 for a group)
+        if (request.getMemberIds().size() < 3) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Group chat requires at least 3 members"));
+        }
+
+        // Validate maximum members (optional, you can adjust this limit)
+        if (request.getMemberIds().size() > 100) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Group chat cannot have more than 100 members"));
+        }
+
+        var chatOptional = chatService.findOrCreateGroupChat(request);
+        if (chatOptional.isPresent()) {
+            GroupChatResponseDTO response = chatOptional.get();
+            
+            // Return 200 OK if chat already exists, 201 CREATED if newly created
+            if (response.getIsNewlyCreated()) {
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            } else {
+                return ResponseEntity.ok(response);
+            }
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Failed to create or find group chat. Please check if all users exist."));
+        }
+    }
+
+    /**
+     * Get all group chats that a user is a member of
+     * 
+     * @param userId User ID (path variable)
+     * @return List of group chats the user belongs to
+     */
+    @GetMapping("/groups/user/{userId}")
+    public ResponseEntity<?> getGroupChatsByUserId(@PathVariable Integer userId) {
+        // Validate userId
+        if (userId == null || userId <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid user ID"));
+        }
+
+        List<GroupChatListResponseDTO> groupChats = chatService.getGroupChatsByUserId(userId);
+        return ResponseEntity.ok(groupChats);
     }
 }

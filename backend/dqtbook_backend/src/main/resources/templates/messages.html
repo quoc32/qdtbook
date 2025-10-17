@@ -65,8 +65,14 @@
             flex-shrink: 0;
         }
 
+        .chat-search-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         .chat-search input {
-            width: 100%;
+            flex: 1;
             padding: 8px 12px;
             border: none;
             border-radius: 20px;
@@ -82,6 +88,23 @@
 
         .chat-search input::placeholder {
             color: #65676b;
+        }
+
+        .btn-create-group {
+            padding: 8px 16px;
+            background: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .btn-create-group:hover {
+            background: #0073e6;
         }
 
         .chat-list {
@@ -271,14 +294,15 @@
 
         .message {
             display: flex;
+            flex-direction: column;
             margin-bottom: 8px;
             max-width: 60%;
-            align-items: flex-end;
+            align-items: flex-start;
         }
 
         .message.sent {
             margin-left: auto;
-            justify-content: flex-end;
+            align-items: flex-end;
         }
 
         .message-bubble {
@@ -305,6 +329,27 @@
 
         .message.sent .message-time {
             color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Sender info for group chats */
+        .message-sender {
+            margin-bottom: 4px;
+            padding-left: 8px;
+        }
+
+        .message-sender-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #65676b;
+        }
+
+        .message.sent .message-sender-name {
+            color: #0084ff;
+        }
+
+        /* Hide sender info for sent messages in group chat */
+        .message.sent .message-sender {
+            display: none;
         }
 
         .chat-input-area {
@@ -530,6 +575,196 @@
             }
         }
 
+        /* Create Group Modal */
+        .create-group-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .create-group-modal.show {
+            display: flex;
+        }
+
+        .modal-content-group {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header-group {
+            padding: 20px;
+            border-bottom: 1px solid #e4e6ea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header-group h5 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #050505;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #65676b;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f0f2f5;
+        }
+
+        .modal-body-group {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .form-group-modal {
+            margin-bottom: 20px;
+        }
+
+        .form-group-modal label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #050505;
+            font-size: 14px;
+        }
+
+        .form-group-modal input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e4e6ea;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #050505;
+        }
+
+        .form-group-modal input:focus {
+            outline: none;
+            border-color: #0084ff;
+        }
+
+        .friend-select-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e4e6ea;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .friend-select-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .friend-select-item:hover {
+            background: #f0f2f5;
+        }
+
+        .friend-select-item input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .friend-select-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+        }
+
+        .friend-select-info {
+            flex: 1;
+        }
+
+        .friend-select-name {
+            font-weight: 600;
+            color: #050505;
+            font-size: 15px;
+        }
+
+        .modal-footer-group {
+            padding: 16px 20px;
+            border-top: 1px solid #e4e6ea;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-modal {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-cancel {
+            background: #e4e6ea;
+            color: #050505;
+        }
+
+        .btn-modal-cancel:hover {
+            background: #d0d2d6;
+        }
+
+        .btn-modal-create {
+            background: #0084ff;
+            color: white;
+        }
+
+        .btn-modal-create:hover {
+            background: #0073e6;
+        }
+
+        .btn-modal-create:disabled {
+            background: #bcc0c4;
+            cursor: not-allowed;
+        }
+
+        .selected-count {
+            color: #65676b;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
         /* Firefox Scrollbar */
         .chat-sidebar,
         .chat-messages,
@@ -556,7 +791,10 @@
                     </div>
 
                     <div class="chat-search">
-                        <input type="text" placeholder="Tìm kiếm cuộc trò chuyện..." id="chatSearchInput">
+                        <div class="chat-search-wrapper">
+                            <input type="text" placeholder="Tìm kiếm cuộc trò chuyện..." id="chatSearchInput">
+                            <button class="btn-create-group" onclick="openCreateGroupModal()">+ Tạo nhóm</button>
+                        </div>
                     </div>
 
                     <div class="chat-list" id="chatList">
@@ -642,22 +880,22 @@
             }
         }
 
-        // Refresh friends list định kỳ để cập nhật online status
-        function startFriendsRefresh() {
+        // Refresh chats list định kỳ để cập nhật online status
+        function startChatsRefresh() {
             setInterval(() => {
-                loadFriends();
+                loadChats();
             }, 60000); // Refresh mỗi 1 phút
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            loadFriends();      // Load friends ngay lập tức
+            loadChats();        // Load chats (friends + groups) ngay lập tức
             startHeartbeat();   // Bắt đầu heartbeat
-            startFriendsRefresh(); // Bắt đầu refresh friends
+            startChatsRefresh(); // Bắt đầu refresh chats
             connectWebSocket(); // Kết nối WebSocket
 
             console.log('🟢 Online status system initialized in messages page!');
             console.log('📡 Heartbeat: every 2 minutes');
-            console.log('🔄 Friends refresh: every 1 minute');
+            console.log('🔄 Chats refresh: every 1 minute');
         });
         
         // ============================================
@@ -908,10 +1146,8 @@
             }
         }
 
-        // Get current user ID from localStorage
-        // Load friends from API
-        async function loadFriends() {
-            // Get current user ID from localStorage
+        // Load all chats (friends + groups)
+        async function loadChats() {
             const auth = JSON.parse(localStorage.getItem('auth') || '{}');
             const userId = auth.user_id;
             const chatList = document.getElementById('chatList');
@@ -925,51 +1161,70 @@
                 return;
             }
 
-            console.log('Loading friends for userId:', userId);
+            console.log('Loading chats for userId:', userId);
 
             // Show loading
             chatList.innerHTML = `
                 <div class="text-center py-4">
-                    <small class="text-muted">Đang tải danh sách bạn bè...</small>
+                    <small class="text-muted">Đang tải danh sách chat...</small>
                 </div>
             `;
 
             try {
-                // Sử dụng API mới với online status như trong index.html
-                const apiUrl = `/api/friends/${userId}/online-status`;
-                console.log('Fetching from URL:', apiUrl);
-                const response = await fetch(apiUrl, {
+                // 1. Load friends (direct chats)
+                const friendsResponse = await fetch(`/api/friends/${userId}/online-status`, {
                     method: 'GET',
                     credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch friends: ${response.status} ${response.statusText}`);
+                // 2. Load group chats
+                const groupsResponse = await fetch(`/api/chats/groups/user/${userId}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!friendsResponse.ok && !groupsResponse.ok) {
+                    throw new Error('Failed to fetch chats');
                 }
 
-                const data = await response.json();
-                console.log('Friends response:', data);
+                const friendsData = friendsResponse.ok ? await friendsResponse.json() : { friends: [] };
+                const groupsData = groupsResponse.ok ? await groupsResponse.json() : [];
 
-                // API mới trả về object có friends array
-                const friends = data.friends || [];
+                console.log('Friends response:', friendsData);
+                console.log('Groups response:', groupsData);
 
-                // Transform friends data to chat format với online status
-                const chats = friends
-                    .filter(friendData => friendData.status === 'accepted') // Only show accepted friends
+                // Log each group to check memberIds
+                groupsData.forEach((group, index) => {
+                    console.log(`Group ${index}:`, group);
+                    console.log(`  - chatId:`, group.chatId);
+                    console.log(`  - chatName:`, group.chatName);
+                    console.log(`  - memberIds:`, group.memberIds);
+                    console.log(`  - memberCount:`, group.memberCount);
+                });
+
+                // Transform friends to chat format
+                const friends = friendsData.friends || [];
+                const friendChats = friends
+                    .filter(friendData => friendData.status === 'accepted')
                     .map(friendData => transformFriendToChat(friendData, userId));
 
-                displayChatList(chats);
+                // Transform groups to chat format
+                const groupChats = groupsData.map(group => transformGroupToChat(group));
+
+                // Combine and sort by time (newest first)
+                const allChats = [...friendChats, ...groupChats];
+                
+                displayChatList(allChats);
 
             } catch (error) {
-                console.error('Error loading friends:', error);
+                console.error('Error loading chats:', error);
                 chatList.innerHTML = `
                     <div class="text-center py-4">
-                        <small class="text-danger">Không thể tải danh sách bạn bè</small>
+                        <small class="text-danger">Không thể tải danh sách chat</small>
                         <br>
-                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadFriends()">
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadChats()">
                             Thử lại
                         </button>
                     </div>
@@ -1005,7 +1260,29 @@
                 avatar: friendInfo.avatar_url || '/img/default-avatar.png',
                 lastMessage: 'Bắt đầu cuộc trò chuyện...', // Default message
                 time: formatTime(friendData.updated_at || friendData.created_at),
-                online: isOnline // Use real online status
+                online: isOnline, // Use real online status
+                isGroup: false // Direct chat
+            };
+        }
+
+        // Transform group data to chat format
+        function transformGroupToChat(groupData) {
+            // Always use default avatar for groups to avoid loading issues
+            const defaultGroupAvatar = 'https://ui-avatars.com/api/?name=' + 
+                encodeURIComponent(groupData.chatName || 'Group') + 
+                '&background=0D8ABC&color=fff&size=200&bold=true';
+            
+            return {
+                id: groupData.chatId,
+                chatId: groupData.chatId,
+                name: groupData.chatName || 'Nhóm chat',
+                avatar: defaultGroupAvatar, // Use generated avatar
+                lastMessage: `${groupData.memberCount} thành viên`,
+                time: formatTime(groupData.createdAt),
+                online: false, // Groups don't have online status
+                isGroup: true, // Group chat
+                memberCount: groupData.memberCount,
+                memberIds: groupData.memberIds
             };
         }
 
@@ -1058,26 +1335,71 @@
         function createChatItem(chat) {
             const div = document.createElement('div');
 
-            div.innerHTML = `
-                <a href="#" class="chat-item" data-chat-id="${chat.id}" data-friend-id="${chat.friendId}" data-online="${chat.online}" onclick="openChat(${chat.friendId}, '${escapeHtml(chat.name)}', '${chat.avatar}')">
-                    <div class="position-relative">
-                        <img src="${chat.avatar}" class="chat-avatar" alt="${escapeHtml(chat.name)}" onerror="this.src='/img/default-avatar.png'">
-                        ${chat.online ? '<span class="online-indicator"></span>' : '<span class="offline-indicator"></span>'}
+            // Only show online indicator for direct chats
+            const onlineIndicator = chat.isGroup 
+                ? '' 
+                : (chat.online ? '<span class="online-indicator"></span>' : '<span class="offline-indicator"></span>');
+
+            const chatItem = document.createElement('a');
+            chatItem.href = '#';
+            chatItem.className = 'chat-item';
+            chatItem.setAttribute('data-chat-id', chat.id);
+            chatItem.setAttribute('data-chat-name', chat.name);
+            chatItem.setAttribute('data-chat-avatar', chat.avatar);
+            chatItem.setAttribute('data-is-group', chat.isGroup);
+            
+            if (chat.isGroup) {
+                chatItem.setAttribute('data-member-ids', JSON.stringify(chat.memberIds));
+            } else {
+                chatItem.setAttribute('data-friend-id', chat.friendId);
+                chatItem.setAttribute('data-online', chat.online);
+            }
+
+            chatItem.innerHTML = `
+                <div class="position-relative">
+                    <img src="${chat.avatar}" class="chat-avatar" alt="${escapeHtml(chat.name)}">
+                    ${onlineIndicator}
+                </div>
+                <div class="chat-info">
+                    <div class="chat-name">
+                        ${chat.isGroup ? '👥 ' : ''}${escapeHtml(chat.name)}
                     </div>
-                    <div class="chat-info">
-                        <div class="chat-name">${escapeHtml(chat.name)}</div>
-                        <div class="chat-last-message">${escapeHtml(chat.lastMessage)}</div>
-                    </div>
-                    <div class="chat-time">
-                        ${chat.time}
-                    </div>
-                </a>
+                    <div class="chat-last-message">${escapeHtml(chat.lastMessage)}</div>
+                </div>
+                <div class="chat-time">
+                    ${chat.time}
+                </div>
             `;
 
+            // Add click event listener
+            chatItem.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active state
+                document.querySelectorAll('.chat-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                const isGroup = this.getAttribute('data-is-group') === 'true';
+                const chatId = parseInt(this.getAttribute('data-chat-id'));
+                const chatName = this.getAttribute('data-chat-name');
+                const avatarUrl = this.getAttribute('data-chat-avatar');
+                
+                if (isGroup) {
+                    const memberIds = JSON.parse(this.getAttribute('data-member-ids'));
+                    openGroupChat(chatId, chatName, avatarUrl, memberIds);
+                } else {
+                    const friendId = parseInt(this.getAttribute('data-friend-id'));
+                    openChat(friendId, chatName, avatarUrl);
+                }
+            });
+
+            div.appendChild(chatItem);
             return div;
         }
 
-        // Open chat with real API integration
+        // Open direct chat with real API integration
         async function openChat(friendId, chatName, avatarUrl) {
             try {
                 // Get current user ID
@@ -1090,13 +1412,7 @@
                     return;
                 }
 
-                console.log(`Opening chat: Current User ${currentUserId} with Friend ${friendId}`);
-
-                // Update active chat item
-                document.querySelectorAll('.chat-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                event.target.closest('.chat-item').classList.add('active');
+                console.log(`Opening direct chat: Current User ${currentUserId} with Friend ${friendId}`);
 
                 // Show loading state
                 showChatLoadingState(chatName, avatarUrl);
@@ -1116,7 +1432,7 @@
                     // Step 3: Load chat info
                     loadChatInfo(chatId, chatName, avatarUrl);
 
-                    console.log(`✅ Chat opened successfully with ID: ${chatId}`);
+                    console.log(`✅ Direct chat opened successfully with ID: ${chatId}`);
                 } else {
                     throw new Error('Failed to create or find chat');
                 }
@@ -1124,6 +1440,105 @@
             } catch (error) {
                 console.error('Error opening chat:', error);
                 showChatErrorState(chatName, avatarUrl, error.message);
+            }
+        }
+
+        // Open group chat
+        async function openGroupChat(chatId, chatName, avatarUrl, memberIds) {
+            try {
+                // Get current user ID
+                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                const currentUserId = auth.user_id;
+
+                if (!currentUserId) {
+                    console.error('Current user ID not found');
+                    alert('Vui lòng đăng nhập lại');
+                    return;
+                }
+
+                console.log(`Opening group chat: ${chatName} (ID: ${chatId})`);
+                console.log('📋 Member IDs:', memberIds);
+
+                // Show loading state
+                showChatLoadingState(chatName, avatarUrl);
+
+                // Group chat already exists, use the chatId directly
+                console.log(`💬 Using existing chat ID: ${chatId}`);
+
+                // Set current chat info
+                currentChatId = chatId;
+                selectedChatName = chatName;
+                selectedAvatarUrl = avatarUrl;
+
+                // Step 1: Load chat content with messages
+                await loadRealChatContent(chatId, chatName, avatarUrl, currentUserId);
+
+                // Step 2: Load chat info sidebar
+                loadGroupChatInfo(chatId, chatName, avatarUrl);
+
+                console.log(`✅ Group chat opened successfully with ID: ${chatId}`);
+
+            } catch (error) {
+                console.error('Error opening group chat:', error);
+                showChatErrorState(chatName, avatarUrl, error.message);
+            }
+        }
+
+        // Find or create group chat using API
+        async function findOrCreateGroupChat(memberIds, groupName = null) {
+            try {
+                console.log(`🔍 Finding or creating group chat with members:`, memberIds);
+                console.log(`📝 Group name:`, groupName);
+
+                const requestBody = {
+                    userIds: memberIds,
+                    groupName: groupName
+                };
+                console.log(`📤 Request body:`, JSON.stringify(requestBody));
+
+                const response = await fetch('/api/chats/find-or-create-group', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log(`📥 Response status:`, response.status, response.statusText);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Error response:', errorText);
+                    
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        errorData = { error: errorText };
+                    }
+                    
+                    throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const chatData = await response.json();
+                console.log('💬 Group chat data received:', chatData);
+                console.log('🔑 Chat ID:', chatData.chatId || chatData.chat_id);
+
+                // Return chatId
+                const finalChatId = chatData.chatId || chatData.chat_id;
+                
+                if (!finalChatId) {
+                    console.error('❌ No chatId in response:', chatData);
+                    throw new Error('Response does not contain chatId');
+                }
+                
+                return finalChatId;
+
+            } catch (error) {
+                console.error('❌ Error finding/creating group chat:', error);
+                console.error('❌ Error details:', error.message);
+                throw error; // Re-throw để caller có thể handle
             }
         }
 
@@ -1391,7 +1806,18 @@
                 contentHtml += `<div class="mt-2"><a href="${message.mediaUrl}" target="_blank" class="text-decoration-none">📎 Media</a></div>`;
             }
 
+            // Add sender info (will be hidden for sent messages via CSS)
+            let senderInfoHtml = '';
+            if (message.senderName) {
+                senderInfoHtml = `
+                    <div class="message-sender">
+                        <span class="message-sender-name">${escapeHtml(message.senderName)}</span>
+                    </div>
+                `;
+            }
+
             div.innerHTML = `
+                ${senderInfoHtml}
                 <div class="message-bubble">
                     ${contentHtml}
                     <div class="message-time">${message.time}</div>
@@ -1556,7 +1982,7 @@
             }
         }
 
-        // Load chat info with real data
+        // Load direct chat info with real data
         function loadChatInfo(chatId, chatName, avatarUrl) {
             const chatInfoArea = document.getElementById('chatInfoArea');
 
@@ -1597,6 +2023,113 @@
             `;
         }
 
+        // Load group chat info
+        async function loadGroupChatInfo(chatId, chatName, avatarUrl) {
+            const chatInfoArea = document.getElementById('chatInfoArea');
+
+            try {
+                // Fetch group details from API
+                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                const userId = auth.user_id;
+                
+                const response = await fetch(`/api/chats/groups/user/${userId}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const groups = await response.json();
+                    const currentGroup = groups.find(g => g.chatId === chatId);
+                    
+                    if (currentGroup) {
+                        chatInfoArea.innerHTML = `
+                            <div class="info-header">
+                                <img src="${avatarUrl}" class="info-avatar" alt="${chatName}">
+                                <div class="info-name">${chatName}</div>
+                                <div class="info-status">${currentGroup.memberCount} thành viên</div>
+                            </div>
+                            
+                            <div class="info-section">
+                                <h6>Thông tin nhóm</h6>
+                                <div class="info-item">
+                                    <span>🔗</span>
+                                    <span>Chat ID: ${chatId}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>👥</span>
+                                    <span>Nhóm chat (${currentGroup.memberCount} người)</span>
+                                </div>
+                                <div class="info-item">
+                                    <span>📅</span>
+                                    <span>Tạo: ${formatTime(currentGroup.createdAt)}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-section">
+                                <h6>Thành viên (${currentGroup.memberCount})</h6>
+                                <div class="info-item">
+                                    <span>👤</span>
+                                    <span>Member IDs: ${currentGroup.memberIds.join(', ')}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-section">
+                                <h6>Tùy chọn</h6>
+                                <div class="info-item">
+                                    <span>🔔</span>
+                                    <span>Tắt thông báo</span>
+                                </div>
+                                <div class="info-item text-danger" onclick="confirmLeaveGroup(${chatId})">
+                                    <span>🚪</span>
+                                    <span>Rời khỏi nhóm</span>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+                }
+                
+                // Fallback if API fails
+                chatInfoArea.innerHTML = `
+                    <div class="info-header">
+                        <img src="${avatarUrl}" class="info-avatar" alt="${chatName}">
+                        <div class="info-name">${chatName}</div>
+                        <div class="info-status">Nhóm chat</div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h6>Thông tin nhóm</h6>
+                        <div class="info-item">
+                            <span>🔗</span>
+                            <span>Chat ID: ${chatId}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>👥</span>
+                            <span>Nhóm chat</span>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading group info:', error);
+                chatInfoArea.innerHTML = `
+                    <div class="empty-chat">
+                        <div class="empty-icon">ℹ️</div>
+                        <h6>Không thể tải thông tin nhóm</h6>
+                    </div>
+                `;
+            }
+        }
+
+        // Confirm leave group
+        function confirmLeaveGroup(chatId) {
+            if (confirm('Bạn có chắc chắn muốn rời khỏi nhóm này?')) {
+                // TODO: Implement leave group functionality
+                alert('Tính năng rời nhóm sẽ được triển khai sau');
+            }
+        }
+
 
         // Confirm delete chat (placeholder)
         function confirmDeleteChat(chatId) {
@@ -1634,7 +2167,276 @@
             };
             return text.replace(/[&<>"']/g, m => map[m]);
         }
+
+        // ============================================
+        // CREATE GROUP MODAL
+        // ============================================
+
+        let selectedFriends = [];
+        let allFriends = [];
+
+        // Open create group modal
+        async function openCreateGroupModal() {
+            const modal = document.getElementById('createGroupModal');
+            modal.classList.add('show');
+            
+            // Reset form
+            document.getElementById('groupNameInput').value = '';
+            selectedFriends = [];
+            updateSelectedCount();
+            updateCreateButton();
+            
+            // Load friends list
+            await loadFriendsForGroupCreation();
+        }
+
+        // Close create group modal
+        function closeCreateGroupModal() {
+            const modal = document.getElementById('createGroupModal');
+            modal.classList.remove('show');
+        }
+
+        // Load friends for group creation
+        async function loadFriendsForGroupCreation() {
+            try {
+                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                const userId = auth.user_id;
+
+                if (!userId) {
+                    console.error('User ID not found');
+                    return;
+                }
+
+                const response = await fetch(`/api/friends/${userId}/online-status`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load friends');
+                }
+
+                const data = await response.json();
+                allFriends = (data.friends || []).filter(f => f.status === 'accepted');
+
+                displayFriendsForSelection(allFriends, userId);
+
+            } catch (error) {
+                console.error('Error loading friends:', error);
+                document.getElementById('friendSelectList').innerHTML = `
+                    <div class="text-center py-3">
+                        <small class="text-danger">Không thể tải danh sách bạn bè</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Display friends for selection
+        function displayFriendsForSelection(friends, currentUserId) {
+            const friendSelectList = document.getElementById('friendSelectList');
+
+            if (friends.length === 0) {
+                friendSelectList.innerHTML = `
+                    <div class="text-center py-3">
+                        <small class="text-muted">Bạn chưa có bạn bè nào</small>
+                    </div>
+                `;
+                return;
+            }
+
+            friendSelectList.innerHTML = '';
+
+            friends.forEach(friendData => {
+                const friendInfo = friendData.friend_info;
+                const friendId = (friendData.sender_id === currentUserId) 
+                    ? friendData.receiver_id 
+                    : friendData.sender_id;
+
+                const item = document.createElement('div');
+                item.className = 'friend-select-item';
+                item.onclick = () => toggleFriendSelection(friendId);
+
+                item.innerHTML = `
+                    <input type="checkbox" id="friend_${friendId}" onchange="toggleFriendSelection(${friendId})">
+                    <img src="${friendInfo.avatar_url || '/img/default-avatar.png'}" 
+                         class="friend-select-avatar" 
+                         alt="${friendInfo.full_name}">
+                    <div class="friend-select-info">
+                        <div class="friend-select-name">${escapeHtml(friendInfo.full_name)}</div>
+                    </div>
+                `;
+
+                friendSelectList.appendChild(item);
+            });
+        }
+
+        // Toggle friend selection
+        function toggleFriendSelection(friendId) {
+            const checkbox = document.getElementById(`friend_${friendId}`);
+            
+            if (selectedFriends.includes(friendId)) {
+                selectedFriends = selectedFriends.filter(id => id !== friendId);
+                checkbox.checked = false;
+            } else {
+                selectedFriends.push(friendId);
+                checkbox.checked = true;
+            }
+
+            updateSelectedCount();
+            updateCreateButton();
+        }
+
+        // Update selected count
+        function updateSelectedCount() {
+            const countElement = document.getElementById('selectedCount');
+            countElement.textContent = `Đã chọn: ${selectedFriends.length} người`;
+        }
+
+        // Update create button state
+        function updateCreateButton() {
+            const groupName = document.getElementById('groupNameInput').value.trim();
+            const btnCreate = document.getElementById('btnCreateGroup');
+            
+            // Enable button if group name is not empty and at least 2 friends selected
+            btnCreate.disabled = !(groupName && selectedFriends.length >= 2);
+        }
+
+        // Listen to group name input
+        document.addEventListener('DOMContentLoaded', function() {
+            const groupNameInput = document.getElementById('groupNameInput');
+            if (groupNameInput) {
+                groupNameInput.addEventListener('input', updateCreateButton);
+            }
+        });
+
+        // Create group
+        async function createGroup() {
+            try {
+                const groupName = document.getElementById('groupNameInput').value.trim();
+                
+                if (!groupName) {
+                    alert('Vui lòng nhập tên nhóm');
+                    return;
+                }
+
+                if (selectedFriends.length < 2) {
+                    alert('Vui lòng chọn ít nhất 2 thành viên');
+                    return;
+                }
+
+                // Get current user ID
+                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                const currentUserId = auth.user_id;
+
+                if (!currentUserId) {
+                    alert('Vui lòng đăng nhập lại');
+                    return;
+                }
+
+                // Include current user in the group
+                const memberIds = [currentUserId, ...selectedFriends];
+
+                console.log('Creating group:', { groupName, memberIds });
+
+                // Disable button
+                const btnCreate = document.getElementById('btnCreateGroup');
+                btnCreate.disabled = true;
+                btnCreate.textContent = 'Đang tạo...';
+
+                // Call API to create group
+                const response = await fetch('/api/chats/find-or-create-group', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        memberIds: memberIds,
+                        chatName: groupName
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || errorData.message || 'Không thể tạo nhóm');
+                }
+
+                const result = await response.json();
+                console.log('Group created:', result);
+
+                // Check if group is newly created or already exists
+                if (result.isNewlyCreated === false || (result.message && result.message.includes('found'))) {
+                    // Group already exists - show alert and keep modal open
+                    alert('Nhóm chat với các thành viên này đã tồn tại!\n\nVui lòng chọn thành viên khác hoặc đổi tên nhóm.');
+                    
+                    // Re-enable button
+                    btnCreate.disabled = false;
+                    btnCreate.textContent = 'Tạo nhóm';
+                    
+                    // Clear selections to let user choose again
+                    selectedFriends = [];
+                    updateSelectedCount();
+                    updateCreateButton();
+                    
+                    // Uncheck all checkboxes
+                    document.querySelectorAll('.friend-select-item input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    
+                    // Don't close modal - let user try again
+                    return;
+                }
+
+                // Group created successfully
+                alert('Tạo nhóm thành công!');
+
+                // Close modal
+                closeCreateGroupModal();
+
+                // Reload chats to show new group
+                await loadChats();
+
+            } catch (error) {
+                console.error('Error creating group:', error);
+                alert('Lỗi: ' + error.message);
+                
+                // Re-enable button
+                const btnCreate = document.getElementById('btnCreateGroup');
+                btnCreate.disabled = false;
+                btnCreate.textContent = 'Tạo nhóm';
+            }
+        }
     </script>
+
+    <!-- Create Group Modal -->
+    <div class="create-group-modal" id="createGroupModal">
+        <div class="modal-content-group">
+            <div class="modal-header-group">
+                <h5>Tạo nhóm mới</h5>
+                <button class="modal-close" onclick="closeCreateGroupModal()">×</button>
+            </div>
+            <div class="modal-body-group">
+                <div class="form-group-modal">
+                    <label for="groupNameInput">Tên nhóm <span style="color: red;">*</span></label>
+                    <input type="text" id="groupNameInput" placeholder="Nhập tên nhóm..." maxlength="50">
+                </div>
+                <div class="form-group-modal">
+                    <label>Chọn thành viên <span style="color: red;">*</span></label>
+                    <div class="selected-count" id="selectedCount">Đã chọn: 0 người</div>
+                    <div class="friend-select-list" id="friendSelectList">
+                        <div class="text-center py-3">
+                            <small class="text-muted">Đang tải danh sách bạn bè...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer-group">
+                <button class="btn-modal btn-modal-cancel" onclick="closeCreateGroupModal()">Hủy</button>
+                <button class="btn-modal btn-modal-create" id="btnCreateGroup" onclick="createGroup()" disabled>Tạo nhóm</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

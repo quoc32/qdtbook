@@ -1,0 +1,91 @@
+### Test API - Create Group Chat
+
+### 1. Tạo nhóm mới với 3 thành viên
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11, 12],
+  "chatName": "Nhóm test API"
+}
+
+###
+
+### 2. Tạo nhóm với 4 thành viên
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11, 12, 13],
+  "chatName": "Nhóm 4 người"
+}
+
+###
+
+### 3. Tạo nhóm đã tồn tại (should return existing group)
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11, 12],
+  "chatName": "Nhóm test API"
+}
+
+###
+
+### 4. Error: Thiếu memberIds
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "chatName": "Nhóm lỗi"
+}
+
+###
+
+### 5. Error: Chỉ có 2 thành viên (minimum 3)
+POST http://localhost:8080/api/chats/find-or-create-group
+Content-Type: application/json
+
+{
+  "memberIds": [10, 11],
+  "chatName": "Nhóm 2 người"
+}
+
+###
+
+### Expected Response (Success - New Group):
+# {
+#   "chatId": 8,
+#   "chatName": "Nhóm test API",
+#   "chatAvatarUrl": null,
+#   "isGroup": true,
+#   "memberCount": 3,
+#   "memberIds": [10, 11, 12],
+#   "createdAt": "2025-10-17T14:00:00Z",
+#   "isNewlyCreated": true,
+#   "message": "Group chat created successfully"
+# }
+
+### Expected Response (Success - Existing Group):
+# {
+#   "chatId": 5,
+#   "chatName": "Nhóm học tập",
+#   "chatAvatarUrl": null,
+#   "isGroup": true,
+#   "memberCount": 3,
+#   "memberIds": [10, 11, 12],
+#   "createdAt": "2025-10-17T11:00:00Z",
+#   "isNewlyCreated": false,
+#   "message": "Group chat found"
+# }
+
+### Expected Response (Error - Missing memberIds):
+# {
+#   "error": "Member IDs are required"
+# }
+
+### Expected Response (Error - Less than 3 members):
+# {
+#   "error": "Group chat requires at least 3 members"
+# }
