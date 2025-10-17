@@ -164,7 +164,30 @@
                             
                         </script>
 
-                      <button type="button" class="list-group-item list-group-item-action">Báo cáo</button>
+            <button type="button" class="list-group-item list-group-item-action" onclick="(function(btn){
+                try{
+                  const article = btn.closest('article'); if(!article) return;
+                  const postId = article.dataset.postId; if(!postId) return;
+                  // close the 'Tùy chọn bài viết' modal immediately so the report modal can show
+                  try{ const currentModal = btn.closest('.pc-more-modal'); if(currentModal){ bootstrap.Modal.getOrCreateInstance(currentModal).hide(); } }catch(_){ }
+                  var modal = document.getElementById('qdt_report_modal');
+                  if(modal){
+                    modal.dataset.targetType = 'post';
+                    modal.dataset.targetId = String(postId);
+                    var ta = modal.querySelector('textarea.report-reason'); if(ta) ta.value = '';
+                    bootstrap.Modal.getOrCreateInstance(modal).show();
+                  } else {
+                    var reason = prompt('Lý do báo cáo (tùy chọn):');
+                    reason = (reason || '').trim();
+                    if(!reason){ try{ showToast('Vui lòng nhập lý do báo cáo.', 'danger'); }catch(e){} return; }
+                    fetch('/api/reports/posts/'+encodeURIComponent(postId), { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ reason: reason }) })
+                      .then(r=>{
+                        if(r.ok || r.status === 201){ try{ showToast('Cảm ơn, báo cáo đã được gửi.', 'success'); }catch(e){} }
+                        else { r.json().then(j=> showToast('Báo cáo thất bại: ' + (j.message || r.statusText), 'danger')).catch(()=> showToast('Báo cáo thất bại', 'danger')); }
+                      }).catch(e=>{ console.error(e); try{ showToast('Lỗi khi gửi báo cáo', 'danger'); }catch(_){} });
+                  }
+                }catch(e){ console.error(e); }
+              })(this);">Báo cáo</button>
                       <button type="button" class="list-group-item list-group-item-action" data-bs-dismiss="modal">Đóng</button>
                     </div>
                       </div>
@@ -1023,8 +1046,13 @@
                     const ts = c => new Date(c.created_at || c.createdAt || c.created || 0).getTime();
                     arr = arr.slice().sort((a,b)=> ts(a) - ts(b));
 
+                    // current logged-in user id (from localStorage auth). fallback keys checked for common shapes
+                    var _authRaw = {};
+                    try{ _authRaw = JSON.parse(localStorage.getItem('auth')||'{}'); }catch(e){ _authRaw = {}; }
+                    var _meId = _authRaw.user_id || _authRaw.id || _authRaw.userId || _authRaw.userId || null;
+
                     arr.forEach(function(c){
-                      const fallbackUser = c.user || c.author || {};
+              const fallbackUser = c.user || c.author || {};
                       const uid = getUserIdFromComment(c);
                       const u = (uid && userCache.get(uid)) || fallbackUser;
 
@@ -1036,6 +1064,8 @@
 
                       // Item wrapper (no default list-group borders/paddings)
                       const item = document.createElement('div');
+                      // set an id so deep-links can target this comment: #comment-<id>
+                      try{ if(c && (c.id||c.comment_id||c.commentId)) item.id = 'comment-' + (c.id || c.comment_id || c.commentId); }catch(e){}
                       item.className = 'list-group-item border-0 bg-transparent p-0';
                       item.style.marginBottom = '6px';
 
@@ -1107,7 +1137,9 @@
 
                       const timeEl = document.createElement('small');
                       timeEl.className = 'text-muted';
-                      timeEl.textContent = formatRelativeTime(created);
+                      // Prefer updated timestamp when available
+                      const usedTime = (c.updatedAt || c.updated_at || c.updated) ? (c.updatedAt || c.updated_at || c.updated) : created;
+                      timeEl.textContent = formatRelativeTime(usedTime) + ((c.updatedAt || c.updated_at || c.updated) ? ' • Đã chỉnh sửa' : '');
 
                       header.appendChild(left);
                       header.appendChild(timeEl);
@@ -1119,6 +1151,135 @@
                       contentRow.style.marginTop = '4px';
                       contentRow.style.lineHeight = '1.45';
                       contentRow.style.color = '#2a3542';
+
+                      // Actions area (Edit / Delete) - only show when current user is the comment author
+                      try{
+                        var actionsWrap = document.createElement('div');
+                        actionsWrap.style.marginTop = '6px';
+                        actionsWrap.style.display = 'flex';
+                        actionsWrap.style.gap = '8px';
+                        actionsWrap.style.alignItems = 'center';
+
+                        var postId = article.dataset.postId;
+                        var isOwner = (_meId != null) && (String(_meId) === String(uid));
+                        if(isOwner){
+                          var editBtn = document.createElement('button');
+                          editBtn.type = 'button';
+                          editBtn.className = 'btn btn-sm btn-link';
+                          editBtn.textContent = 'Sửa';
+
+                          var delBtn = document.createElement('button');
+                          delBtn.type = 'button';
+                          delBtn.className = 'btn btn-sm btn-link text-danger';
+                          delBtn.textContent = 'Xoá';
+
+                          // Edit handler: replace content with textarea, provide Save/Cancel
+                          editBtn.addEventListener('click', function(ev){
+                            ev.stopPropagation();
+                            if(bubble._editing) return;
+                            bubble._editing = true;
+                            var ta = document.createElement('textarea');
+                            ta.className = 'form-control';
+                            ta.style.minHeight = '60px';
+                            ta.value = content;
+                            bubble.replaceChild(ta, contentRow);
+
+                            var save = document.createElement('button'); save.type='button'; save.className='btn btn-sm btn-primary'; save.textContent='Lưu';
+                            var cancel = document.createElement('button'); cancel.type='button'; cancel.className='btn btn-sm btn-link'; cancel.textContent='Huỷ';
+                            var actionBar = document.createElement('div'); actionBar.style.marginTop='6px'; actionBar.style.display='flex'; actionBar.style.gap='8px';
+                            actionBar.appendChild(save); actionBar.appendChild(cancel);
+                            bubble.appendChild(actionBar);
+
+                            save.addEventListener('click', async function(){
+                              try{
+                                var newText = ta.value || '';
+                                var r = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments/'+encodeURIComponent(c.id),{
+                                  method: 'PUT', credentials: 'include', headers: {'Content-Type':'application/json'},
+                                  body: JSON.stringify({ content: newText })
+                                });
+                                if(!r.ok){
+                                  var j = await r.json().catch(()=>({}));
+                                  alert('Cập nhật thất bại: ' + (j.message||r.statusText));
+                                  return;
+                                }
+                                var updated = await r.json().catch(()=>null);
+                                var finalText = (updated && (updated.content||updated.text)) || newText;
+                                // restore
+                                bubble.removeChild(actionBar);
+                                bubble.replaceChild(contentRow, ta);
+                                contentRow.textContent = finalText;
+                                // update displayed time: prefer server-returned updated timestamp, otherwise fall back to now
+                                try{
+                                  var newUpdated = updated && (updated.updatedAt || updated.updated_at || updated.updated);
+                                  if(newUpdated){
+                                    timeEl.textContent = formatRelativeTime(newUpdated) + ' • Đã chỉnh sửa';
+                                  } else {
+                                    // fallback: use current time to show 'just edited'
+                                    timeEl.textContent = formatRelativeTime(new Date().toISOString()) + ' • Đã chỉnh sửa';
+                                  }
+                                }catch(e){ /* ignore */ }
+                                bubble._editing = false;
+                              }catch(e){ console.error(e); alert('Lỗi mạng'); }
+                            });
+
+                            cancel.addEventListener('click', function(){
+                              try{ bubble.removeChild(actionBar); bubble.replaceChild(contentRow, ta); bubble._editing = false; }
+                              catch(e){}
+                            });
+                          });
+
+                          // Delete handler: confirm then call DELETE
+                          delBtn.addEventListener('click', async function(ev){
+                            ev.stopPropagation();
+                            if(!confirm('Xác nhận xoá bình luận này?')) return;
+                            try{
+                              var rr = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments/'+encodeURIComponent(c.id),{
+                                method: 'DELETE', credentials: 'include'
+                              });
+                              if(rr.status === 204){
+                                // remove item and update counts
+                                try{ item.remove(); }catch(_){ item.style.display='none'; }
+                                try{ if(article._loadComments) article._loadComments(); }catch(_){ }
+                              }else{
+                                var jj = await rr.json().catch(()=>({}));
+                                alert('Xoá thất bại: ' + (jj.message||rr.statusText));
+                              }
+                            }catch(e){ console.error(e); alert('Lỗi mạng'); }
+                          });
+
+                          actionsWrap.appendChild(editBtn);
+                          actionsWrap.appendChild(delBtn);
+                          bubble.appendChild(actionsWrap);
+                        } else {
+                          // Not the owner -> allow reporting the comment
+                          try{
+                            var reportBtn = document.createElement('button');
+                            reportBtn.type = 'button';
+                            reportBtn.className = 'btn btn-sm btn-link text-danger';
+                            reportBtn.textContent = 'Báo cáo';
+                            reportBtn.addEventListener('click', function(ev){
+                              ev.stopPropagation();
+                              // open bootstrap modal to collect reason
+                              try{
+                                var modal = document.getElementById('qdt_report_modal');
+                                if(modal){
+                                  modal.dataset.targetType = 'comment';
+                                  modal.dataset.targetId = String(c.id);
+                                  modal.querySelector('textarea.report-reason').value = '';
+                                  var bs = bootstrap.Modal.getOrCreateInstance(modal);
+                                  bs.show();
+                                } else {
+                                  // fallback to prompt
+                                  var reason = prompt('Lý do báo cáo (tùy chọn):');
+                                  submitCommentReport(c.id, reason || '');
+                                }
+                              }catch(e){ console.error(e); }
+                            });
+                            actionsWrap.appendChild(reportBtn);
+                            bubble.appendChild(actionsWrap);
+                          }catch(e){ console.error('report btn error', e); }
+                        }
+                      }catch(e){ console.error(e); }
 
                       // Mount
                       bubble.appendChild(header);
@@ -1371,6 +1532,103 @@
           }
       } */
       </style>
+      <!-- Report modal (shared) -->
+      <div class="modal fade" id="qdt_report_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Báo cáo nội dung</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-2">Lý do báo cáo (tùy chọn):</div>
+              <textarea class="form-control report-reason" rows="4" placeholder="Nhập lý do..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+              <button type="button" class="btn btn-danger" id="qdt_report_submit_btn">Gửi báo cáo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+      // Toast helper (Bootstrap toast)
+      (function(){
+        // small html-escape utility local to this fragment
+        function _escapeHtml(s){
+          if(s == null) return '';
+          return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+        // Append toast container if missing
+        if(!document.getElementById('qdt_toast_container')){
+          var div = document.createElement('div');
+          div.id = 'qdt_toast_container';
+          div.style.position = 'fixed';
+          div.style.right = '20px';
+          div.style.bottom = '20px';
+          div.style.zIndex = '10800';
+          document.body.appendChild(div);
+        }
+        window.showToast = function(message, type){
+          type = type || 'info';
+          var toastId = 'qdt_toast_'+Date.now();
+          var wrapper = document.getElementById('qdt_toast_container');
+          var html = `<div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">`+
+                     `<div class="d-flex"><div class="toast-body">${_escapeHtml(message)}</div>`+
+                     `<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>`;
+          var tmp = document.createElement('div'); tmp.innerHTML = html;
+          wrapper.appendChild(tmp.firstChild);
+          var tEl = document.getElementById(toastId);
+          var bs = new bootstrap.Toast(tEl); bs.show();
+          // remove after hidden
+          tEl.addEventListener('hidden.bs.toast', function(){ try{ tEl.remove(); }catch(_){} });
+        };
+      })();
+
+      // submit handler used by report modal
+      (function(){
+        const submitBtn = document.getElementById('qdt_report_submit_btn');
+        if(!submitBtn) return;
+        submitBtn.addEventListener('click', async function(){
+          try{
+            var modal = document.getElementById('qdt_report_modal');
+            if(!modal) return;
+            var reason = (modal.querySelector('textarea.report-reason').value || '').trim();
+            if(!reason){
+              try{ showToast('Vui lòng nhập lý do báo cáo.', 'danger'); }catch(e){ alert('Vui long nhap ly do bao cao.'); }
+              return;
+            }
+            var t = modal.dataset.targetType || '';
+            var id = modal.dataset.targetId || '';
+            var url = '';
+            if(t === 'comment') url = '/api/reports/comments/'+encodeURIComponent(id);
+            else if(t === 'post') url = '/api/reports/posts/'+encodeURIComponent(id);
+            else if(t === 'product') url = '/api/reports/market/'+encodeURIComponent(id);
+            if(!url) { showToast('Không xác định loại báo cáo', 'danger'); return; }
+            var bs = bootstrap.Modal.getInstance(modal);
+            // send
+            var r = await fetch(url, { method:'POST', credentials:'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ reason: reason }) });
+            if(r.ok || r.status === 201){
+              try{ bs.hide(); }catch(_){}
+              showToast('Cảm ơn, báo cáo đã được gửi.', 'success');
+            } else {
+              var j = await r.json().catch(()=>({}));
+              showToast('Báo cáo thất bại: ' + (j.message || r.statusText), 'danger');
+            }
+          }catch(e){ console.error(e); showToast('Lỗi khi gửi báo cáo: ' + (e && e.message ? e.message : String(e)), 'danger'); }
+        });
+      })();
+      // fallback function used earlier
+      async function submitCommentReport(id, reason){
+        reason = (reason || '').trim();
+        if(!reason){ try{ showToast('Vui lòng nhập lý do báo cáo.', 'danger'); }catch(e){ /* ignore */ } return null; }
+        try{
+          var r = await fetch('/api/reports/comments/'+encodeURIComponent(id), { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ reason: reason }) });
+          return r;
+        }catch(e){ console.error(e); throw e; }
+      }
+      </script>
 
       <script>
       (function(){
@@ -1585,6 +1843,41 @@
           }
 
           loadPosts();
+      })();
+      // Deep-link handler: if URL has ?postId=... then open that post's comments modal and optionally scroll to comment
+      (function(){
+        try{
+          const params = new URL(window.location.href).searchParams;
+          const postId = params.get('postId') || params.get('postid');
+          if(!postId) return;
+          // wait a tick for posts to render
+          setTimeout(function(){
+            const article = document.querySelector('article.post-card[data-post-id="'+postId+'"]') || document.getElementById('post-'+postId);
+            if(article){
+              // show comments modal if present
+              const modal = article.querySelector('.comments-modal');
+              if(modal){
+                try{ bootstrap.Modal.getOrCreateInstance(modal).show(); }catch(e){}
+                // if fragment contains comment-<id>, scroll into view after comments loaded
+                const hash = window.location.hash || '';
+                if(hash && hash.startsWith('#comment-')){
+                  const commentId = hash.replace('#','');
+                  // wait for comments to load then scroll
+                  setTimeout(function(){
+                    const el = article.querySelector('#'+CSS.escape(commentId));
+                    if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.transition='background-color 0.6s'; const prevBg=el.style.backgroundColor; el.style.backgroundColor='#fff3cd'; setTimeout(()=>{ el.style.backgroundColor = prevBg; }, 1600); }
+                  }, 600);
+                }
+              } else {
+                // no modal: just scroll to article
+                article.scrollIntoView({behavior:'smooth', block:'center'});
+              }
+            } else {
+              // not found yet: try again shortly (in case posts are still loading)
+              setTimeout(function(){ window.location = window.location.href; }, 400);
+            }
+          }, 600);
+        }catch(e){}
       })();
       </script>
       <!-- Post Segment:END -->
