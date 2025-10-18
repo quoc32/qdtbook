@@ -23,8 +23,8 @@ public class User {
     @Column(name = "email", nullable = false, length = 150)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;  // Nullable for OAuth2 users
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
@@ -105,6 +105,13 @@ public class User {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    // OAuth2 fields
+    @Column(name = "oauth_provider", length = 50)
+    private String oauthProvider;  // "google", "facebook", null for local users
+
+    @Column(name = "oauth_id", length = 255)
+    private String oauthId;  // Google User ID (sub claim)
 }
 
 

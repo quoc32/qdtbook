@@ -342,4 +342,68 @@ public class UserService {
         return Optional.of(convertToResponseDTO(savedUser));
     }
 
+    // ============================================
+    // OAuth2 Methods
+    // ============================================
+
+    /**
+     * Find user by OAuth provider and OAuth ID
+     */
+    public User findByOAuthProviderAndOAuthId(String provider, String oauthId) {
+        return userRepository.findByOauthProviderAndOauthId(provider, oauthId);
+    }
+
+    /**
+     * Create new user from OAuth2 login (Google)
+     * Option 1: Merge accounts if email exists
+     */
+    @Transactional
+    public User createOrUpdateOAuthUser(String email, String name, String picture, String oauthProvider, String oauthId) {
+        // PRIORITY 1: Check if OAuth user already exists (by provider + oauthId)
+        User oauthUser = userRepository.findByOauthProviderAndOauthId(oauthProvider, oauthId);
+        if (oauthUser != null) {
+            // OAuth user exists - update info
+            oauthUser.setFullName(name);
+            oauthUser.setEmail(email); // Update email in case it changed
+            // Don't update avatar - keep default avatar
+            oauthUser.setUpdatedAt(Instant.now());
+            
+            System.out.println("✅ OAuth user exists - updating: " + email + " (ID: " + oauthUser.getId() + ")");
+            return userRepository.save(oauthUser);
+        }
+        
+        // PRIORITY 2: Check if user with same email exists (for account merging)
+        User existingUser = userRepository.findByEmail(email);
+        if (existingUser != null) {
+            // Only merge if user doesn't have OAuth linked yet
+            if (existingUser.getOauthProvider() == null || existingUser.getOauthId() == null) {
+                existingUser.setOauthProvider(oauthProvider);
+                existingUser.setOauthId(oauthId);
+                existingUser.setUpdatedAt(Instant.now());
+                
+                System.out.println("✅ Merging OAuth into existing account: " + email + " (ID: " + existingUser.getId() + ")");
+                return userRepository.save(existingUser);
+            } else {
+                // User already has different OAuth linked - this shouldn't happen
+                System.err.println("⚠️ User already has OAuth linked: " + email);
+                throw new RuntimeException("Email already linked to another OAuth account");
+            }
+        }
+        
+        // PRIORITY 3: Create new user
+        User newUser = new User();
+        newUser.setEmail(email);
+        newUser.setFullName(name);
+        newUser.setAvatarUrl("http://localhost:8080/default-avatar.png");  // Always use default avatar
+        newUser.setOauthProvider(oauthProvider);
+        newUser.setOauthId(oauthId);
+        newUser.setPasswordHash(null);  // No password for OAuth users
+        newUser.setRole("student");  // Default role
+        newUser.setCreatedAt(Instant.now());
+        newUser.setUpdatedAt(Instant.now());
+        
+        System.out.println("✅ Creating new OAuth user: " + email);
+        return userRepository.save(newUser);
+    }
+
 }
