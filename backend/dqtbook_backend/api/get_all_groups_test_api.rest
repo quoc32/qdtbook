@@ -1,0 +1,64 @@
+### Test API - Get Group Chats by User ID
+
+### 1. Lấy tất cả group chats của user 10
+GET http://localhost:8080/api/chats/groups/user/10
+
+###
+
+### 2. Lấy tất cả group chats của user 11
+GET http://localhost:8080/api/chats/groups/user/13
+
+###
+
+### 3. Lấy tất cả group chats của user 12
+GET http://localhost:8080/api/chats/groups/user/12
+
+###
+
+### 4. Lấy group chats của user không tồn tại
+GET http://localhost:8080/api/chats/groups/user/9999
+
+###
+
+### 5. Error: Invalid user ID
+GET http://localhost:8080/api/chats/groups/user/0
+
+###
+
+### Expected Response (User 10):
+# [
+#   {
+#     "chatId": 1,
+#     "chatName": "Nhóm học tập",
+#     "chatAvatarUrl": null,
+#     "memberCount": 3,
+#     "memberIds": [10, 11, 12],
+#     "createdAt": "2025-10-17T12:00:00Z"
+#   },
+#   {
+#     "chatId": 2,
+#     "chatName": "Nhóm dự án",
+#     "chatAvatarUrl": null,
+#     "memberCount": 3,
+#     "memberIds": [10, 11, 13],
+#     "createdAt": "2025-10-17T11:30:00Z"
+#   },
+#   {
+#     "chatId": 3,
+#     "chatName": "Nhóm bạn thân",
+#     "chatAvatarUrl": null,
+#     "memberCount": 4,
+#     "memberIds": [10, 11, 12, 13],
+#     "createdAt": "2025-10-17T11:00:00Z"
+#   }
+# ]
+
+###
+
+### Note:
+# - Chỉ trả về group chats mà user đó là thành viên
+# - Sắp xếp theo createdAt DESC (mới nhất trước)
+# - Mỗi chat có đầy đủ thông tin: chatId, chatName, chatAvatarUrl, memberCount, memberIds, createdAt
+# - memberIds được sort tăng dần
+# - Nếu user không tham gia group chat nào, trả về array rỗng []
+# - Nếu user không tồn tại, trả về array rỗng []
