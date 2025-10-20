@@ -81,8 +81,14 @@
         async function findUserByEmail(email) {
           const res = await fetch(`/api/users/find/by-email?email=${encodeURIComponent(email)}`, {
             credentials: 'include'
-              setContent('<div class="text-center text-muted py-2">Đang tải bình luận...</div>');
-              if(reportedPostId){
+          });
+          if (!res.ok) return null;
+          return await res.json();
+        }
+
+        async function loadCommentDetails(reportedPostId, reportedCommentId, setContent) {
+          setContent('<div class="text-center text-muted py-2">Đang tải bình luận...</div>');
+          if(reportedPostId){
                 // fetch the post and the comments list, then find the comment by id (avoid non-existing single-comment GET)
                 const [resPost, resComments] = await Promise.all([
                   fetch('/api/posts/'+encodeURIComponent(reportedPostId), { credentials:'include' }),
@@ -128,9 +134,31 @@
                 }
               } else {
                 // no post id: backend does not provide a global GET /api/comments/{id} endpoint in this app.
-                // Show helpful message and raw report payload so admin can inspect.
-                setContent('<div class="text-danger">Không có postId trong báo cáo nên không thể lấy bình luận riêng lẻ. Hiển thị dữ liệu thô của báo cáo:</div><pre style="max-height:300px;overflow:auto">'+escapeHtml(JSON.stringify(r, null, 2))+'</pre>');
-                              }
+                setContent('<div class="text-danger">Không có postId trong báo cáo nên không thể lấy bình luận riêng lẻ.</div>');
+              }
+        }
+
+        function setStatus(el, msg, isLoading) {
+          el.textContent = msg;
+          el.className = isLoading ? 'small mt-3 text-info' : 'small mt-3 text-success';
+        }
+
+        async function upgradeRole(userId, role) {
+          const res = await fetch(`/api/users/${userId}/role`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role })
+          });
+          if (!res.ok) throw new Error('Failed to upgrade role');
+          return await res.json();
+        }
+
+        function escapeHtml(text) {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        }
 
         document.getElementById('btnSpecial').addEventListener('click', async () => {
           const email = document.getElementById('userEmailSpecial').value.trim();
@@ -770,5 +798,4 @@
       })();
     </script>
 </body>
-
 </html>
