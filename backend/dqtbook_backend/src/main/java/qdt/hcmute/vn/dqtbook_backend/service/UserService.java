@@ -13,7 +13,6 @@ import qdt.hcmute.vn.dqtbook_backend.repository.DepartmentRepository;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +26,12 @@ public class UserService {
 
     @Autowired
     private HttpSession session;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private OtpService otpService;
 
     public UserService(UserRepository userRepository,
             DepartmentRepository departmentRepository,
@@ -53,50 +58,88 @@ public class UserService {
     }
 
     @Transactional
-    public Optional<UserResponseDTO> createUser(UserCreateRequestDTO dto) {
-        // Check if email already exists
-        if (userRepository.findByEmail(dto.getEmail()) != null) {
-            return Optional.empty();
+    public boolean sendOtpForRegistration(String email) {
+        // Kiểm tra email có tồn tại chưa
+        if (userRepository.findByEmail(email) != null) {
+            throw new IllegalArgumentException("Email already exists");
         }
 
+        // Sinh OTP và gửi mail
+        String otp = otpService.generateOtp(email);
+        emailService.sendSimpleEmail(
+            email,
+            "Email Verification Code",
+            "Your verification code is: " + otp + "\n\nThis code will expire in 5 minutes."
+        );
+
+        return true;
+    }
+
+    @Transactional
+    public Optional<UserResponseDTO> verifyOtpAndCreateUser(UserCreateRequestDTO dto) {
+        String otp = dto.getOtp();
+        boolean valid = otpService.verifyOtp(dto.getEmail(), otp);
+        if (!valid) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+
+        // Sau khi OTP hợp lệ → tạo user như trước
         User user = new User();
 
         user.setFullName(dto.getFullName());
         user.setEmail(dto.getEmail());
-        // user.setPasswordHash(dto.getPasswordHash());
-        // Băm mật khẩu trước khi lưu
         user.setPasswordHash(passwordEncoder.encode(dto.getPasswordHash()));
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setGender(dto.getGender());
         user.setDateOfBirth(dto.getDateOfBirth());
         user.setAvatarUrl(dto.getAvatarUrl() != null ? dto.getAvatarUrl() : "http://localhost:8080/default-avatar.png");
-        user.setCoverPhotoUrl(dto.getCoverPhotoUrl());
-        user.setBio(dto.getBio());
-        user.setSchoolId(dto.getSchoolId());
-        user.setAcademicYear(dto.getAcademicYear());
-        user.setRole(dto.getRole() != null ? dto.getRole() : "student");
-        user.setPhone(dto.getPhone());
-        user.setWebsite(dto.getWebsite());
-        user.setCountry(dto.getCountry());
-        user.setCity(dto.getCity());
-        user.setEducation(dto.getEducation());
-        user.setWorkplace(dto.getWorkplace());
-        user.setFacebookUrl(dto.getFacebookUrl());
-        user.setInstagramUrl(dto.getInstagramUrl());
-        user.setLinkedinUrl(dto.getLinkedinUrl());
-        user.setTwitterUrl(dto.getTwitterUrl());
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
 
-        // Set department if provided
         if (dto.getDepartmentId() != null) {
-            Optional<Department> department = departmentRepository.findById(dto.getDepartmentId());
-            department.ifPresent(user::setDepartment);
+            departmentRepository.findById(dto.getDepartmentId()).ifPresent(user::setDepartment);
         }
 
         User savedUser = userRepository.save(user);
+
+        emailService.sendSimpleEmail(
+            user.getEmail(),
+            "Welcome to Our Platform",
+            "Dear " + user.getFullName() + ",\n\nYour email has been verified successfully!\nYou are now a part of our comunity. Enjoy!\n\nBest regards,\nThe QDT Team"
+        );
+
         return Optional.of(convertToResponseDTO(savedUser));
+    }
+
+    @Transactional
+    public boolean sendOtpForForgotPassword(String email) {
+        // Sinh OTP và gửi mail
+        String otp = otpService.generateOtp(email);
+        emailService.sendSimpleEmail(
+            email,
+            "Email Verification Code for Password Reset",
+            "Your verification code is: " + otp + "\n\nThis code will expire in 5 minutes."
+        );
+
+        return true;
+    }
+    @Transactional
+    public boolean resetPasswordWithOtp(String email, String newPassword, String otp) {
+        boolean valid = otpService.verifyOtp(email, otp);
+        if (!valid) {
+            return false;
+        }
+
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return false;
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(Instant.now());
+        userRepository.save(user);
+        return true;
     }
 
     @Transactional

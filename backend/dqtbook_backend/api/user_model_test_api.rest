@@ -51,10 +51,28 @@ POST http://localhost:8080/api/users/register
 Content-Type: application/json
 
 {
-  "full_name": "John Doe",
-  "email": "john@example.com",
-  "password_hash": "password123"
+  "full_name": "Vũ Quốc",
+  "email": "vuanhquoc0397144200@gmail.com",
+  "password_hash": "123456",
+  "otp": "814702"
 }
+
+### 5.1. Send OTP for user registration
+POST http://localhost:8080/api/users/send-otp?email=vuanhquoc0397144200@gmail.com
+
+
+### 5.2. Forgot password - change password with OTP
+POST http://localhost:8080/api/users/forgot-password
+Content-Type: application/json
+
+{
+  "email": "vuanhquoc0397144200@gmail.com",
+  "new_password": "654321",
+  "otp": "827182"
+}
+
+### 5.2.1. Send OTP for user forgot password
+POST http://localhost:8080/api/users/send-otp/forgot-password?email=vuanhquoc0397144200@gmail.com
 
 ### 6. Change user Role to "special" (only for admin)
 POST http://localhost:8080/api/users/10/upgrade

@@ -152,19 +152,36 @@ DELETE http://localhost:8080/api/posts/4/comments/3
 Cookie: JSESSIONID=1DC7391AE19B9D149B943782253E090F
 
 ### Shares (Chia sẻ bài viết)
-# Tạo 1 share 
-POST http://localhost:8080/api/posts/5/shares
+  
+# Tạo 1 share (server sẽ lấy user từ session; không cần gửi user_id)
+POST http://localhost:8080/api/posts/8/shares
 Content-Type: application/json
+Cookie: JSESSIONID=EC1378CF5F48B4B623AC37600464AEEC
 
 {
-  "user_id": 2,
-  "shared_text": "Mình chia sẻ bài này nha",
-  "visibility": "public"
+  "shared_text": "Mình chia sẻ bài này nha ok nha cu",
+  "visibility": "friend"
 }
 
 ### Lấy danh sách share của 1 post
-GET http://localhost:8080/api/posts/5/shares
+GET http://localhost:8080/api/posts/6/shares
+Cookie: JSESSIONID=EC1378CF5F48B4B623AC37600464AEEC
 
-### Xoá 1 share
-DELETE http://localhost:8080/api/posts/5/shares/4
+### Lấy 1 share theo id
+GET http://localhost:8080/api/posts/6/shares/7
+Cookie: JSESSIONID=4CB18DE274EB54A8E4A1D27E20DB351A
+
+### Xoá 1 share (chỉ owner hoặc admin)
+DELETE http://localhost:8080/api/posts/6/shares/8
+Cookie: JSESSIONID=EC1378CF5F48B4B623AC37600464AEEC
+
+### Cập nhật 1 share (chỉ owner được phép chỉnh sửa shared_text và visibility)
+PUT http://localhost:8080/api/posts/9/shares/17
+Content-Type: application/json
+Cookie: JSESSIONID=844C5D5D724CFC6F30B765753A860CDA
+
+{
+  "shared_text": "chán quá hạ em, tội nghiệp",
+  "visibility": "friend"
+}
 

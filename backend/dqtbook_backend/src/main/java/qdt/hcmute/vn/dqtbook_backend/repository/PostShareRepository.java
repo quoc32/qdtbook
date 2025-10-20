@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface PostShareRepository extends JpaRepository<PostShare, Integer> {
     List<PostShare> findByPostId(Integer postId);
+    java.util.Optional<PostShare> findByPostIdAndUserId(Integer postId, Integer userId);
+    List<PostShare> findByUserId(Integer userId);
 }
