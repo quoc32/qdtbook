@@ -68,8 +68,49 @@
                           </div>
                       </div>
                   </div>
-                <button class="pc-menu" type="button" aria-label="Menu"
-                    onclick="(function(btn){var m=btn.closest('article').querySelector('.pc-more-modal');bootstrap.Modal.getOrCreateInstance(m).show();})(this)">
+    <button class="pc-menu" type="button" aria-label="Menu"
+      onclick="(function(btn){
+        var article = btn.closest('article');
+        var m = article ? article.querySelector('.pc-more-modal') : null;
+        if(!m){ return; }
+        var modal = bootstrap.Modal.getOrCreateInstance(m) || bootstrap.Modal.getOrCreateInstance(m);
+        m.addEventListener('shown.bs.modal', function onShown(){
+          try{
+            var isShare = !!(article && article.dataset && article.dataset.shareId);
+            var items = m.querySelectorAll('.list-group .list-group-item-action');
+            if(items && items.length >= 2){
+              var deleteBtn = items[0];
+              var editBtn = items[1];
+              // Save original labels once
+              if(!m.dataset.origDelete) m.dataset.origDelete = (deleteBtn.textContent || '').trim();
+              if(!m.dataset.origEdit) m.dataset.origEdit = (editBtn.textContent || '').trim();
+              if(isShare){
+                // If this fragment is rendered on the user's own profile (isSelfProfile === true),
+                // keep share-specific labels for edit/delete. Otherwise (feed/homepage),
+                // show report/close to match homepage semantics.
+                if(typeof isSelfProfile !== 'undefined' && isSelfProfile){
+                  deleteBtn.textContent = 'Xóa bài chia sẻ';
+                  editBtn.textContent = 'Sửa bài chia sẻ';
+                  if(items.length >= 3) items[2].style.display = '';
+                  if(items.length >= 4) items[3].style.display = '';
+                } else {
+                  deleteBtn.textContent = 'Báo cáo';
+                  editBtn.textContent = 'Đóng';
+                  if(items.length >= 3) items[2].style.display = 'none';
+                  if(items.length >= 4) items[3].style.display = 'none';
+                }
+              } else {
+                deleteBtn.textContent = m.dataset.origDelete || deleteBtn.textContent;
+                editBtn.textContent = m.dataset.origEdit || editBtn.textContent;
+                if(items.length >= 3) items[2].style.display = '';
+                if(items.length >= 4) items[3].style.display = '';
+              }
+            }
+          }catch(e){ /* ignore */ }
+          m.removeEventListener('shown.bs.modal', onShown);
+        });
+        modal.show();
+      })(this)">
                   <i class="bi bi-three-dots"></i>
                 </button>
 
@@ -84,79 +125,144 @@
                       <div class="modal-body">
                     <div class="list-group list-group-flush">
 
-            <button type="button" class="list-group-item list-group-item-action"
-              th:if="${canDeletePost}"
-              onclick="(function(btn){
-                                console.log('Delete post clicked');
-                                const isSelf = isSelfProfile;
-                                if(!isSelf){
-                                    alert('Chỉ có thể xóa bài viết trên trang cá nhân của bạn.');
-                                    return;
-                                }
-                                const article = btn.closest('article');
-                                const postId = article.dataset.postId;
-                                if(!postId){
-                                    alert('Không xác định được bài viết để xóa.');
-                                    return;
-                                }
-                                if(!confirm('Bạn có chắc chắn muốn xóa bài viết này?')){
-                                    return;
-                                }
-                                // Gửi yêu cầu xóa bài viết
-                                fetch('/api/posts/' + encodeURIComponent(postId), {
-                                    method: 'DELETE',
-                                    credentials: 'include'
-                                }).then(res => {
-                                    if(res.ok){
-                                        // Xóa bài viết khỏi giao diện
-                                        article.remove();
-                                    }else{
-                                        alert('Xóa bài viết thất bại. Vui lòng thử lại.');
-                                    }
-                                }).catch(err => {
-                                    console.error(err);
-                                    alert('Đã xảy ra lỗi khi xóa bài viết.');
-                                }).finally(() => {
-                                    window.location.reload();
-                                });
-                            })(this);"
-                        >Xóa bài viết</button>
+      <button type="button" class="list-group-item list-group-item-action"
+        th:if="${canDeletePost}"
+        onclick="(function(btn){
+                (async function(){
+                  try{
+                  const isSelf = isSelfProfile;
+                  if(!isSelf){ alert('Chỉ có thể xóa bài viết trên trang cá nhân của bạn.'); return; }
+                  const article = btn.closest('article'); if(!article) return;
+                  const postId = article.dataset.postId;
+                  const shareId = article.dataset.shareId;
+                  if(!postId){ alert('Không xác định được bài viết để xóa.'); return; }
+
+                  if(shareId){
+                    console.log('[delete-share] clicked', { postId, shareId });
+                    // Close the options modal first, then open the confirm modal after it's fully hidden
+                    try{
+                      const currentModal = btn.closest('.pc-more-modal');
+                      if(currentModal){
+                        const inst = bootstrap.Modal.getOrCreateInstance(currentModal);
+                        let opened = false;
+                        const onHidden = function(){
+                          currentModal.removeEventListener('hidden.bs.modal', onHidden);
+                          if(window.openConfirmDeleteShare && typeof window.openConfirmDeleteShare === 'function'){
+                            opened = true;
+                            window.openConfirmDeleteShare(article, postId, shareId);
+                          } else {
+                            console.error('openConfirmDeleteShare not available; aborting delete-share action');
+                          }
+                        };
+                        currentModal.addEventListener('hidden.bs.modal', onHidden);
+                        inst.hide();
+                        // Fallback: if hidden event doesn't fire within 400ms, try opening anyway
+                        setTimeout(function(){
+                          if(!opened){
+                            currentModal.removeEventListener('hidden.bs.modal', onHidden);
+                            if(window.openConfirmDeleteShare && typeof window.openConfirmDeleteShare === 'function'){
+                              console.warn('[delete-share] hidden event timeout fallback');
+                              window.openConfirmDeleteShare(article, postId, shareId);
+                            }
+                          }
+                        }, 400);
+                        return;
+                      }
+                    }catch(_){ }
+                    // Fallback if no modal instance found
+                    if(window.openConfirmDeleteShare && typeof window.openConfirmDeleteShare === 'function'){
+                      window.openConfirmDeleteShare(article, postId, shareId);
+                      return;
+                    }
+                    console.error('openConfirmDeleteShare not available; aborting delete-share action');
+                    return;
+                  } else {
+                    console.log('[delete-post] clicked', { postId });
+                    // Close the options modal first, then open the confirm modal after it's fully hidden
+                    try{
+                      const currentModal = btn.closest('.pc-more-modal');
+                      if(currentModal){
+                        const inst = bootstrap.Modal.getOrCreateInstance(currentModal);
+                        let opened = false;
+                        const onHidden = function(){
+                          currentModal.removeEventListener('hidden.bs.modal', onHidden);
+                          if(window.openConfirmDeletePost && typeof window.openConfirmDeletePost === 'function'){
+                            opened = true;
+                            window.openConfirmDeletePost(article, postId);
+                          } else {
+                            console.error('openConfirmDeletePost not available; aborting delete-post action');
+                          }
+                        };
+                        currentModal.addEventListener('hidden.bs.modal', onHidden);
+                        inst.hide();
+                        // Fallback: if hidden event doesn't fire within 400ms, try opening anyway
+                        setTimeout(function(){
+                          if(!opened){
+                            currentModal.removeEventListener('hidden.bs.modal', onHidden);
+                            if(window.openConfirmDeletePost && typeof window.openConfirmDeletePost === 'function'){
+                              console.warn('[delete-post] hidden event timeout fallback');
+                              window.openConfirmDeletePost(article, postId);
+                            }
+                          }
+                        }, 400);
+                        return;
+                      }
+                    }catch(_){ }
+                    // Fallback if no modal instance found
+                    if(window.openConfirmDeletePost && typeof window.openConfirmDeletePost === 'function'){
+                      window.openConfirmDeletePost(article, postId);
+                      return;
+                    }
+                    console.error('openConfirmDeletePost not available; aborting delete-post action');
+                    return;
+                  }
+                  }catch(err){ console.error(err); alert('Đã xảy ra lỗi khi xóa.'); }
+                })();
+              })(this);"
+            >Xóa bài viết</button>
             <!-- Edit post button: render only on own profile -->
             <button type="button" class="list-group-item list-group-item-action" th:if="${isSelfProfile}"
               onclick="(function(btn){
-                const isSelf = isSelfProfile;
-                if(!isSelf){
-                  alert('Chỉ có thể sửa bài viết trên trang cá nhân của bạn.');
-                  return;
-                }
-                // Close the 'Tùy chọn bài viết' modal immediately
-                try{
-                  const currentModal = btn.closest('.pc-more-modal');
-                  if(currentModal){
-                    bootstrap.Modal.getOrCreateInstance(currentModal).hide();
-                  }
-                }catch(e){ /* no-op */ }
-                const article = btn.closest('article');
-                const postId = article.dataset.postId;
-                if(!postId){
-                  alert('Không xác định được bài viết để sửa.');
-                  return;
-                }
-                // Fetch existing post data and open composer in edit mode
-                fetch('/api/posts/' + encodeURIComponent(postId), { credentials: 'include' })
-                  .then(r => {
-                    if(!r.ok) throw new Error('Failed to fetch post');
-                    return r.json();
-                  })
-                  .then(post => {
-                    // open composer modal in edit mode
-                    if(window.openEditPost && typeof window.openEditPost === 'function'){
-                      window.openEditPost(post);
-                    }else{
-                      alert('Chức năng sửa bài hiện không khả dụng.');
+                (async function(){
+                  try{
+                    const isSelf = isSelfProfile;
+                    if(!isSelf){ alert('Chỉ có thể sửa bài viết trên trang cá nhân của bạn.'); return; }
+                    // Close the 'Tùy chọn bài viết' modal immediately
+                    try{ const currentModal = btn.closest('.pc-more-modal'); if(currentModal){ bootstrap.Modal.getOrCreateInstance(currentModal).hide(); } }catch(e){}
+                    const article = btn.closest('article'); if(!article) return;
+                    const postId = article.dataset.postId; const shareId = article.dataset.shareId;
+                    if(!postId){ alert('Không xác định được bài viết để sửa.'); return; }
+
+                    if(shareId){
+                      // Open share-edit UI. Prefer the composer-based editor (openEditShare) if available,
+                      // otherwise fall back to the inline modal helper (openEditShareModal).
+                      try{
+                        const currentTextEl = article.querySelector('.post-content');
+                        const currentText = currentTextEl ? currentTextEl.textContent.trim() : '';
+                        const vis = article.dataset.visibility || 'public';
+                        if(window.openEditShare && typeof window.openEditShare === 'function'){
+                          // composer-based editor (recommended)
+                          window.openEditShare({ postId: postId, shareId: shareId, sharedText: currentText, visibility: vis });
+                        } else if(window.openEditShareModal && typeof window.openEditShareModal === 'function'){
+                          // legacy modal-based helper
+                          window.openEditShareModal({ postId: postId, shareId: shareId, sharedText: currentText, visibility: vis, articleEl: article });
+                        } else {
+                          console.error('No share edit entrypoint found', { openEditShare: !!window.openEditShare, openEditShareModal: !!window.openEditShareModal });
+                          alert('Không thể mở giao diện sửa share: chức năng chưa sẵn sàng. Kiểm tra console để biết thêm chi tiết.');
+                        }
+                      }catch(e){ console.error(e); alert('Không thể mở giao diện sửa share.'); }
+                    } else {
+                      // edit post: existing behaviour (fetch post and open composer)
+                      try{
+                        const r = await fetch('/api/posts/' + encodeURIComponent(postId), { credentials: 'include' });
+                        if(!r.ok) throw new Error('Failed to fetch post');
+                        const post = await r.json();
+                        if(window.openEditPost && typeof window.openEditPost === 'function'){ window.openEditPost(post); }
+                        else { alert('Chức năng sửa bài hiện không khả dụng.'); }
+                      }catch(err){ console.error(err); alert('Không thể lấy dữ liệu bài viết để sửa.'); }
                     }
-                  })
-                  .catch(err => { console.error(err); alert('Không thể lấy dữ liệu bài viết để sửa.'); });
+                  }catch(e){ console.error(e); }
+                })();
               })(this);"
             >Sửa bài viết</button>
                         <!-- Script xử lý xóa bài viết -->
@@ -200,6 +306,8 @@
               <div class="pc-body">
                   <div class="post-content"></div>
                   <div class="post-media pm-grid"></div>
+          <!-- Shares list for this post -->
+          <div class="post-shares mt-3"></div>
               </div>
 
 
@@ -213,7 +321,7 @@
                             const article = btn.closest('article'); if(!article) return;
                             const postId = article.dataset.postId; if(!postId) return;
 
-                            const modal = article.querySelector('.reactions-modal');
+                            const modal = Array.from(article.querySelectorAll('.reactions-modal')).find(function(m){ return m.closest('article')===article; }) || null;
                             const listEl = modal.querySelector('.reactions-list');
                             const tabsWrap = modal.querySelector('.reaction-tabs');
 
@@ -424,9 +532,9 @@
                     <div class="modal-content">
                       <div class="modal-header">
                         <h5 class="modal-title">Cảm xúc</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng" 
-                            onclick="(function(){document.querySelector('.btn-reaction-summary').focus();}())"
-                        ></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng" 
+              onclick="(function(btn){ try{ var art = btn.closest('article'); var b = art && art.querySelector('.btn-reaction-summary'); if(b) b.focus(); }catch(e){} })(this)"
+            ></button>
                       </div>
                       <div class="modal-body">
                         <ul class="nav nav-pills reaction-tabs gap-1 mb-3 flex-wrap">
@@ -504,15 +612,16 @@
                   onclick="(function(btn){
                   try{
                     var article = btn.closest('article'); if(!article) return;
-                    var modal = article.querySelector('.comments-modal'); 
+                    var modal = Array.from(article.querySelectorAll('.comments-modal')).find(function(m){ return m.closest('article')===article; }) || null;
                     if(modal){
-                    if(article._loadComments) article._loadComments();
-                    var inst = bootstrap.Modal.getOrCreateInstance(modal);
-                    inst.show();
-                    setTimeout(function(){
-                      var input = article.querySelector('.modal-comment-input');
-                      if(input) input.focus();
-                    }, 200);
+                      try{ if(!article._loadComments && typeof window.initCommentsForArticle==='function'){ window.initCommentsForArticle(article); } }catch(_){ }
+                      if(article._loadComments) article._loadComments();
+                      var inst = bootstrap.Modal.getOrCreateInstance(modal);
+                      inst.show();
+                      setTimeout(function(){
+                        var input = article.querySelector('.modal-comment-input');
+                        if(input) input.focus();
+                      }, 200);
                     }
                   }catch(e){}
                   })(this)">
@@ -561,6 +670,68 @@
 
                     init();
                   }catch(_){}
+                  })();
+                </script>
+
+                <!-- Nút hiển thị số chia sẻ -->
+                <button type="button" class="btn-share-summary" aria-label="Xem số chia sẻ"
+                  style="background:transparent;border:0;padding:0;color:#65676b;font-weight:500;font-size:.9rem;line-height:1;text-transform:none;box-shadow:none;margin-left:16px;"
+                  onclick="(function(btn){ try{ var article=btn.closest('article'); if(!article) return; var shareList=article.querySelector('.post-shares'); if(shareList){ shareList.scrollIntoView({behavior:'smooth', block:'nearest'}); } }catch(e){} })(this)">
+                  <span class="ico"><i class="bi bi-share"></i></span>
+                  <span class="txt">Chia sẻ</span>
+                  <span class="count share-count">0</span>
+                </button>
+
+                <!-- Tải số chia sẻ ban đầu + helper global refresh -->
+                <script>
+                  (function(){
+                    try{
+                      var sc = document.currentScript;
+                      var article = sc;
+                      while(article && article.tagName !== 'ARTICLE'){ article = article.parentElement; }
+                      if(!article) return;
+
+                      var countEl = article.querySelector('.share-count');
+                      if(!countEl) return;
+
+                      async function setCount(n){ countEl.textContent = Number(n||0); }
+
+                      async function fetchShareCount(postId){
+                        try{
+                          var r = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares',{credentials:'include'});
+                          if(r.ok){
+                            var data = await r.json().catch(()=>[]);
+                            if(Array.isArray(data)) return data.length;
+                            if(data && Array.isArray(data.content)) return data.content.length;
+                            if(Number.isFinite(data.totalElements)) return data.totalElements;
+                            if(Number.isFinite(data.total)) return data.total;
+                            if(Number.isFinite(data.count)) return data.count;
+                          }
+                        }catch(_){ }
+                        return 0;
+                      }
+
+                      async function init(){
+                        if(article._shareCountLoaded) return;
+                        var postId = article.dataset.postId; if(!postId){ setTimeout(init,50); return; }
+                        article._shareCountLoaded = true;
+                        var n = await fetchShareCount(postId);
+                        setCount(n);
+                      }
+
+                      // tiny global helper to refresh share count across all cards for a post
+                      window.QDTCounts = window.QDTCounts || {};
+                      window.QDTCounts.refreshShareCountForPost = async function(postId){
+                        try{
+                          var n = await fetchShareCount(postId);
+                          // update all matching article nodes whether they use data-post-id or data-original-post-id
+                          const selShares = 'article.post-card[data-post-id="'+String(postId)+'"] .share-count, article.post-card.share-item[data-original-post-id="'+String(postId)+'"] .share-count, article.post-card[data-original-post-id="'+String(postId)+'"] .share-count';
+                          document.querySelectorAll(selShares).forEach(function(el){ el.textContent = Number(n||0); });
+                        }catch(_){ }
+                      }
+
+                      init();
+                    }catch(_){ }
                   })();
                 </script>
 
@@ -810,6 +981,51 @@
                             if(mostReactionEl) mostReactionEl.innerHTML = sortedReactions[0] ? iconByType(sortedReactions[0][0]) : '<i class="bi bi-plus"></i>';
                             if(secondMostReactionEl) secondMostReactionEl.innerHTML = sortedReactions[1] ? iconByType(sortedReactions[1][0]) : '⋯';
                         }
+
+            // Broadcast: sync reactions UI across all cards of the same postId (original + share)
+            try{
+              const postId = article.dataset.postId;
+              if(postId){
+                const rc = {};
+                (arr||[]).forEach(r => { const type=(r.reactionType||'').toLowerCase(); if(type){ rc[type]=(rc[type]||0)+1; } });
+                const sorted = Object.entries(rc).sort((a,b)=> b[1]-a[1]);
+                const totalAll = Object.values(rc).reduce((s,c)=>s+c,0);
+
+                // target both post-card[data-post-id] and share-item/data-original-post-id variants
+                const sel = 'article.post-card[data-post-id="'+String(postId)+'"],'
+                          + 'article.post-card.share-item[data-original-post-id="'+String(postId)+'"],'
+                          + 'article.post-card[data-original-post-id="'+String(postId)+'"]';
+                document.querySelectorAll(sel).forEach(function(other){
+                  if(!other || other===article) return;
+                  try{
+                    // summary pills
+                    const wrap2 = other.querySelector('#post-info-reactions-and-comments');
+                    if(wrap2){
+                      const likeCount2 = wrap2.querySelector('.like-count');
+                      const most2 = wrap2.querySelector('.most-reaction');
+                      const second2 = wrap2.querySelector('.second-most-reaction');
+                      if(likeCount2) likeCount2.textContent = totalAll > 0 ? totalAll : 'Chưa có reaction nào...';
+                      if(most2) most2.innerHTML = sorted[0] ? iconByType(sorted[0][0]) : '<i class="bi bi-plus"></i>';
+                      if(second2) second2.innerHTML = sorted[1] ? iconByType(sorted[1][0]) : '⋯';
+                    }
+                    // composer counter and button label
+                    const comp2 = other.querySelector('.reaction-composer');
+                    if(comp2){
+                      const lc2 = comp2.querySelector('.like-count'); if(lc2) lc2.textContent = Number(totalAll||0);
+                      const btn2 = comp2.querySelector('.btn-like');
+                      other.setAttribute('data-my-reaction', t||'');
+                      other.setAttribute('data-my-reaction-id', id||'');
+                      if(btn2){
+                        btn2.dataset.active = t? '1':'0';
+                        btn2.setAttribute('data-reaction', t||'');
+                        const txt2=btn2.querySelector('.txt'); if(txt2) txt2.textContent = t? labelByType(t) : 'Thích';
+                        const ico2=btn2.querySelector('.ico'); if(ico2) ico2.innerHTML = iconByType(t);
+                      }
+                    }
+                  }catch(_){ }
+                });
+              }
+            }catch(_){ }
                     }
 
                     async function refresh(wrap){
@@ -869,15 +1085,15 @@
 
 
                 <!-- Comments -->
-                <button type="button" class="act-btn btn-comment">
+                <button type="button" class="act-btn btn-comment" onclick="(function(btn){try{var article=btn.closest('article'); if(!article) return; var modal = Array.from(article.querySelectorAll('.comments-modal')).find(function(m){return m.closest('article')===article;})||null; if(!modal) return; if(!article._loadComments && typeof window.initCommentsForArticle==='function'){ window.initCommentsForArticle(article);} if(article._loadComments){ article._loadComments(); } var inst = bootstrap.Modal.getOrCreateInstance(modal); inst.show();}catch(e){ console.error('[comments:btn-click] failed', e); }})(this)">
                     <span class="ico"><i class="bi bi-chat-dots"></i></span>
                     <span class="txt">Bình luận</span>
                 </button>
-                <!-- Share -->
-                <button type="button" class="act-btn">
-                    <span class="ico"><i class="bi bi-share"></i></span>
-                    <span class="txt">Chia sẻ</span>
-                </button>
+        <!-- Share -->
+        <button type="button" class="act-btn" onclick="(function(btn){ try{ var article=btn.closest('article'); if(!article) return; var modal=article.querySelector('.share-modal'); if(modal) bootstrap.Modal.getOrCreateInstance(modal).show(); }catch(e){} })(this)">
+          <span class="ico"><i class="bi bi-share"></i></span>
+          <span class="txt">Chia sẻ</span>
+        </button>
 
               </div>
 
@@ -916,7 +1132,9 @@
                           try{
                             var article = btn.closest('article'); if(!article) return;
                             var postId = article.dataset.postId; if(!postId) return;
-                            var input = article.querySelector('.modal-comment-input');
+                            // scope to the current comments modal to avoid nested preview collisions
+                            var modalEl = btn.closest('.modal');
+                            var input = modalEl ? modalEl.querySelector('.modal-comment-input') : article.querySelector('.modal-comment-input');
                             var text = (input && input.value || '').trim();
                             if(!text) return;
 
@@ -947,6 +1165,137 @@
                 </div>
                 
 
+                <!-- Share Modal:BEGIN -->
+                <div class="modal fade share-modal" tabindex="-1" aria-hidden="true" role="dialog">
+                  <div class="modal-dialog modal-dialog-centered modal-md">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title">Chia sẻ bài viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-2">
+                        <textarea class="form-control share-textarea" rows="3" placeholder="Viết gì đó khi chia sẻ..."></textarea>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label small">Ai có thể xem</label>
+                        <select class="form-select form-select-sm share-visibility">
+                          <option value="public">Công khai</option>
+                          <option value="friends">Bạn bè</option>
+                          <option value="private">Chỉ mình tôi</option>
+                        </select>
+                      </div>
+                      <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary share-send-btn">Chia sẻ</button>
+                      </div>
+                    </div>
+                  </div>
+                  </div>
+                </div>
+
+                <script>
+                (function(){
+                  try{
+                    var script = document.currentScript;
+                    var article = script;
+                    while(article && article.tagName !== 'ARTICLE'){ article = article.parentElement; }
+                    if(!article) return;
+
+                    var shareModal = article.querySelector('.share-modal');
+                    if(!shareModal) return;
+
+                    var btn = shareModal.querySelector('.share-send-btn');
+                    var ta = shareModal.querySelector('.share-textarea');
+
+                    if(!btn) return;
+                    if(btn.dataset._shareHandler === '1'){
+                      // already attached
+                    } else {
+                      btn.dataset._shareHandler = '1';
+                      btn.addEventListener('click', async function(){
+                        try{
+                          if(btn.dataset.sending==='1') return; // prevent double submit
+                          btn.dataset.sending='1';
+                          btn.disabled = true;
+                      try{
+                        var postId = article.dataset.postId; if(!postId) return;
+                        var text = (ta && ta.value||'').trim();
+                        var visEl = shareModal.querySelector('.share-visibility');
+                        var visibility = (visEl && visEl.value) || 'public';
+                        var body = { shared_text: text, visibility: visibility };
+                        var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
+                          method: 'POST', credentials: 'include',
+                          headers: {'Content-Type':'application/json'},
+                          body: JSON.stringify(body)
+                        });
+                        if(res.ok){
+                          // hide modal and show small toast-like feedback
+                          bootstrap.Modal.getInstance(shareModal).hide();
+                          try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
+                          // clear textarea
+                          try{ if(ta) ta.value = ''; }catch(e){}
+                          // refresh per-post share list
+                          try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
+                          // refresh global share count (ties to original post id on share cards)
+                          try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
+                          // refresh the whole feed so the new share appears as a feed item
+                          try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
+                          } else {
+                          var json = {};
+                          try{ json = await res.json(); }catch(e){}
+                          alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
+                        }
+                        }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
+                        finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
+                      });
+                    }
+                    });
+                      if(btn){
+                        if(btn.dataset._shareHandler === '1'){
+                          // already attached
+                        } else {
+                          btn.dataset._shareHandler = '1';
+                          btn.addEventListener('click', async function(){
+                            try{
+                              if(btn.dataset.sending === '1') return;
+                              btn.dataset.sending = '1';
+                              btn.disabled = true;
+                              var postId = article.dataset.postId; if(!postId) return;
+                              var text = (ta && ta.value||'').trim();
+                              var visEl = shareModal.querySelector('.share-visibility');
+                              var visibility = (visEl && visEl.value) || 'public';
+                              var body = { shared_text: text, visibility: visibility };
+                              var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
+                                method: 'POST', credentials: 'include',
+                                headers: {'Content-Type':'application/json'},
+                                body: JSON.stringify(body)
+                              });
+                              if(res.ok){
+                                try{ bootstrap.Modal.getInstance(shareModal).hide(); }catch(_){ }
+                                try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
+                                try{ if(ta) ta.value = ''; }catch(e){}
+                                try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
+                                try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
+                                try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
+                              } else {
+                                var json = {};
+                                try{ json = await res.json(); }catch(e){}
+                                alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
+                              }
+                            }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
+                            finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
+                          });
+                        }
+                      }
+
+                    // auto-load shares on article render
+                    try{ article._loadShares(); }catch(e){}
+                  }catch(e){}
+                })();
+                </script>
+
+
                 <script>
                 (function(){
                   try{
@@ -960,22 +1309,228 @@
 
                   var listEl = modal.querySelector('.comments-list');
 
+                  // Global initializer: attach a per-article loader and modal hook so shares and clones work reliably
+                  // Always resolves the post id from article.dataset.postId (single source of truth)
+                  if(typeof window.initCommentsForArticle !== 'function'){
+                    window.initCommentsForArticle = function(articleNode){
+                      try{
+                        if(!articleNode) return;
+                        if(articleNode._commentsInit) return; // avoid double-init
+                        articleNode._commentsInit = true;
+                        const cmModal = Array.from(articleNode.querySelectorAll('.comments-modal')).find(function(m){ return m.closest('article') === articleNode; }) || null;
+                        if(!cmModal) return;
+                        const cmList = cmModal.querySelector('.comments-list');
+
+                        async function loadCommentsForArticle(){
+                          const postId = articleNode.dataset.postId;
+                          if(!postId) return;
+                          try{
+                            cmList.innerHTML = '<div class="text-center text-muted small py-2">Đang tải bình luận...</div>';
+                            const res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments', { credentials:'include' });
+                            const data = res.ok ? await res.json() : [];
+                            let arr = [];
+                            if(Array.isArray(data)) arr = data;
+                            else if(data && Array.isArray(data.content)) arr = data.content;
+                            else if(data && Array.isArray(data.items)) arr = data.items;
+                            else if(data && Array.isArray(data.data)) arr = data.data;
+
+                            // Ensure a per-article user cache
+                            const userCache = articleNode._userCache || new Map();
+                            articleNode._userCache = userCache;
+
+                            // Hoisted helpers are available: getUserIdFromComment, normName, normAvatar, normEmail, formatRelativeTime
+                            // Prefetch unique users
+                            try{
+                              const uniqueIds = Array.from(new Set((arr||[]).map(getUserIdFromComment).filter(Boolean)));
+                              await Promise.all(uniqueIds.map(async function(id){
+                                if(!id) return null;
+                                if(userCache.has(id)){
+                                  const cached = userCache.get(id);
+                                  return (cached && typeof cached.then==='function') ? await cached : cached;
+                                }
+                                const pending = (async () => {
+                                  try{
+                                    const r = await fetch('/api/users/' + encodeURIComponent(id), { credentials:'include' });
+                                    if(!r.ok) return null;
+                                    const u = await r.json();
+                                    return u || null;
+                                  }catch(e){ return null; }
+                                })();
+                                userCache.set(id, pending);
+                                const resolved = await pending; userCache.set(id, resolved);
+                                return resolved;
+                              }));
+                            }catch(_){ }
+
+                            // current user id
+                            let me = {};
+                            try{ me = JSON.parse(localStorage.getItem('auth')||'{}'); }catch(_){ me = {}; }
+                            const meId = me.user_id || me.id || me.userId || null;
+
+                            // Render comments (oldest -> newest)
+                            cmList.innerHTML = '';
+                            if(!arr || arr.length===0){
+                              cmList.innerHTML = '<div class="text-muted small text-center py-2">Chưa có bình luận.</div>';
+                            } else {
+                              const ts = c => new Date(c.created_at || c.createdAt || c.created || 0).getTime();
+                              arr = arr.slice().sort((a,b)=> ts(a) - ts(b));
+                              arr.forEach(function(c){
+                                try{
+                                  const uid = getUserIdFromComment(c);
+                                  const fallbackUser = c.user || c.author || {};
+                                  const u = (uid && userCache.get(uid)) || fallbackUser;
+                                  const name = normName(u);
+                                  const avatar = normAvatar(u);
+                                  const email = normEmail(u);
+                                  const content = c.content || c.text || '';
+                                  const created = c.created_at || c.createdAt || c.created || null;
+
+                                  const item = document.createElement('div');
+                                  try{ if(c && (c.id||c.comment_id||c.commentId)) item.id = 'comment-' + (c.id || c.comment_id || c.commentId); }catch(_){ }
+                                  item.className = 'list-group-item border-0 bg-transparent p-0';
+                                  item.style.marginBottom = '6px';
+
+                                  const row = document.createElement('div'); row.className='d-flex align-items-start gap-2 py-2';
+                                  const img = document.createElement('img');
+                                  img.src=avatar; img.alt=''; img.className='rounded-circle';
+                                  img.style.width='40px'; img.style.height='40px'; img.style.objectFit='cover';
+                                  if(email) img.title = email;
+
+                                  const bubble = document.createElement('div');
+                                  bubble.className='flex-fill';
+                                  bubble.style.background='#f7f9fc';
+                                  bubble.style.border='1px solid rgba(120,150,190,.30)';
+                                  bubble.style.borderRadius='12px';
+                                  bubble.style.padding='.5rem .75rem';
+                                  bubble.style.minWidth='0';
+
+                                  const header = document.createElement('div'); header.className='d-flex align-items-center justify-content-between gap-2 flex-wrap';
+                                  const left = document.createElement('div'); left.className='d-flex align-items-center gap-2 flex-wrap';
+                                  const nameSpan = document.createElement('span'); nameSpan.textContent = name; nameSpan.style.fontWeight='600'; nameSpan.style.color='#2a3542'; left.appendChild(nameSpan);
+                                  if(email){
+                                    const emailWrap = document.createElement('span');
+                                    emailWrap.className = 'text-muted small d-inline-flex align-items-center gap-1';
+                                    emailWrap.style.whiteSpace='nowrap';
+                                    const emailSpan = document.createElement('span'); emailSpan.textContent = email; emailSpan.style.maxWidth='220px'; emailSpan.style.overflow='hidden'; emailSpan.style.textOverflow='ellipsis';
+                                    const copyBtn = document.createElement('button');
+                                    copyBtn.type='button'; copyBtn.className='btn btn-sm btn-outline-secondary py-0 px-2'; copyBtn.title='Sao chép email'; copyBtn.innerHTML = "<i class='bi bi-clipboard'></i>";
+                                    copyBtn.addEventListener('click', async function(ev){ ev.stopPropagation(); try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(email); } }catch(_){ } });
+                                    emailWrap.appendChild(emailSpan); emailWrap.appendChild(copyBtn);
+                                    left.appendChild(emailWrap);
+                                  }
+                                  const timeEl = document.createElement('small'); timeEl.className='text-muted';
+                                  const usedTime = (c.updatedAt || c.updated_at || c.updated) ? (c.updatedAt || c.updated_at || c.updated) : created;
+                                  timeEl.textContent = (typeof formatRelativeTime==='function'? formatRelativeTime(usedTime): (usedTime? new Date(usedTime).toLocaleString():'')) + ((c.updatedAt || c.updated_at || c.updated)? ' • Đã chỉnh sửa' : '');
+                                  header.appendChild(left);
+                                  header.appendChild(timeEl);
+
+                                  const contentDiv = document.createElement('div'); contentDiv.style.whiteSpace='pre-wrap'; contentDiv.style.marginTop='6px'; contentDiv.textContent = content;
+
+                                  // Actions (owner: edit/delete; others: report)
+                                  const actionsWrap = document.createElement('div');
+                                  actionsWrap.style.marginTop='6px'; actionsWrap.style.display='flex'; actionsWrap.style.gap='8px'; actionsWrap.style.alignItems='center';
+                                  const isOwner = ((meId != null) && (String(meId) === String(uid))) || c.mine === true || c.ownedByRequester === true;
+                                  const postIdLocal = postId;
+                                  if(isOwner){
+                                    const editBtn = document.createElement('button'); editBtn.type='button'; editBtn.className='btn btn-sm btn-link'; editBtn.textContent='Sửa';
+                                    const delBtn = document.createElement('button'); delBtn.type='button'; delBtn.className='btn btn-sm btn-link text-danger'; delBtn.textContent='Xoá';
+
+                                    editBtn.addEventListener('click', function(ev){
+                                      ev.stopPropagation(); if(bubble._editing) return; bubble._editing = true;
+                                      const ta = document.createElement('textarea'); ta.className='form-control'; ta.style.minHeight='60px'; ta.value = content;
+                                      bubble.replaceChild(ta, contentDiv);
+                                      const save = document.createElement('button'); save.type='button'; save.className='btn btn-sm btn-primary'; save.textContent='Lưu';
+                                      const cancel = document.createElement('button'); cancel.type='button'; cancel.className='btn btn-sm btn-link'; cancel.textContent='Huỷ';
+                                      const actionBar = document.createElement('div'); actionBar.style.marginTop='6px'; actionBar.style.display='flex'; actionBar.style.gap='8px';
+                                      actionBar.appendChild(save); actionBar.appendChild(cancel); bubble.appendChild(actionBar);
+                                      save.addEventListener('click', async function(){
+                                        try{
+                                          const newText = ta.value || '';
+                                          const rr = await fetch('/api/posts/'+encodeURIComponent(postIdLocal)+'/comments/'+encodeURIComponent(c.id),{
+                                            method:'PUT', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ content: newText })
+                                          });
+                                          if(rr.ok){ try{ if(articleNode._loadComments) await articleNode._loadComments(); }catch(_){ } }
+                                          else { const jj = await rr.json().catch(()=>({})); alert('Cập nhật bình luận thất bại: ' + (jj.message || rr.statusText)); try{ bubble.removeChild(actionBar); bubble.replaceChild(contentDiv, ta); bubble._editing=false; }catch(_){ } }
+                                        }catch(e){ console.error(e); alert('Lỗi mạng'); }
+                                      });
+                                      cancel.addEventListener('click', function(){ try{ bubble.removeChild(actionBar); bubble.replaceChild(contentDiv, ta); bubble._editing=false; }catch(_){ } });
+                                    });
+
+                                    delBtn.addEventListener('click', async function(ev){
+                                      ev.stopPropagation(); if(!confirm('Xác nhận xoá bình luận này?')) return;
+                                      try{
+                                        const rr = await fetch('/api/posts/'+encodeURIComponent(postIdLocal)+'/comments/'+encodeURIComponent(c.id),{ method:'DELETE', credentials:'include' });
+                                        if(rr.status === 204){ try{ item.remove(); }catch(_){ item.style.display='none'; } try{ if(articleNode._loadComments) articleNode._loadComments(); }catch(_){ }
+                                        } else { const jj = await rr.json().catch(()=>({})); alert('Xoá thất bại: ' + (jj.message || rr.statusText)); }
+                                      }catch(e){ console.error(e); alert('Lỗi mạng'); }
+                                    });
+
+                                    actionsWrap.appendChild(editBtn); actionsWrap.appendChild(delBtn);
+                                  } else {
+                                    try{
+                                      const reportBtn = document.createElement('button'); reportBtn.type='button'; reportBtn.className='btn btn-sm btn-link text-danger'; reportBtn.textContent='Báo cáo';
+                                      reportBtn.addEventListener('click', function(ev){
+                                        ev.stopPropagation();
+                                        try{
+                                          const rmodal = document.getElementById('qdt_report_modal');
+                                          if(rmodal){ rmodal.dataset.targetType='comment'; rmodal.dataset.targetId=String(c.id); const ta = rmodal.querySelector('textarea.report-reason'); if(ta) ta.value=''; bootstrap.Modal.getOrCreateInstance(rmodal).show(); }
+                                          else {
+                                            const reason = prompt('Lý do báo cáo (tùy chọn):');
+                                            // optional: if submitCommentReport is available
+                                            if(typeof submitCommentReport === 'function') submitCommentReport(c.id, reason||'');
+                                          }
+                                        }catch(e){ console.error(e); }
+                                      });
+                                      actionsWrap.appendChild(reportBtn);
+                                    }catch(e){ }
+                                  }
+
+                                  bubble.appendChild(header);
+                                  bubble.appendChild(contentDiv);
+                                  bubble.appendChild(actionsWrap);
+                                  row.appendChild(img); row.appendChild(bubble);
+                                  item.appendChild(row);
+                                  cmList.appendChild(item);
+                                }catch(e){ /* continue */ }
+                              });
+                            }
+
+                            // update comment-count on related cards
+                            try{
+                              const count = (data && (Number.isFinite(data.totalElements)? data.totalElements : (Number.isFinite(data.total)? data.total : (Number.isFinite(data.count)? data.count : null)))) ?? (arr?arr.length:0);
+                              const selComments = 'article.post-card[data-post-id="'+String(postId)+'"] .comment-count, article.post-card.share-item[data-original-post-id="'+String(postId)+'"] .comment-count, article.post-card[data-original-post-id="'+String(postId)+'"] .comment-count';
+                              document.querySelectorAll(selComments).forEach(function(el){ el.textContent = Number(count||0); });
+                            }catch(_){ }
+                          }catch(e){ cmList.innerHTML = '<div class="text-muted small text-center py-2">Tải bình luận thất bại.</div>'; }
+                        }
+
+                        articleNode._loadComments = loadCommentsForArticle;
+                        cmModal.addEventListener('shown.bs.modal', function(){ loadCommentsForArticle(); });
+                      }catch(e){ console.error('initCommentsForArticle failed', e); }
+                    };
+                  }
+
                   // cache user details per-article to avoid refetching
                   var userCache = article._userCache || new Map();
                   article._userCache = userCache;
 
                   function normName(u){
                     return (u && (u.full_name || u.fullName || u.name || u.username)) || 'Ẩn danh';
-                  }
+                  } 
                   function normAvatar(u){
-                    return (u && (u.avatar_url || u.avatarUrl || u.avatar)) || '/img/image1.png';
+                    return (u && (u.avatar_url || u.avatarUrl || u.profilePictureUrl || u.profile_picture_url || u.profilePicture || u.avatar)) || '/img/image1.png';
                   }
                   function normEmail(u){
-                    return (u && (u.email || u.emailAddress)) || '';
+                    return (u && (u.email || u.emailAddress || u.mail || u.contactEmail || u.user_email)) || '';
                   }
 
                   function getUserIdFromComment(c){
-                    return (c.authorId) || null;
+                    return (
+                      c.authorId || c.userId || c.user_id || c.ownerId || c.commenterId || c.createdBy ||
+                      (c.user && (c.user.id || c.user.user_id)) ||
+                      (c.author && (c.author.id || c.author.user_id)) ||
+                      null
+                    );
                   }
 
                   async function fetchUserOnce(id){
@@ -1049,7 +1604,7 @@
                     // current logged-in user id (from localStorage auth). fallback keys checked for common shapes
                     var _authRaw = {};
                     try{ _authRaw = JSON.parse(localStorage.getItem('auth')||'{}'); }catch(e){ _authRaw = {}; }
-                    var _meId = _authRaw.user_id || _authRaw.id || _authRaw.userId || _authRaw.userId || null;
+                    var _meId = _authRaw.user_id || _authRaw.id || _authRaw.userId || null;
 
                     arr.forEach(function(c){
               const fallbackUser = c.user || c.author || {};
@@ -1161,7 +1716,7 @@
                         actionsWrap.style.alignItems = 'center';
 
                         var postId = article.dataset.postId;
-                        var isOwner = (_meId != null) && (String(_meId) === String(uid));
+                        var isOwner = ((_meId != null) && (String(_meId) === String(uid))) || c.mine === true || c.ownedByRequester === true;
                         if(isOwner){
                           var editBtn = document.createElement('button');
                           editBtn.type = 'button';
@@ -1193,32 +1748,19 @@
                             save.addEventListener('click', async function(){
                               try{
                                 var newText = ta.value || '';
-                                var r = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments/'+encodeURIComponent(c.id),{
+                                var rr = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments/'+encodeURIComponent(c.id),{
                                   method: 'PUT', credentials: 'include', headers: {'Content-Type':'application/json'},
                                   body: JSON.stringify({ content: newText })
                                 });
-                                if(!r.ok){
-                                  var j = await r.json().catch(()=>({}));
-                                  alert('Cập nhật thất bại: ' + (j.message||r.statusText));
-                                  return;
+                                if(rr.ok){
+                                  // reload the list to reflect updated content/time
+                                  try{ if(article._loadComments) await article._loadComments(); }catch(_){ }
+                                } else {
+                                  var jj = await rr.json().catch(()=>({}));
+                                  alert('Cập nhật bình luận thất bại: ' + (jj.message || rr.statusText));
+                                  // restore UI
+                                  try{ bubble.removeChild(actionBar); bubble.replaceChild(contentRow, ta); bubble._editing = false; }catch(_){ }
                                 }
-                                var updated = await r.json().catch(()=>null);
-                                var finalText = (updated && (updated.content||updated.text)) || newText;
-                                // restore
-                                bubble.removeChild(actionBar);
-                                bubble.replaceChild(contentRow, ta);
-                                contentRow.textContent = finalText;
-                                // update displayed time: prefer server-returned updated timestamp, otherwise fall back to now
-                                try{
-                                  var newUpdated = updated && (updated.updatedAt || updated.updated_at || updated.updated);
-                                  if(newUpdated){
-                                    timeEl.textContent = formatRelativeTime(newUpdated) + ' • Đã chỉnh sửa';
-                                  } else {
-                                    // fallback: use current time to show 'just edited'
-                                    timeEl.textContent = formatRelativeTime(new Date().toISOString()) + ' • Đã chỉnh sửa';
-                                  }
-                                }catch(e){ /* ignore */ }
-                                bubble._editing = false;
                               }catch(e){ console.error(e); alert('Lỗi mạng'); }
                             });
 
@@ -1294,16 +1836,29 @@
                   async function loadComments(){
                     var postId = article.dataset.postId;
                     if(!postId) return;
+                    try{ console.debug('[comments:modal-iife] fetch for', { postId, articleId: article.id, isShare: article.classList.contains('share-item') }); }catch(_){ }
                     try{
-                    listEl.innerHTML = '<div class="text-center text-muted small py-2">Đang tải bình luận...</div>';
-                    var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments', { credentials:'include' });
-                    var arr = res.ok ? await res.json() : [];
-                    if(!Array.isArray(arr)) arr = [];
-                    await renderComments(arr);
-                    var count = arr.length;
-                    article.querySelectorAll('.comment-count').forEach(function(el){ el.textContent = count; });
+                      listEl.innerHTML = '<div class="text-center text-muted small py-2">Đang tải bình luận...</div>';
+                      var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/comments', { credentials:'include' });
+                      var data = res.ok ? await res.json() : [];
+                      var arr = [];
+                      if(Array.isArray(data)) arr = data;
+                      else if(data && Array.isArray(data.content)) arr = data.content;
+                      else if(data && Array.isArray(data.items)) arr = data.items;
+                      else if(data && Array.isArray(data.data)) arr = data.data;
+
+                      await renderComments(arr);
+                      try{ console.debug('[comments:modal-iife] rendered', { count: Array.isArray(arr)?arr.length:0 }); }catch(_){ }
+
+                      var count = (data && (Number.isFinite(data.totalElements)? data.totalElements : (Number.isFinite(data.total)? data.total : (Number.isFinite(data.count)? data.count : null))))
+                                 ?? arr.length;
+                      // update comment-count on all related cards (original + shares)
+                      try{
+                        const selComments = 'article.post-card[data-post-id="'+String(postId)+'"] .comment-count, article.post-card.share-item[data-original-post-id="'+String(postId)+'"] .comment-count, article.post-card[data-original-post-id="'+String(postId)+'"] .comment-count';
+                        document.querySelectorAll(selComments).forEach(function(el){ el.textContent = Number(count||0); });
+                      }catch(_){ }
                     }catch(e){
-                    listEl.innerHTML = '<div class="text-muted small text-center py-2">Tải bình luận thất bại.</div>';
+                      listEl.innerHTML = '<div class="text-muted small text-center py-2">Tải bình luận thất bại.</div>';
                     }
                   }
 
@@ -1314,16 +1869,18 @@
                   modal.addEventListener('shown.bs.modal', function(){ loadComments(); });
 
                   // optional: submit on Enter in input
-                  var input = article.querySelector('.modal-comment-input');
-                  if(input){
-                    input.addEventListener('keydown', function(e){
-                    if(e.key === 'Enter'){
-                      e.preventDefault();
-                      var btn = article.querySelector('.btn.btn-primary');
-                      if(btn) btn.click();
-                    }
-                    });
-                  }
+                      // Bind Enter submit on the correct modal input(s) within this article (exclude nested previews)
+                      var modalInputs = Array.from(article.querySelectorAll('.comments-modal .modal-comment-input')).filter(function(inp){ return inp.closest('article') === article; });
+                      modalInputs.forEach(function(input){
+                        input.addEventListener('keydown', function(e){
+                          if(e.key === 'Enter'){
+                            e.preventDefault();
+                            var modalEl = input.closest('.modal');
+                            var btnSend = modalEl ? modalEl.querySelector('.btn.btn-primary') : article.querySelector('.btn.btn-primary');
+                            if(btnSend) btnSend.click();
+                          }
+                        });
+                      });
                   }catch(e){}
                 })();
                 </script>
@@ -1531,6 +2088,26 @@
                 linear-gradient(100deg,rgba(60,70,82,.55) 8%,rgba(90,100,112,.6) 18%,rgba(60,70,82,.55) 28%) #2a313b;
           }
       } */
+    /* Share preview adjustments: make the preview card taller and media larger */
+    .post-card.share-item .card.mt-2{
+      min-height:140px;
+      padding:12px;
+    }
+    .post-card.share-item .card.mt-2 .small.text-muted{
+      max-height:220px;
+      overflow:auto;
+    }
+    .post-card.share-item .card.mt-2 img,
+    .post-card.share-item .card.mt-2 video{
+      width:100%;
+      max-height:360px;
+      object-fit:cover;
+      display:block;
+      border-radius:8px;
+    }
+    .post-card.share-item .card.mt-2 .d-flex img{
+      width:40px; height:40px; object-fit:cover; border-radius:50%;
+    }
       </style>
       <!-- Report modal (shared) -->
       <div class="modal fade" id="qdt_report_modal" tabindex="-1" aria-hidden="true">
@@ -1634,6 +2211,8 @@
       (function(){
           const listEl = document.getElementById('postList');
           const tpl = document.getElementById('postCardTemplate');
+          // set of postIds that have share items rendered as feed (to avoid duplicating inside post .post-shares)
+          let postsWithFeedShare = new Set();
 
           function showSkeleton(count=3){
               listEl.innerHTML='';
@@ -1644,190 +2223,529 @@
               }
           }
 
-          async function loadPosts(){
-              showSkeleton();
-              try{
-                  const res = await fetch(fetchUrl, { credentials:'include' });
-                  if(!res.ok) throw new Error(res.status);
-                  const data = await res.json();
-                  const posts = Array.isArray(data) ? data : (Array.isArray(data.content) ? data.content : []);
-                  posts.sort((a, b) => {
-                      const ta = new Date(a.createdAt || a.created_at || a.created || 0).getTime();
-                      const tb = new Date(b.createdAt || b.created_at || b.created || 0).getTime();
-                      return tb - ta; // newest first
+      // Helper: normalize various media shapes into {mediaType, mediaUrl}[]
+      function normalizeMediaArray(raw){
+        try{
+          if(!raw) return [];
+          // if raw is an object (single file), wrap it
+          if(!Array.isArray(raw)) raw = [raw];
+          return raw.map(m => {
+            if(!m) return null;
+            if(typeof m === 'string') return { mediaType: 'image', mediaUrl: m };
+            const mediaType = (m.mediaType || m.type || m.media_type || (m.mime && String(m.mime).toLowerCase().startsWith('video') ? 'video' : '') ) || '';
+            const mediaUrl = m.mediaUrl || m.media_url || m.url || m.path || m.fileUrl || m.file_url || m.src || m.source || m.location || m.image || m.video || null;
+            if(!mediaUrl) return null;
+            return { mediaType: String(mediaType||'').toLowerCase(), mediaUrl };
+          }).filter(Boolean);
+        }catch(e){ console.error('normalizeMediaArray error', e); return []; }
+      }
+
+      // Helper: extract media from a full post-like object (supports many shapes)
+      function extractMediaFromPostLike(orig){
+        if(!orig) return [];
+        let raw = [];
+        if(Array.isArray(orig.medias) && orig.medias.length) raw = orig.medias.slice();
+        else if(Array.isArray(orig.media) && orig.media.length) raw = orig.media.slice();
+        else if(Array.isArray(orig.mediaUrls) && orig.mediaUrls.length) raw = orig.mediaUrls.map(u=>({ mediaUrl: u }));
+        else if(Array.isArray(orig.attachments) && orig.attachments.length) raw = orig.attachments.slice();
+        else if(Array.isArray(orig.files) && orig.files.length) raw = orig.files.slice();
+        else if(Array.isArray(orig.images) && orig.images.length) raw = orig.images.slice();
+        else if(Array.isArray(orig.videos) && orig.videos.length) raw = orig.videos.slice();
+        if(!raw.length && typeof orig === 'object'){
+          if(orig.image) raw.push({ mediaUrl: orig.image });
+          if(orig.video) raw.push({ mediaUrl: orig.video, mediaType: 'video' });
+        }
+        return normalizeMediaArray(raw);
+      }
+
+      // Render media area for a post-card node using normalized media array
+      function renderMediaForNode(node, postObj){
+        try{
+          const mediaWrap = node.querySelector('.post-media');
+          if(!mediaWrap) return;
+          mediaWrap.innerHTML = '';
+          const mediaArr = extractMediaFromPostLike(postObj);
+          if(!Array.isArray(mediaArr) || mediaArr.length===0){ mediaWrap.style.display='none'; return; }
+          mediaWrap.style.display='block';
+          const total = mediaArr.length;
+          const classMap = total<=4?('img-'+total):'img-4';
+          mediaWrap.className = 'post-media pm-grid '+classMap;
+          mediaArr.slice(0,4).forEach((m,idx)=>{
+            let u = m.mediaUrl;
+            const t = (m.mediaType||'image');
+            if(u && !u.startsWith('http') && !u.startsWith('/') && !u.startsWith('data:')){ u = '/api/media/files/' + encodeURIComponent(u); }
+            if(!u) return;
+            let el;
+            if(String(t).toLowerCase().includes('video') || String(u).toLowerCase().endsWith('.mp4') || String(u).toLowerCase().endsWith('.webm')){
+              el=document.createElement('video'); el.style.width='100%'; el.style.height='100%'; el.style.objectFit='contain'; el.style.display='block'; el.style.background='#000'; el.src=u; el.controls=true; el.playsInline=true;
+            } else {
+              el=document.createElement('img'); el.src=u; el.loading='lazy'; el.alt='';
+            }
+            const fig=document.createElement('figure'); fig.style.margin='0'; fig.appendChild(el);
+            if(idx===3 && total>4){ const overlay=document.createElement('div'); overlay.textContent='+'+(total-4); overlay.style.position='absolute'; overlay.style.inset='0'; overlay.style.display='flex'; overlay.style.alignItems='center'; overlay.style.justifyContent='center'; overlay.style.fontSize='2rem'; overlay.style.fontWeight='700'; overlay.style.color='#fff'; overlay.style.background='rgba(0,0,0,.45)'; overlay.style.backdropFilter='blur(2px)'; fig.style.position='relative'; fig.appendChild(overlay); }
+            mediaWrap.appendChild(fig);
+          });
+        }catch(e){ console.error('renderMediaForNode error', e); }
+      }
+
+      // Populate a cloned post-card node with a post object. options.compact hides actions/modals for preview.
+      function populatePostNode(node, p, options){
+        try{
+          options = options || {};
+          const postId = p.post_id || p.id || '';
+          const author = p.author || {};
+          const name = author.fullName || author.full_name || author.name || 'Ẩn danh';
+          const avatar = author.avatarUrl || author.avatar || '/img/image1.png';
+          const created = p.created_at || p.createdAt || p.created || null;
+          const updated = p.updated_at || p.updatedAt || p.updated || null;
+          const content = (p.content || p.caption || p.text || '').trim();
+
+          node.dataset.postId = postId;
+          node.id = 'post-'+postId;
+          const nameEl = node.querySelector('.pc-name'); if(nameEl) nameEl.textContent = name;
+          const avEl = node.querySelector('.pc-avatar'); if(avEl) avEl.src = avatar;
+          const timeEl = node.querySelector('.post-time'); if(timeEl){ timeEl.textContent = formatRelativeTime(created); const iso = (updated || created) ? new Date(updated || created).toISOString() : ''; if(iso) timeEl.setAttribute('datetime', iso); }
+          const contentEl = node.querySelector('.post-content'); if(contentEl){ contentEl.textContent = content; if(!content) contentEl.style.display='none'; else contentEl.style.display='block'; }
+
+          // mark if this post has feed-level share
+          if(postsWithFeedShare && postsWithFeedShare.has(String(postId))){ node.dataset.hasFeedShare = '1'; }
+
+          // render media using helper
+          renderMediaForNode(node, p);
+
+          // compact mode tweaks for preview inside a share
+          if(options.compact){
+            try{ const more = node.querySelector('.pc-more-modal'); if(more) more.remove(); }catch(_){}
+            try{ const actions = node.querySelectorAll('.pc-actions'); actions.forEach(a=>a.style.display='none'); }catch(_){ }
+            // remove the inner three-dots menu so users don't click the preview's menu (which has no proper data attributes)
+            try{ const menuBtn = node.querySelector('.pc-menu'); if(menuBtn) menuBtn.remove(); }catch(_){ }
+            // hide author header in preview when requested
+            if(options.hideAuthor){ try{ const head = node.querySelector('.pc-head'); if(head) head.style.display='none'; }catch(_){ } }
+            // hide inner post content when requested (useful when share text duplicates original post)
+            if(options.hideContent){ try{ if(contentEl) contentEl.style.display='none'; }catch(_){ } }
+            try{ node.classList.add('shared-preview'); node.style.margin='0'; node.style.border='0'; }catch(_){}
+          }
+        }catch(e){ console.error('populatePostNode error', e); }
+      }
+
+      async function loadPosts(){
+        showSkeleton();
+        try{
+          // fetch posts
+          const res = await fetch(fetchUrl, { credentials:'include' });
+          if(!res.ok) throw new Error(res.status);
+          const data = await res.json();
+          const posts = Array.isArray(data) ? data : (Array.isArray(data.content) ? data.content : []);
+
+          // build map for posts
+          const postsById = {};
+          posts.forEach(p=>{ const id = p.post_id || p.id; if(id!=null) postsById[String(id)] = p; });
+
+          // fetch shares for each post in parallel (only for posts present in this page)
+          const postIds = Object.keys(postsById);
+          const shareFetches = postIds.map(id => fetch('/api/posts/'+encodeURIComponent(id)+'/shares', { credentials:'include' }).then(r=> r.ok ? r.json().catch(()=>[]) : []).catch(()=>[]));
+          const shareResults = await Promise.allSettled(shareFetches);
+
+          const shares = [];
+          shareResults.forEach((sr, idx)=>{
+          if(sr.status === 'fulfilled' && Array.isArray(sr.value)){
+            const id = postIds[idx];
+            sr.value.forEach(s=>{ s._postId = id; shares.push(s); });
+          }
+          });
+
+          // Additionally, if this fragment is used on a user profile (fetchUrl like /api/posts/user/{id}),
+          // fetch the shares created by that user so their shared posts appear on their profile.
+          try{
+            const m = fetchUrl.match(/\/api\/posts\/user\/(\d+)/);
+            if(m){
+              const userId = m[1];
+              const r2 = await fetch('/api/users/' + encodeURIComponent(userId) + '/shares', { credentials:'include' });
+              if(r2.ok){
+                const userShares = await r2.json();
+                if(Array.isArray(userShares)){
+                  userShares.forEach(us => {
+                    // The server already embeds originalPost in DTO as originalPost
+                    if(us && us.originalPost){
+                      // Normalize field names similar to postsById mapping
+                      const op = us.originalPost;
+                      const opId = op.id || op.post_id || null;
+                      if(opId != null) postsById[String(opId)] = op;
+                      us._postId = opId;
+                      shares.push(us);
+                    }
                   });
-                  render(posts);
-              }catch(err){
-                  listEl.innerHTML = '<div class="text-center text-muted small">Không tải được bài viết.</div>';
+                }
               }
+            }
+          }catch(e){ console.warn('fetch user shares failed', e); }
+
+                  // Deduplicate shares: sometimes the same share is returned twice
+                  // (once from per-post /api/posts/{id}/shares and once from /api/users/{id}/shares)
+                  try{
+                    const seen = new Set();
+                    const uniq = [];
+                    shares.forEach(s=>{
+                      const sid = s.id || s.shareId || s._id || null;
+                      const key = sid ? String(sid) : (String(s._postId||'') + '::' + String((s.sharedText||s.shared_text||'').trim()));
+                      if(!seen.has(key)){
+                        seen.add(key);
+                        uniq.push(s);
+                      }
+                    });
+                    shares.length = 0; shares.push.apply(shares, uniq);
+                  }catch(e){ console.warn('dedupe shares failed', e); }
+
+                  // mark posts that have feed-level shares
+                  postsWithFeedShare = new Set(shares.map(s=>String(s._postId)));
+
+                  // convert posts and shares to unified feed items
+          const feedItems = [];
+          posts.forEach(p=>{
+          const id = p.post_id || p.id || null;
+          const created = p.created_at || p.createdAt || p.created || null;
+          feedItems.push({ type: 'post', id: id, createdAt: created, raw: p });
+          });
+          shares.forEach(s=>{
+          const created = s.created_at || s.createdAt || s.created || s.updated_at || s.updatedAt || null;
+          // originalPost may be embedded as s.originalPost or we may look it up via postsById
+          const orig = s.originalPost || postsById[String(s._postId)] || null;
+          feedItems.push({ type: 'share', id: s.id || null, createdAt: created, share: s, originalPostId: s._postId, originalPost: orig });
+          });
+
+          // sort feed by createdAt desc
+          feedItems.sort((a,b)=>{
+          const ta = new Date(a.createdAt || 0).getTime();
+          const tb = new Date(b.createdAt || 0).getTime();
+          return tb - ta;
+          });
+
+          renderFeed(feedItems);
+        }catch(err){
+          console.error(err);
+          listEl.innerHTML = '<div class="text-center text-muted small">Không tải được bài viết.</div>';
+        }
+      }
+
+      function renderFeed(items){
+        listEl.innerHTML='';
+        if(!Array.isArray(items) || items.length===0){
+          listEl.innerHTML='<div class="text-center text-muted small">Chưa có bài viết.</div>';
+          return;
+        }
+
+        items.forEach(it=>{
+          const node = tpl.content.firstElementChild.cloneNode(true);
+
+                  if(it.type === 'post'){
+          const p = it.raw;
+          const postId = p.post_id || p.id || '';
+                    // if this post also has a share item shown in the feed, mark the node so we can hide per-post .post-shares
+          const author = p.author || {};
+          const name = author.fullName || author.full_name || author.name || 'Ẩn danh';
+          const avatar = author.avatarUrl || author.avatar || '/img/image1.png';
+          const created = p.created_at || p.createdAt || p.created || null;
+          const updated = p.updated_at || p.updatedAt || p.updated || null;
+          const content = (p.content || '').trim();
+
+                    node.dataset.postId = postId;
+                    if(postsWithFeedShare && postsWithFeedShare.has(String(postId))){
+                      node.dataset.hasFeedShare = '1';
+                    }
+          node.id = 'post-'+postId;
+          node.querySelector('.pc-name').textContent = name;
+          node.querySelector('.pc-avatar').src = avatar;
+          (function(){ const timeEl = node.querySelector('.post-time'); timeEl.textContent = formatRelativeTime(created); const iso = (updated || created) ? new Date(updated || created).toISOString() : ''; if(iso) timeEl.setAttribute('datetime', iso); })();
+          node.querySelector('.post-content').textContent = content;
+          if(!content) node.querySelector('.post-content').style.display='none';
+          // media handling (normalize various shapes like Post.medias)
+          const mediaWrap = node.querySelector('.post-media'); mediaWrap.innerHTML='';
+          const mediaArr = extractMediaFromPostLike(p);
+          if(!Array.isArray(mediaArr) || mediaArr.length===0){ mediaWrap.style.display='none'; }
+          else {
+            mediaWrap.style.display='block';
+            const total = mediaArr.length;
+            const classMap = total<=4?('img-'+total):'img-4';
+            mediaWrap.className = 'post-media pm-grid '+classMap;
+            mediaArr.slice(0,4).forEach((m,idx)=>{
+              const t = (m.mediaType||'image');
+              const u = m.mediaUrl;
+              if(!u) return;
+              let el;
+                      // If u looks like a bare filename (no protocol or leading slash), call media API
+                      (function(){ if(u && !u.startsWith('http') && !u.startsWith('/') && !u.startsWith('data:')){ u = '/api/media/files/' + encodeURIComponent(u); } return u; })();
+                      if(String(t).toLowerCase().includes('video') || String(u).toLowerCase().endsWith('.mp4') || String(u).toLowerCase().endsWith('.webm')){
+                        el=document.createElement('video'); el.style.width='100%'; el.style.height='100%'; el.style.objectFit='contain'; el.style.display='block'; el.style.background='#000'; el.src=u; el.controls=true; el.playsInline=true;
+                      } else {
+                        el=document.createElement('img'); el.src=u; el.loading='lazy'; el.alt='';
+                      }
+              const fig=document.createElement('figure'); fig.style.margin='0'; fig.appendChild(el);
+              if(idx===3 && total>4){ const overlay=document.createElement('div'); overlay.textContent='+'+(total-4); overlay.style.position='absolute'; overlay.style.inset='0'; overlay.style.display='flex'; overlay.style.alignItems='center'; overlay.style.justifyContent='center'; overlay.style.fontSize='2rem'; overlay.style.fontWeight='700'; overlay.style.color='#fff'; overlay.style.background='rgba(0,0,0,.45)'; overlay.style.backdropFilter='blur(2px)'; fig.style.position='relative'; fig.appendChild(overlay); }
+              mediaWrap.appendChild(fig);
+            });
           }
 
-          function render(posts){
-              listEl.innerHTML='';
-              if(posts.length===0){
-                  listEl.innerHTML='<div class="text-center text-muted small">Chưa có bài viết.</div>';
-                  return;
-              }
-              posts.forEach(p=>{
-                  const node = tpl.content.firstElementChild.cloneNode(true);
+          } else if(it.type === 'share'){
+          const s = it.share;
+          const sharer = s.user || {};
+          const name = sharer.fullName || sharer.full_name || sharer.name || 'Ẩn danh';
+          const avatar = sharer.avatarUrl || sharer.avatar || '/img/image1.png';
+          // Prefer updated timestamp for display (show when the share was last updated), fall back to created
+          const created = s.updated_at || s.updatedAt || s.updated || s.created_at || s.createdAt || s.created || null;
+          const sharedText = s.sharedText || s.shared_text || '';
+          // Visibility stored on the share record (may differ from original post)
+          const shareVisibility = (s.visibility || s.visibility_level || s.visibilityType || '').toString().toLowerCase() || '';
 
-                  const postId = p.post_id || p.id || '';
-                  const author = p.author || {};
-                  const name = author.fullName || author.full_name || author.name || 'Ẩn danh';
-                  const avatar = author.avatarUrl || author.avatar || '/img/image1.png';
-                  const created = p.created_at || p.createdAt || p.created || null;
-                  const updated = p.updated_at || p.updatedAt || p.updated || null;
-                  const content = (p.content || '').trim();
+          // mark as share item
+          node.classList.add('share-item');
+          // keep original post id as attribute for reference
+          if(it.originalPostId) {
+            node.dataset.originalPostId = it.originalPostId;
+            // For share items, set postId to the original post id so edit/delete handlers can find the post
+            node.dataset.postId = it.originalPostId; 
+          }
+          node.dataset.shareId = it.id || '';
+          // Prevent rendering the per-post shares list inside this share item (avoids duplicate shared_text)
+          node.dataset.hasFeedShare = '1';
 
-                  node.dataset.postId = postId;
-                  node.id = 'post-'+postId;
-                  node.querySelector('.pc-name').textContent = name;
-                  node.querySelector('.pc-avatar').src = avatar;
+          node.querySelector('.pc-name').textContent = name + ' • Đã chia sẻ';
+          node.querySelector('.pc-avatar').src = avatar;
+          // set dataset.visibility from share
+          try{ if(shareVisibility) node.dataset.visibility = shareVisibility; }catch(_){ }
+          // update visibility label in header if present
+          try{
+            const visElTop = node.querySelector('.pc-visibility');
+            if(visElTop){ const map = { public:'Công khai', friends:'Bạn bè', friend:'Bạn bè', private:'Cá nhân' }; visElTop.textContent = map[shareVisibility] || (shareVisibility || visElTop.textContent); }
+          }catch(_){ }
+          (function(){ const timeEl = node.querySelector('.post-time'); timeEl.textContent = formatRelativeTime(created); const iso = created ? new Date(created).toISOString() : ''; if(iso) timeEl.setAttribute('datetime', iso); })();
 
-                  (function(){
-                    const timeEl = node.querySelector('.post-time');
-                    let label = formatRelativeTime(created);
-                    // If there's a valid updatedAt newer than createdAt by > 60s, show edited time
-                    if(updated){
-                      const ct = new Date(created).getTime();
-                      const ut = new Date(updated).getTime();
-                      if(!isNaN(ut) && (isNaN(ct) || ut > ct + 60*1000)){
-                        label = formatRelativeTime(updated) + ' • Đã chỉnh sửa';
-                      }
-                    }
-                    timeEl.textContent = label;
-                    const iso = (updated || created) ? new Date(updated || created).toISOString() : '';
-                    if(iso) timeEl.setAttribute('datetime', iso);
-                  })();
+          // show shared text as the main content
+          const contentEl = node.querySelector('.post-content'); contentEl.textContent = (sharedText || '').trim(); if(!contentEl.textContent) contentEl.style.display='none';
 
-                  // pc-visibility
-                  (function(){
-                      const visEl = node.querySelector('.pc-visibility');
-                      if(!visEl) return;
-                      const raw = p.visibility ?? p.privacy ?? p.scope ?? p.access ?? '';
-                      const norm = (typeof raw === 'number' ? String(raw) : String(raw)).trim().toLowerCase();
-                      let label = 'Bạn bè';
-                      if (p.isPublic === true) label = 'Công khai';
-                      else if (p.isPrivate === true) label = 'Chỉ mình tôi';
-                      else if (p.friendsOnly === true || p.friendOnly === true) label = 'Bạn bè';
-                      else {
-                          switch(norm){
-                              case '0':
-                              case 'public':
-                              case 'everyone':
-                                  label = 'Công khai'; break;
-                              case '1':
-                              case 'friends':
-                              case 'friend':
-                                  label = 'Bạn bè'; break;
-                              case '2':
-                              case 'private':
-                              case 'only_me':
-                              case 'onlyme':
-                                  label = 'Chỉ mình tôi'; break;
-                              case '3':
-                              case 'friends_of_friends':
-                              case 'fof':
-                                  label = 'Bạn của bạn bè'; break;
-                              case 'custom':
-                              case 'restricted':
-                                  label = 'Tùy chỉnh'; break;
-                              default:
-                                  label = 'Bạn bè';
-                          }
-                      }
-            // Important postType
-            const type = (p.postType || p.type || '').toLowerCase();
-            if(type==='important' || type==='notice' || type==='thongbao'){
-              label = 'Thông báo Đặc biệt';
-              // Mark article for special styling if needed
-              try{ node.classList.add('post-important'); }catch(_){ }
+          // show a detailed preview box for the original post (author, content, media)
+          try{
+            const previewWrap = document.createElement('div'); previewWrap.className = 'mt-2';
+            // helper to normalize content for duplicate detection
+            const norm = (s)=> String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
+            if(it.originalPost){
+              try{
+                const cloned = tpl.content.firstElementChild.cloneNode(true);
+                // detect duplicate content: if share's text equals original post content (case-insensitive, collapsed whitespace)
+                const op = it.originalPost || {};
+                const origContent = norm(op.content || op.caption || op.text || '');
+                const sText = norm(sharedText || '');
+                const duplicate = !!(sText && origContent && sText === origContent);
+                // Always hide author in the preview to avoid name duplication; hide content when duplicate
+                populatePostNode(cloned, it.originalPost, { compact: true, hideContent: duplicate });
+                try{ if(it.originalPostId){ cloned.dataset.postId = String(it.originalPostId); cloned.dataset.originalPostId = String(it.originalPostId); } }catch(_){ }
+                previewWrap.appendChild(cloned);
+                try{ if(typeof window.initCommentsForArticle === 'function'){ window.initCommentsForArticle(cloned); } }catch(_){ }
+              }catch(e){ console.error('render share preview error', e); previewWrap.innerHTML = '<div class="small text-muted">(Không thể hiển thị bài gốc)</div>'; }
+            } else if(it.originalPostId){
+              previewWrap.innerHTML = '<div class="small text-muted">Đang tải bài gốc…</div>';
+              (async function(){
+                try{
+                  const r = await fetch('/api/posts/' + encodeURIComponent(it.originalPostId), { credentials:'include' });
+                  if(r.ok){ const json = await r.json(); const cloned = tpl.content.firstElementChild.cloneNode(true);
+                      try{
+                        const origContent = norm(json.content || json.caption || json.text || '');
+                        const sText = norm(sharedText || '');
+                        const duplicate = !!(sText && origContent && sText === origContent);
+                        populatePostNode(cloned, json, { compact: true, hideContent: duplicate });
+                        try{ if(it.originalPostId){ cloned.dataset.postId = String(it.originalPostId); cloned.dataset.originalPostId = String(it.originalPostId); } }catch(_){ }
+                      }catch(e){ populatePostNode(cloned, json, { compact: true }); }
+                      try{ if(it.originalPostId){ cloned.dataset.postId = String(it.originalPostId); cloned.dataset.originalPostId = String(it.originalPostId); } }catch(_){ }
+            previewWrap.innerHTML=''; previewWrap.appendChild(cloned); try{ if(typeof window.initCommentsForArticle === 'function'){ window.initCommentsForArticle(cloned); } }catch(_){ } }
+                  else { previewWrap.innerHTML = '<div class="small text-muted">(Không thể tải bài gốc)</div>'; }
+                }catch(e){ console.error('fetch original post failed', e); previewWrap.innerHTML = '<div class="small text-muted">(Không thể tải bài gốc)</div>'; }
+              })();
+            } else {
+              previewWrap.innerHTML = '<div class="small text-muted">(Bài gốc không có sẵn)</div>';
             }
 
-                      visEl.textContent = label;
-                      visEl.title = label;
-                  })();
+            const bodyArea = node.querySelector('.pc-body') || node;
+            bodyArea.appendChild(previewWrap);
+          }catch(e){ console.error(e); }
 
-                  const contentEl = node.querySelector('.post-content');
-                  contentEl.textContent = content;
-                  if(!content) contentEl.style.display='none';
+          // hide media area for the share item (we show preview only)
+          const mediaWrap2 = node.querySelector('.post-media'); mediaWrap2.innerHTML=''; mediaWrap2.style.display='none';
+          }
 
-                  const mediaWrap = node.querySelector('.post-media');
-                  const mediaArr = Array.isArray(p.media)?p.media:[];
-                  if(mediaArr.length===0){
-                      mediaWrap.style.display='none';
-                  }else{
-                      const total = mediaArr.length;
-                      const classMap = total<=4?('img-'+total):'img-4';
-                      mediaWrap.classList.add(classMap);
-                      mediaArr.slice(0,4).forEach((m,idx)=>{
-                          const t = (m.mediaType||m.media_type)||'image';
-                          const u = m.mediaUrl || m.media_url;
-                          if(!u) return;
-                          let el;
-                          if(t==='video'){
-                              el=document.createElement('video');
-                              el.style.width='100%';
-                              el.style.height='100%';
-                              el.style.objectFit='contain';
-                              el.style.display='block';
-                              el.style.background='#000';
-                              el.src=u;
-                              el.controls=true;
-                              el.playsInline=true;
-                          }else{
-                              el=document.createElement('img');
-                              el.src=u;
-                              el.loading='lazy';
-                              el.alt='';
-                          }
-                          const fig=document.createElement('figure');
-                          fig.style.margin='0';
-                          fig.appendChild(el);
-                          if(idx===3 && total>4){
-                              const overlay=document.createElement('div');
-                              overlay.textContent='+'+(total-4);
-                              overlay.style.position='absolute';
-                              overlay.style.inset='0';
-                              overlay.style.display='flex';
-                              overlay.style.alignItems='center';
-                              overlay.style.justifyContent='center';
-                              overlay.style.fontSize='2rem';
-                              overlay.style.fontWeight='700';
-                              overlay.style.color='#fff';
-                              overlay.style.background='rgba(0,0,0,.45)';
-                              overlay.style.backdropFilter='blur(2px)';
-                              fig.style.position='relative';
-                              fig.appendChild(overlay);
-                          }
-                          mediaWrap.appendChild(fig);
-                      });
+          // initialize reactions so counts and states load for this node (post or share)
+          try{
+            if(window.QDTReactions){
+              const comp = node.querySelector('.reaction-composer');
+              if(comp) window.QDTReactions.ensureLoaded(comp);
+            }
+          }catch(e){}
+
+          try{
+            node.querySelectorAll('.btn-comment').forEach(function(btn){
+              btn.addEventListener('click', function(ev){
+                try{
+                  const article = btn.closest('article') || node;
+                  const modal = Array.from(article.querySelectorAll('.comments-modal')).find(m => (m.closest('article') === article)) || null;
+                  if(modal){
+                    if(!article._loadComments && typeof window.initCommentsForArticle === 'function'){
+                      try{ window.initCommentsForArticle(article); }catch(_){ }
+                    }
+                    if(article._loadComments) article._loadComments();
+                    const inst = bootstrap.Modal.getOrCreateInstance(modal);
+                    inst.show();
+                    setTimeout(()=>{ const input = article.querySelector('.modal-comment-input'); if(input) input.focus(); }, 150);
+                    return;
                   }
-
-                  const likeBtn = node.querySelector('.btn-like');
-                  const likeCount = node.querySelector('.like-count');
-                  let liked=false;
-                  likeBtn.addEventListener('click',()=>{
-                      liked=!liked;
-                      likeBtn.dataset.active = liked? '1':'0';
-                      const current=Number(likeCount.textContent||'0');
-                      likeCount.textContent = liked ? current+1 : Math.max(0,current-1);
-                  });
-
-                  node.querySelector('.btn-comment').addEventListener('click',()=>{
-                      node.querySelector('.pc-footer').classList.toggle('d-none');
-                      node.querySelector('.cm-input')?.focus();
-                  });
-
-                  node.addEventListener('keydown',e=>{
-                      if(e.target.classList.contains('cm-input') && e.key==='Enter'){
-                          e.preventDefault();
-                          e.target.value='';
-                      }
-                  });
-
-                  listEl.appendChild(node);
+                }catch(_){ }
+                // fallback
+                try{ node.querySelector('.pc-footer').classList.toggle('d-none'); node.querySelector('.cm-input')?.focus(); }catch(__){}
               });
+            });
+          }catch(e){}
+
+          try{ node.addEventListener('keydown',e=>{ if(e.target.classList && e.target.classList.contains && e.target.classList.contains('cm-input') && e.key==='Enter'){ e.preventDefault(); e.target.value=''; } }); }catch(e){}
+
+          listEl.appendChild(node);
+          // ensure reactions loaded after insertion as well (in case defer is needed)
+          try{
+            if(window.QDTReactions){
+              const comp = node.querySelector('.reaction-composer');
+              if(comp) window.QDTReactions.ensureLoaded(comp);
+            }
+          }catch(_){ }
+          try{ if(typeof window.initCommentsForArticle === 'function'){ window.initCommentsForArticle(node); } }catch(_){ }
+
+                  // Ensure per-article share handlers and loader are initialized
+                  try{
+                    (function(article){
+                      if(!article || article._shareInit) return; // already initialized
+                      article._shareInit = true;
+                      var shareModal = article.querySelector('.share-modal');
+                      if(!shareModal) return;
+                      var btn = shareModal.querySelector('.share-send-btn');
+                      var ta = shareModal.querySelector('.share-textarea');
+                      if(btn){
+                        btn.addEventListener('click', async function(){
+                          try{
+                            var postId = article.dataset.postId; if(!postId) return;
+                            var text = (ta && ta.value||'').trim();
+                            var visEl = shareModal.querySelector('.share-visibility');
+                            var visibility = (visEl && visEl.value) || 'public';
+                            var body = { shared_text: text, visibility: visibility };
+                            var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
+                              method: 'POST', credentials: 'include',
+                              headers: {'Content-Type':'application/json'},
+                              body: JSON.stringify(body)
+                            });
+                            if(res.ok){
+                              try{ bootstrap.Modal.getInstance(shareModal).hide(); }catch(_){ }
+                              try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
+                              try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
+                            } else {
+                              var json = {};
+                              try{ json = await res.json(); }catch(e){}
+                              alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
+                            }
+                          }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
+                        });
+                      }
+
+                      // define loader if not present
+                        if(typeof article._loadShares !== 'function'){
+                          article._loadShares = async function(){
+                            try{
+                              // if this post is already shown as a feed-level share, skip per-post shares to avoid duplicate UI
+                              if(article.dataset.hasFeedShare === '1'){
+                                var containerSkip = article.querySelector('.post-shares'); if(containerSkip) containerSkip.style.display='none';
+                                return;
+                              }
+                              var postId = article.dataset.postId; if(!postId) return;
+                              var container = article.querySelector('.post-shares'); if(!container) return;
+                              container.innerHTML = '<div class="text-muted small">Đang tải chia sẻ...</div>';
+                              const res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', { credentials:'include' });
+                              if(!res.ok){ container.innerHTML = '<div class="text-muted small">Không thể tải chia sẻ</div>'; return; }
+                              const arr = await res.json(); if(!Array.isArray(arr) || arr.length===0){ container.innerHTML = ''; return; }
+                              // render each share as a compact card
+container.innerHTML = '';
+arr.forEach(s=>{
+  const wrap = document.createElement('div');
+  wrap.className = 'card mb-2';
+
+  const body = document.createElement('div');
+  body.className = 'card-body py-2';
+
+  // --- Header: Avatar + Name ---
+  const top = document.createElement('div');
+  top.className = 'd-flex align-items-center gap-2';
+  const av = document.createElement('img');
+  av.src = (s.user && (s.user.avatarUrl || s.user.avatar_url)) || '/img/image1.png';
+  av.className = 'rounded-circle';
+  av.style.width = '36px';
+  av.style.height = '36px';
+  av.style.objectFit = 'cover';
+
+  const name = document.createElement('div');
+  name.className = 'fw-semibold';
+  name.textContent =
+    (s.user && (s.user.fullName || s.user.full_name)) ||
+    (s.user && (s.user.firstName || s.user.first_name)) ||
+    'Ẩn danh';
+
+  top.append(av, name);
+  body.appendChild(top);
+
+  // --- Shared text ---
+  if (s.sharedText || s.shared_text) {
+    const sharedText = document.createElement('div');
+    sharedText.className = 'mt-2';
+    sharedText.textContent = s.sharedText || s.shared_text || '';
+    body.appendChild(sharedText);
+  }
+
+  // --- Shared media (images/videos) ---
+  (function(){
+    try{
+      const mediaArr = extractMediaFromPostLike(s);
+      if(Array.isArray(mediaArr) && mediaArr.length > 0){
+        const mediaWrap = document.createElement('div');
+        mediaWrap.className = 'mt-2 d-flex flex-wrap gap-2';
+        mediaArr.forEach(m => {
+          const t = (m.mediaType||'image').toLowerCase();
+          const url = m.mediaUrl;
+          if(!url) return;
+          (function(){ if(url && !url.startsWith('http') && !url.startsWith('/') && !url.startsWith('data:')){ url = '/api/media/files/' + encodeURIComponent(url); } return url; })();
+          if(t.includes('image') || url.toLowerCase().endsWith('.jpg') || url.toLowerCase().endsWith('.png') || url.toLowerCase().endsWith('.jpeg')){
+            const img = document.createElement('img'); img.src = url; img.className='img-fluid rounded'; img.style.maxHeight='300px'; img.style.objectFit='cover'; mediaWrap.appendChild(img);
+          } else {
+            const vid = document.createElement('video'); vid.src = url; vid.controls = true; vid.className='rounded'; vid.style.maxHeight='360px'; vid.style.width='100%'; mediaWrap.appendChild(vid);
+          }
+        });
+        body.appendChild(mediaWrap);
+      }
+    }catch(e){ console.error(e); }
+  })();
+
+  wrap.appendChild(body);
+  container.appendChild(wrap);
+});
+
+                            }catch(e){ console.error(e); }
+                          };
+                        }
+
+                        try{ article._loadShares(); }catch(e){}
+                    })(node);
+                  }catch(e){}
+              });
+
+          // safety: ensure all dynamically created articles have comments init
+          try{
+            if(typeof window.initCommentsForArticle === 'function'){
+              setTimeout(function(){
+                document.querySelectorAll('article.post-card').forEach(function(a){ try{ window.initCommentsForArticle(a); }catch(_){ } });
+              }, 0);
+            }
+          }catch(_){ }
+
           }
 
           function formatRelativeTime(ts){
@@ -1880,11 +2798,304 @@
         }catch(e){}
       })();
       </script>
+      
+      <!-- Confirm Delete Share Modal (inside fragment) -->
+      <div class="modal fade" id="qdt_confirm_delete_share_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Xác nhận xóa</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+              Bạn có chắc chắn muốn xóa chia sẻ này?
+              <div id="qdt_confirm_delete_share_error" class="text-danger small mt-2" style="display:none"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+              <button type="button" class="btn btn-danger" id="qdt_confirm_delete_share_btn">Xóa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (function(){
+          const modalEl = document.getElementById('qdt_confirm_delete_share_modal');
+          const btnConfirm = document.getElementById('qdt_confirm_delete_share_btn');
+          const errEl = document.getElementById('qdt_confirm_delete_share_error');
+          let modalInstance = null;
+
+          function ensure(){
+            if(!modalInstance && modalEl && typeof bootstrap !== 'undefined'){
+              modalInstance = new bootstrap.Modal(modalEl);
+            }
+          }
+
+          // Open the confirm modal for deleting a share
+          window.openConfirmDeleteShare = function(articleEl, postId, shareId){
+            console.log('[delete-share] openConfirmDeleteShare()', { postId, shareId, articleEl });
+            try{
+              if(!modalEl){ console.error('qdt_confirm_delete_share_modal not found'); return; }
+              if(typeof bootstrap === 'undefined'){ console.error('Bootstrap is not available'); return; }
+              ensure();
+              if(!modalInstance){ console.error('Failed to create Bootstrap modal instance'); return; }
+              // Store context on modal element
+              modalEl.dataset.postId = postId || '';
+              modalEl.dataset.shareId = shareId || '';
+              modalEl._articleEl = articleEl || null; // keep DOM ref for removal
+              if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+              if(btnConfirm){ btnConfirm.disabled = !(postId && shareId); }
+              modalInstance.show();
+            }catch(e){ console.error('openConfirmDeleteShare error:', e); }
+          };
+
+          async function doDeleteShare(){
+            try{
+              const postId = modalEl?.dataset?.postId;
+              const shareId = modalEl?.dataset?.shareId;
+              if(!postId || !shareId){
+                if(errEl){ errEl.style.display='block'; errEl.textContent='Không xác định được bài chia sẻ để xóa.'; }
+                return;
+              }
+              if(btnConfirm){ btnConfirm.disabled = true; btnConfirm.textContent = 'Đang xóa...'; }
+              const url = '/api/posts/' + encodeURIComponent(postId) + '/shares/' + encodeURIComponent(shareId);
+              const res = await fetch(url, { method:'DELETE', credentials:'include' });
+              if(res.ok || res.status === 204){
+                try{ modalInstance.hide(); }catch(_){ }
+                // Remove the share article element if available
+                try{
+                  const art = modalEl._articleEl;
+                  if(art){ art.remove(); }
+                  else {
+                    // Fallback: remove by data-share-id
+                    const a2 = document.querySelector('article.post-card[data-share-id="'+String(shareId)+'"]');
+                    if(a2) a2.remove();
+                  }
+                }catch(_){ }
+                try{ window.showToast && showToast('Đã xóa bài chia sẻ', 'success'); }catch(_){ }
+                // Optionally refresh lists
+                try{ if(typeof window.loadPosts === 'function') window.loadPosts(); }catch(_){ }
+                // refresh share count for the original post
+                try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(postId); } }catch(_){ }
+              } else {
+                let j=null; try{ j = await res.json(); }catch(_){ }
+                const msg = (j && (j.message||j.error)) ? j.message||j.error : ('Lỗi: ' + res.status);
+                if(errEl){ errEl.style.display='block'; errEl.textContent = msg; }
+              }
+            }catch(e){
+              console.error(e);
+              if(errEl){ errEl.style.display='block'; errEl.textContent='Đã xảy ra lỗi khi xóa.'; }
+            }finally{
+              if(btnConfirm){ btnConfirm.disabled=false; btnConfirm.textContent='Xóa'; }
+            }
+          }
+
+          if(btnConfirm){ btnConfirm.addEventListener('click', doDeleteShare); }
+        })();
+      </script>
+
+      <!-- Confirm Delete Post Modal (inside fragment) -->
+      <div class="modal fade" id="qdt_confirm_delete_post_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Xác nhận xóa</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+              Bạn có chắc chắn muốn xóa bài viết này?
+              <div id="qdt_confirm_delete_post_error" class="text-danger small mt-2" style="display:none"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+              <button type="button" class="btn btn-danger" id="qdt_confirm_delete_post_btn">Xóa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (function(){
+          const modalEl = document.getElementById('qdt_confirm_delete_post_modal');
+          const btnConfirm = document.getElementById('qdt_confirm_delete_post_btn');
+          const errEl = document.getElementById('qdt_confirm_delete_post_error');
+          let modalInstance = null;
+
+          function ensure(){
+            if(!modalInstance && modalEl && typeof bootstrap !== 'undefined'){
+              modalInstance = new bootstrap.Modal(modalEl);
+            }
+          }
+
+          // Open the confirm modal for deleting a full post
+          window.openConfirmDeletePost = function(articleEl, postId){
+            console.log('[delete-post] openConfirmDeletePost()', { postId, articleEl });
+            try{
+              if(!modalEl){ console.error('qdt_confirm_delete_post_modal not found'); return; }
+              if(typeof bootstrap === 'undefined'){ console.error('Bootstrap is not available'); return; }
+              ensure();
+              if(!modalInstance){ console.error('Failed to create Bootstrap modal instance'); return; }
+              modalEl.dataset.postId = postId || '';
+              modalEl._articleEl = articleEl || null;
+              if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+              if(btnConfirm){ btnConfirm.disabled = !(postId); }
+              modalInstance.show();
+            }catch(e){ console.error('openConfirmDeletePost error:', e); }
+          };
+
+          async function doDeletePost(){
+            try{
+              const postId = modalEl?.dataset?.postId;
+              if(!postId){ if(errEl){ errEl.style.display='block'; errEl.textContent='Không xác định được bài viết để xóa.'; } return; }
+              if(btnConfirm){ btnConfirm.disabled=true; btnConfirm.textContent='Đang xóa...'; }
+              const url = '/api/posts/' + encodeURIComponent(postId);
+              const res = await fetch(url, { method:'DELETE', credentials:'include' });
+              if(res.ok || res.status === 204){
+                try{ modalInstance.hide(); }catch(_){ }
+                try{
+                  const art = modalEl._articleEl || document.querySelector('article.post-card[data-post-id="'+String(postId)+'"]');
+                  if(art) art.remove();
+                }catch(_){ }
+                // Remove any share feed items that reference this original post (immediate UI update)
+                try{
+                  const sel = 'article.post-card[data-post-id="'+String(postId)+'"], article.post-card.share-item[data-post-id="'+String(postId)+'"], article.post-card.share-item[data-original-post-id="'+String(postId)+'"], article.post-card[data-original-post-id="'+String(postId)+'"]';
+                  const relatedShares = document.querySelectorAll(sel);
+                  relatedShares.forEach(function(el){ try{ el.remove(); }catch(e){} });
+                }catch(_){ }
+                try{ window.showToast && showToast('Đã xóa bài viết', 'success'); }catch(_){ }
+                try{ if(typeof window.loadPosts === 'function') window.loadPosts(); }catch(_){ }
+              } else {
+                let j=null; try{ j = await res.json(); }catch(_){ }
+                const msg = (j && (j.message||j.error)) ? j.message||j.error : ('Lỗi: ' + res.status);
+                if(errEl){ errEl.style.display='block'; errEl.textContent = msg; }
+              }
+            }catch(e){
+              console.error(e);
+              if(errEl){ errEl.style.display='block'; errEl.textContent='Đã xảy ra lỗi khi xóa.'; }
+            }finally{
+              if(btnConfirm){ btnConfirm.disabled=false; btnConfirm.textContent='Xóa'; }
+            }
+          }
+
+          if(btnConfirm){ btnConfirm.addEventListener('click', doDeletePost); }
+        })();
+      </script>
+
       <!-- Post Segment:END -->
     </div>
 
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Edit Share Modal -->
+  <div class="modal fade" id="qdt_edit_share_modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Sửa bài chia sẻ</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Nội dung chia sẻ</label>
+            <textarea class="form-control" id="qdt_edit_share_text" rows="3" placeholder="Viết gì đó..."></textarea>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Trạng thái</label>
+            <select class="form-select" id="qdt_edit_share_visibility">
+              <option value="public">Công khai</option>
+              <option value="friends">Bạn bè</option>
+              <option value="private">Cá nhân</option>
+            </select>
+          </div>
+          <div id="qdt_edit_share_error" class="text-danger small" style="display:none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" id="qdt_edit_share_submit">Lưu thay đổi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const modalEl = document.getElementById('qdt_edit_share_modal');
+      let modalInstance = null;
+      function ensure(){ if(!modalInstance) modalInstance = new bootstrap.Modal(modalEl); }
+
+      window.openEditShareModal = function(opts){
+        try{
+          if(!modalEl){ console.error('openEditShareModal: modal element not found (id=qdt_edit_share_modal)'); alert('Không thể mở giao diện sửa share: modal không tồn tại.'); return; }
+          if(typeof bootstrap === 'undefined'){ console.error('openEditShareModal: bootstrap is undefined'); alert('Không thể mở giao diện sửa share: bootstrap không sẵn sàng.'); return; }
+          ensure();
+          if(!modalInstance){ console.error('openEditShareModal: failed to create modal instance'); alert('Không thể mở giao diện sửa share.'); return; }
+          modalEl.dataset.postId = opts.postId;
+          modalEl.dataset.shareId = opts.shareId;
+          modalEl.dataset.articleSelector = ''; // optional
+          const ta = modalEl.querySelector('#qdt_edit_share_text');
+          const sel = modalEl.querySelector('#qdt_edit_share_visibility');
+          const err = modalEl.querySelector('#qdt_edit_share_error');
+          if(ta) ta.value = opts.sharedText || '';
+          if(sel) sel.value = opts.visibility || 'public';
+          if(err) { err.style.display='none'; err.textContent=''; }
+          modalInstance.show();
+        }catch(e){ console.error('openEditShareModal error:', e); alert('Không thể mở giao diện sửa share. Kiểm tra console để biết thêm chi tiết.'); }
+      };
+
+      async function submitEditShare(){
+        try{
+          const postId = modalEl.dataset.postId; const shareId = modalEl.dataset.shareId;
+          const ta = modalEl.querySelector('#qdt_edit_share_text');
+          const sel = modalEl.querySelector('#qdt_edit_share_visibility');
+          const err = modalEl.querySelector('#qdt_edit_share_error');
+          if(!postId || !shareId){ if(err){ err.style.display='block'; err.textContent='Không xác định được bài share.'; } return; }
+          const body = { shared_text: (ta && ta.value) ? ta.value : '' };
+          if(sel && sel.value) body.visibility = sel.value;
+          const url = '/api/posts/' + encodeURIComponent(postId) + '/shares/' + encodeURIComponent(shareId);
+          const res = await fetch(url, { method: 'PUT', credentials: 'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+          if(!res.ok){ let j=null; try{ j = await res.json(); }catch(_){ } if(err){ err.style.display='block'; err.textContent = (j && j.message) ? j.message : ('Lỗi: ' + res.status); } return; }
+          const updated = await res.json().catch(()=>null);
+          // Update DOM: replace post-content text, visibility label and time if present
+          try{
+            const rootArticle = document.querySelector('article[data-share-id="'+String(shareId)+'"]') || document.querySelector('article.post-card[data-share-id="'+String(shareId)+'"]');
+            if(rootArticle){
+              // update content
+              const contentEl = rootArticle.querySelector('.post-content'); if(contentEl) contentEl.textContent = body.shared_text;
+              // update visibility dataset + label
+              if(body.visibility){
+                try{ rootArticle.dataset.visibility = body.visibility; }catch(_){ }
+                const visEl = rootArticle.querySelector('.pc-visibility');
+                if(visEl){ const map = { public: 'Công khai', friend: 'Bạn bè', friends: 'Bạn bè', private: 'Cá nhân' }; visEl.textContent = map[body.visibility] || body.visibility; }
+              }
+              // update time to show edited
+              const timeEl = rootArticle.querySelector('.post-time');
+              try{
+                if(timeEl){ if(typeof formatRelativeTime === 'function'){ const nowIso = new Date().toISOString(); timeEl.textContent = formatRelativeTime(nowIso) + ' • Đã chỉnh sửa'; timeEl.setAttribute('datetime', nowIso); } else { timeEl.textContent = 'Vừa xong • Đã chỉnh sửa'; } }
+              }catch(_){ }
+            }
+          }catch(_){ }
+          modalInstance.hide();
+          try{ const toasts = document.querySelector('.qdt-toast-area') || (function(){ const t=document.createElement('div'); t.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(t); return t; })(); const t=document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Cập nhật chia sẻ thành công'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000); }catch(_){ }
+        }catch(e){ console.error(e); const err = modalEl.querySelector('#qdt_edit_share_error'); if(err){ err.style.display='block'; err.textContent='Đã xảy ra lỗi khi cập nhật.'; } }
+      }
+
+      const submitBtn = document.getElementById('qdt_edit_share_submit');
+      if(submitBtn) submitBtn.addEventListener('click', submitEditShare);
+    })();
+  </script>
+  <script>
+    // Diagnostic helper: run from console with runEditShareDiagnostics();
+    window.runEditShareDiagnostics = function(){
+      try{
+        const modalEl = document.getElementById('qdt_edit_share_modal');
+        console.log('qdt_edit_share_modal element:', modalEl);
+        console.log('bootstrap available:', typeof bootstrap !== 'undefined');
+        if(modalEl){ console.log('modal in body?', document.body.contains(modalEl)); }
+      }catch(e){ console.error(e); }
+    };
+  </script>
+  
   </body>
 </html>

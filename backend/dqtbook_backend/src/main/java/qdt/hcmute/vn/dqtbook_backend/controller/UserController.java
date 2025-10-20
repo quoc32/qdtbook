@@ -11,21 +11,17 @@ import qdt.hcmute.vn.dqtbook_backend.service.UserService;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
+    private final qdt.hcmute.vn.dqtbook_backend.service.PostShareQueryService postShareQueryService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, qdt.hcmute.vn.dqtbook_backend.service.PostShareQueryService postShareQueryService) {
         this.userService = userService;
+        this.postShareQueryService = postShareQueryService;
     }
 
     @GetMapping("/api")
@@ -54,16 +50,41 @@ public class UserController {
         }
     }
     
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestParam String email) {
+        userService.sendOtpForRegistration(email);
+        return ResponseEntity.ok("OTP sent to email: " + email);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> createUser(@RequestBody UserCreateRequestDTO dto) {
-        Optional<UserResponseDTO> user = userService.createUser(dto);
+        Optional<UserResponseDTO> user = userService.verifyOtpAndCreateUser(dto);
         if (user.isPresent()) {
             return ResponseEntity.status(HttpStatus.CREATED).body(user.get());
         } else {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(java.util.Map.of("message", "User already exists"));
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String newPassword = body.get("new_password");
+        String otp = body.get("otp");
+
+        boolean result = userService.resetPasswordWithOtp(email, newPassword, otp);
+        if (result) {
+            return ResponseEntity.ok("Password reset successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid OTP or email");
+        }
+    }
+
+    @PostMapping("/send-otp/forgot-password")
+    public ResponseEntity<?> sendOtpForgotPassword(@RequestParam String email) {
+        userService.sendOtpForForgotPassword(email);
+        return ResponseEntity.ok("OTP sent to email: " + email);
     }
 
     @PutMapping("/{id}")
@@ -83,6 +104,16 @@ public class UserController {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+
+    @GetMapping("/{id}/shares")
+    public ResponseEntity<?> getUserShares(@PathVariable Integer id) {
+        try {
+            var list = postShareQueryService.listSharesByUser(id);
+            return ResponseEntity.ok(list);
+        } catch (Exception ex) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(500, "Internal server error"));
         }
     }
 

@@ -2,6 +2,7 @@ package qdt.hcmute.vn.dqtbook_backend.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -51,6 +52,7 @@ public class Post {
 
     // >> relationship with PostMedia
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<PostMedia> medias;
 
     @PrePersist

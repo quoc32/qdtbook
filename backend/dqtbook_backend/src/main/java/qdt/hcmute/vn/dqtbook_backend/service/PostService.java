@@ -88,6 +88,35 @@ public class PostService {
         return postRepository.findById(id);
     }
 
+    // Utility to map Post -> PostContentResponseDTO (reuse existing mapping logic)
+    public PostContentResponseDTO mapToContentDto(Post post) {
+        if (post == null) return null;
+        PostContentResponseDTO dto = new PostContentResponseDTO();
+        dto.setId(post.getId());
+        dto.setContent(post.getContent());
+        dto.setVisibility(post.getVisibility());
+        dto.setPostType(post.getPostType());
+        dto.setStatus(post.getStatus());
+        dto.setCreatedAt(post.getCreatedAt());
+        dto.setUpdatedAt(post.getUpdatedAt());
+
+        PostContentResponseDTO.AuthorDTO authorDto = new PostContentResponseDTO.AuthorDTO();
+        if (post.getAuthor() != null) {
+            authorDto.setId(post.getAuthor().getId());
+            authorDto.setFullName(post.getAuthor().getFullName());
+            authorDto.setAvatarUrl(post.getAuthor().getAvatarUrl());
+            authorDto.setEmail(post.getAuthor().getEmail());
+        }
+        dto.setAuthor(authorDto);
+
+        List<PostContentResponseDTO.MediaDTO> mediaDtos = post.getMedias().stream()
+                .map(m -> new PostContentResponseDTO.MediaDTO(m.getMediaType(), m.getMediaUrl()))
+                .toList();
+        dto.setMedia(mediaDtos);
+
+        return dto;
+    }
+
     public Post savePost(Post post) {
         return postRepository.save(post);
     }
