@@ -75,10 +75,43 @@ public class AuthController {
         if (userId == null) {
             return ResponseEntity.status(401).body(Map.of("message", "Chưa đăng nhập"));
         }
-        return ResponseEntity.ok(Map.of(
-                "message", "Đang đăng nhập",
-                "userId", userId
-        ));
+        
+        // Get full user info from database
+        return userService.getUserById((Integer) userId)
+                .map(userDto -> {
+                    // Return same format as login response
+                    AuthResponseDTO authResponse = new AuthResponseDTO(
+                            "Đang đăng nhập",
+                            session.getId(),
+                            userDto.getId(),
+                            userDto.getEmail(),
+                            userDto.getFullName(),
+                            userDto.getFirstName(),
+                            userDto.getLastName(),
+                            userDto.getGender(),
+                            userDto.getBio(),
+                            userDto.getAvatarUrl(),
+                            userDto.getCoverPhotoUrl(),
+                            userDto.getRole()
+                    );
+                    return ResponseEntity.ok(authResponse);
+                })
+                .orElse(ResponseEntity.status(404).body(
+                        new AuthResponseDTO(
+                            "User không tồn tại",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                        )
+                ));
     }
 
     // Đăng xuất

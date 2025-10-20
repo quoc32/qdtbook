@@ -1,8 +1,8 @@
 USE spkt_connect;
 
 -- Xóa 2 cột này trước
--- ALTER TABLE Reports DROP COLUMN reported_content_type;
--- ALTER TABLE Reports DROP COLUMN reported_content_id;
+--ALTER TABLE Reports DROP COLUMN reported_content_type;
+--ALTER TABLE Reports DROP COLUMN reported_content_id;
 
 ALTER TABLE Reports
 ADD COLUMN reported_post_id INT NULL,
