@@ -1,56 +1,77 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-    crossorigin="anonymous"
-  />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link rel="icon" type="image/png" href="/qdtFavicon.png">
 </head>
+
 <body class="min-vh-100 d-flex align-items-center py-5 animated-bg">
   <style>
     .animated-bg {
       position: relative;
       background:
         radial-gradient(1100px 680px at 10% 10%, #e2efff 0%, #dfe8ff 40%, #ffffff 80%),
-        radial-gradient(620px 420px at 85% 12%, rgba(168,85,247,0.3), transparent 60%),
-        radial-gradient(660px 460px at 15% 88%, rgba(14,165,233,0.32), transparent 60%),
-        radial-gradient(600px 440px at 92% 82%, rgba(245,158,11,0.28), transparent 60%) !important;
+        radial-gradient(620px 420px at 85% 12%, rgba(168, 85, 247, 0.3), transparent 60%),
+        radial-gradient(660px 460px at 15% 88%, rgba(14, 165, 233, 0.32), transparent 60%),
+        radial-gradient(600px 440px at 92% 82%, rgba(245, 158, 11, 0.28), transparent 60%) !important;
       overflow: hidden;
       background:
         radial-gradient(1000px 600px at 10% 10%, #eef5ff 0, #f6fbff 40%, #ffffff 70%);
     }
+
     .animated-bg::before {
       content: "";
       position: fixed;
       inset: -25% -10% -15% -10%;
       pointer-events: none;
       background:
-        radial-gradient(600px 400px at 10% 15%, rgba(14,165,233,.35), transparent 60%),
-        radial-gradient(520px 360px at 85% 10%, rgba(168,85,247,.28), transparent 60%),
-        radial-gradient(560px 420px at 15% 90%, rgba(34,197,94,.28), transparent 60%),
-        radial-gradient(480px 340px at 90% 80%, rgba(245,158,11,.26), transparent 60%);
+        radial-gradient(600px 400px at 10% 15%, rgba(14, 165, 233, .35), transparent 60%),
+        radial-gradient(520px 360px at 85% 10%, rgba(168, 85, 247, .28), transparent 60%),
+        radial-gradient(560px 420px at 15% 90%, rgba(34, 197, 94, .28), transparent 60%),
+        radial-gradient(480px 340px at 90% 80%, rgba(245, 158, 11, .26), transparent 60%);
       filter: blur(40px) saturate(120%);
       animation: float-blobs 28s ease-in-out infinite alternate;
-      transform: translate3d(0,0,0);
+      transform: translate3d(0, 0, 0);
       z-index: 0;
     }
+
     @keyframes float-blobs {
-      0%   { transform: translate3d(0%, 0%, 0) scale(1); }
-      25%  { transform: translate3d(-2%, 1%, 0) scale(1.03); }
-      50%  { transform: translate3d(1%, -2%, 0) scale(0.98); }
-      75%  { transform: translate3d(2%, 2%, 0) scale(1.02); }
-      100% { transform: translate3d(-1%, 1%, 0) scale(1.01); }
+      0% {
+        transform: translate3d(0%, 0%, 0) scale(1);
+      }
+
+      25% {
+        transform: translate3d(-2%, 1%, 0) scale(1.03);
+      }
+
+      50% {
+        transform: translate3d(1%, -2%, 0) scale(0.98);
+      }
+
+      75% {
+        transform: translate3d(2%, 2%, 0) scale(1.02);
+      }
+
+      100% {
+        transform: translate3d(-1%, 1%, 0) scale(1.01);
+      }
     }
+
     @media (prefers-reduced-motion: reduce) {
-      .animated-bg::before { animation: none; }
+      .animated-bg::before {
+        animation: none;
+      }
     }
-    .content-layer { position: relative; z-index: 1; }
+
+    .content-layer {
+      position: relative;
+      z-index: 1;
+    }
   </style>
 
   <main class="container content-layer">
@@ -67,51 +88,43 @@
               Tên đăng nhập hoặc mật khẩu không đúng.
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
             </div>
-            <div th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null}"
-                 class="alert alert-danger alert-dismissible fade show" role="alert"
-                 th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}">
-              Lỗi xác thực
+
+            <!-- Thông báo lỗi OAuth2 -->
+            <div id="oauth2ErrorAlert" class="alert alert-danger alert-dismissible fade show" role="alert"
+              style="display: none;">
+              <div id="oauth2ErrorMessage"></div>
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
             </div>
+
+            <!-- Thông báo logout thành công -->
             <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show" role="alert">
               Bạn đã đăng xuất.
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
             </div>
 
+
+
             <form id="loginForm" th:action="@{/login}" method="post" autocomplete="on" novalidate>
               <!-- CSRF (Spring Security) -->
-              <input type="hidden" th:if="${_csrf != null}"
-                     th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                th:value="${_csrf.token}" />
 
               <div class="mb-3">
                 <label for="username" class="form-label">Email hoặc tên đăng nhập</label>
                 <div class="input-group">
                   <span class="input-group-text">@</span>
-                  <input id="username"
-                         type="text"
-                         name="username"
-                         inputmode="email"
-                         autocomplete="username"
-                         required
-                         placeholder="you@example.com"
-                         class="form-control" />
+                  <input id="username" type="text" name="username" inputmode="email" autocomplete="username" required
+                    placeholder="you@example.com" class="form-control" />
                 </div>
               </div>
 
               <div class="mb-3">
                 <label for="password" class="form-label">Mật khẩu</label>
                 <div class="input-group">
-                  <input id="password"
-                         type="password"
-                         name="password"
-                         autocomplete="current-password"
-                         required
-                         placeholder="Password"
-                         class="form-control" />
-                  <button type="button"
-                          class="btn btn-outline-secondary"
-                          id="togglePassword"
-                          aria-label="Hiện/Ẩn mật khẩu">Hiện</button>
+                  <input id="password" type="password" name="password" autocomplete="current-password" required
+                    placeholder="Password" class="form-control" />
+                  <button type="button" class="btn btn-outline-secondary" id="togglePassword"
+                    aria-label="Hiện/Ẩn mật khẩu">Hiện</button>
                 </div>
               </div>
 
@@ -136,13 +149,18 @@
               </div>
 
               <!-- Google Login Button -->
-              <a href="/oauth2/authorization/google" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+              <a href="/oauth2/authorization/google"
+                class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  <path fill="none" d="M0 0h48v48H0z"/>
+                  <path fill="#EA4335"
+                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                  <path fill="#4285F4"
+                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                  <path fill="#FBBC05"
+                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                  <path fill="#34A853"
+                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                  <path fill="none" d="M0 0h48v48H0z" />
                 </svg>
                 Đăng nhập bằng Google
               </a>
@@ -158,11 +176,9 @@
     </div>
   </main>
 
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous">
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
   <script>
     (function () {
       const form = document.getElementById('loginForm');
@@ -188,6 +204,7 @@
     })();
   </script>
 </body>
+
 </html>
 <script>
   (function () {
@@ -248,7 +265,7 @@
             const data = await res.json();
             if (data?.message) msg = data.message;
             else if (data?.error) msg = data.error;
-          } catch {}
+          } catch { }
           showAlert(msg, 'danger');
           if (submitBtn) {
             submitBtn.disabled = false;
@@ -259,7 +276,7 @@
         const data = await res.json();
         try {
           localStorage.setItem('auth', JSON.stringify({ ...data, stored_at: new Date().toISOString() }));
-        } catch {}
+        } catch { }
         const params = new URLSearchParams(location.search);
         const redirectTo = params.get('redirect') || params.get('next') || '/';
         location.replace(redirectTo);
@@ -271,5 +288,29 @@
         }
       }
     });
+  })();
+
+  // Xử lý OAuth2 error message từ URL
+  (function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorType = urlParams.get('error');
+
+    if (errorType === 'oauth2') {
+      const alertDiv = document.getElementById('oauth2ErrorAlert');
+      const messageDiv = document.getElementById('oauth2ErrorMessage');
+
+      if (alertDiv && messageDiv) {
+        // Hiển thị thông báo ngắn gọn
+        messageDiv.innerHTML = '❌ Đăng nhập Google thất bại<br>Chỉ cho phép email @hcmute.edu.vn hoặc @student.hcmute.edu.vn';
+        alertDiv.style.display = 'block';
+
+        // Scroll to alert
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Clean URL (remove error params)
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
   })();
 </script>

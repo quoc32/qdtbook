@@ -38,6 +38,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             throw new OAuth2AuthenticationException("Email not verified by Google");
         }
 
+        // Validate email domain - Chỉ cho phép @hcmute.edu.vn hoặc @student.hcmute.edu.vn
+        if (email == null || email.trim().isEmpty()) {
+            throw new OAuth2AuthenticationException("Email is required");
+        }
+        
+        String emailLower = email.toLowerCase().trim();
+        boolean isValidDomain = emailLower.endsWith("@hcmute.edu.vn") || 
+                                emailLower.endsWith("@student.hcmute.edu.vn");
+        
+        if (!isValidDomain) {
+            System.err.println("❌ OAuth2 login rejected: Invalid email domain - " + email);
+            throw new OAuth2AuthenticationException(
+                "Chỉ cho phép đăng nhập bằng email @hcmute.edu.vn hoặc @student.hcmute.edu.vn"
+            );
+        }
+
+        System.out.println("✅ Email domain validated: " + email);
+
         // Create or update user in database
         User user = userService.createOrUpdateOAuthUser(
             email,
