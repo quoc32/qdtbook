@@ -221,15 +221,14 @@ public class UserService {
             user.setLinkedinUrl(dto.getLinkedinUrl());
         if (dto.getTwitterUrl() != null)
             user.setTwitterUrl(dto.getTwitterUrl());
-
         // Update department if provided
         if (dto.getDepartmentId() != null) {
             Optional<Department> department = departmentRepository.findById(dto.getDepartmentId());
             department.ifPresent(user::setDepartment);
         }
-
         user.setUpdatedAt(Instant.now());
         User savedUser = userRepository.save(user);
+
         return Optional.of(convertToResponseDTO(savedUser));
     }
 

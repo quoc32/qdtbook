@@ -46,5 +46,19 @@ public class FileStorageService {
 
         return fileName; // Lưu tên file để ghi vào DB
     }
+
+    /**
+     * Xóa file được chỉ định khỏi thư mục upload đã cấu hình (nếu tồn tại).
+     *
+     * Tên file được resolve so với thư mục upload. Nếu file không tồn tại,
+     * thao tác sẽ kết thúc mà không phát sinh lỗi.
+     *
+     * @param fileName tên (hoặc đường dẫn tương đối) của file cần xóa trong thư mục upload
+     * @throws IOException nếu xảy ra lỗi I/O trong quá trình xóa file
+     */
+    public void deleteFile(String fileName) throws IOException {
+        Path filePath = Paths.get(uploadDir).resolve(fileName);
+        Files.deleteIfExists(filePath);
+    }
 }
 
