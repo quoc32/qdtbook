@@ -200,7 +200,6 @@
                         if(img) img.src = url;
                     }
                     const coverUrl = auth?.cover_photo_url || auth?.cover_photo;
-                    console.log('Cover URL:', coverUrl);
                     if(coverUrl){
                         const coverImg = document.getElementById('user-cover');
                         if(coverImg){
@@ -292,14 +291,12 @@
           <script defer>
             document.addEventListener("DOMContentLoaded", function(){
               const tabs = document.querySelectorAll('#profile-tabs .nav-link');
-              console.log('Tabs found:', tabs);
               const sections = {
                 posts: document.getElementById('posts-section'),
                 about: document.getElementById('about-section'),
                 friends: document.getElementById('friends-section'),
                 photos: document.getElementById('photos-section')
               };
-              console.log('Sections:', sections);
               function showSection(tab){
                 Object.keys(sections).forEach(key=>{
                   if(sections[key]){
@@ -1148,182 +1145,185 @@
       <!-- >> Script xử lý Friends -->
       <script>
         (function(){
-            const section = document.getElementById('friends-section');
-            if(!section) return;
+          console.log('Initializing Friends Section...');
+          const section = document.getElementById('friends-section');
+          console.log(section)
+          if(!section) return;
 
-            const userId = section.dataset.userId || (function(){try{return JSON.parse(localStorage.getItem('auth')||'{}')?.id}catch(_){return ''}})();
-            console.log('Friends Section for User ID:', userId);
-            const grid   = document.getElementById('friends-grid');
-            const empty  = document.getElementById('friends-empty');
-            const search = document.getElementById('friends-search');
-            const clear  = document.getElementById('friends-clear');
-            const sortEl = document.getElementById('friends-sort');
-            const totalEl= document.getElementById('friends-count');
-            const resultEl=document.getElementById('friends-result-count');
+          const userId = section.dataset.userId || (function(){try{return JSON.parse(localStorage.getItem('auth')||'{}')?.id}catch(_){return ''}})();
+          console.log('Friends Section for User ID:', userId);
+          const grid   = document.getElementById('friends-grid');
+          const empty  = document.getElementById('friends-empty');
+          const search = document.getElementById('friends-search');
+          const clear  = document.getElementById('friends-clear');
+          const sortEl = document.getElementById('friends-sort');
+          const totalEl= document.getElementById('friends-count');
+          const resultEl=document.getElementById('friends-result-count');
 
-            let fullList = [];
-            let filtered = [];
+          let fullList = [];
+          let filtered = [];
 
-            const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-            const safeHtml = (s)=> (s||'').toString()
-              .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-              .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+          const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+          const safeHtml = (s)=> (s||'').toString()
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
-            function renderSkeleton(n=8){
-              grid.innerHTML='';
-              for(let i=0;i<n;i++){
-                const col = document.createElement('div');
-                col.className='col-6 col-md-4 col-lg-3';
-                col.innerHTML=`
-              <div class="placeholder-card">
-                <div class="ph-img"></div>
-                <div class="p-2">
-                  <div class="ph-line mb-2" style="width:70%"></div>
-                  <div class="ph-line" style="width:45%"></div>
-                </div>
-              </div>`;
-                grid.appendChild(col);
-              }
+          function renderSkeleton(n=8){
+            grid.innerHTML='';
+            for(let i=0;i<n;i++){
+              const col = document.createElement('div');
+              col.className='col-6 col-md-4 col-lg-3';
+              col.innerHTML=`
+            <div class="placeholder-card">
+              <div class="ph-img"></div>
+              <div class="p-2">
+                <div class="ph-line mb-2" style="width:70%"></div>
+                <div class="ph-line" style="width:45%"></div>
+              </div>
+            </div>`;
+              grid.appendChild(col);
             }
+          }
 
-            const pickUser = (item)=> item?.friend_info || item || {};
-            function pickName(item){
-              const u = pickUser(item);
-              return u.full_name || u.fullName || [u.first_name,u.last_name].filter(Boolean).join(' ') || u.name || u.username || 'Người dùng';
+          const pickUser = (item)=> item?.friend_info || item || {};
+          function pickName(item){
+            const u = pickUser(item);
+            return u.full_name || u.fullName || [u.first_name,u.last_name].filter(Boolean).join(' ') || u.name || u.username || 'Người dùng';
+          }
+          function pickAvatar(item){
+            const u = pickUser(item);
+            return u.avatar_url || u.avatarUrl || u.avatar || '/img/image1.png';
+          }
+          function pickId(item){
+            const u = pickUser(item);
+            return u.id ?? u.user_id ?? u.uid ?? '';
+          }
+          function pickAddedAt(item){
+            // prefer relation created_at
+            return item?.created_at || pickUser(item)?.created_at || '';
+          }
+
+          function render(list){
+            grid.innerHTML='';
+            if(!list.length){
+              empty.classList.remove('d-none');
+              resultEl.textContent='0';
+              return;
             }
-            function pickAvatar(item){
-              const u = pickUser(item);
-              return u.avatar_url || u.avatarUrl || u.avatar || '/img/image1.png';
-            }
-            function pickId(item){
-              const u = pickUser(item);
-              return u.id ?? u.user_id ?? u.uid ?? '';
-            }
-            function pickAddedAt(item){
-              // prefer relation created_at
-              return item?.created_at || pickUser(item)?.created_at || '';
-            }
+            empty.classList.add('d-none');
+            resultEl.textContent=String(list.length);
 
-            function render(list){
-              grid.innerHTML='';
-              if(!list.length){
-                empty.classList.remove('d-none');
-                resultEl.textContent='0';
-                return;
-              }
-              empty.classList.add('d-none');
-              resultEl.textContent=String(list.length);
+            const frag = document.createDocumentFragment();
+            list.forEach(item=>{
+              const id   = pickId(item);
+              const name = pickName(item);
+              const ava  = pickAvatar(item);
+              const mutual = 0;
 
-              const frag = document.createDocumentFragment();
-              list.forEach(item=>{
-                const id   = pickId(item);
-                const name = pickName(item);
-                const ava  = pickAvatar(item);
-                const mutual = 0;
-
-                const col = document.createElement('div');
-                col.className='col-6 col-md-4 col-lg-3';
-                col.innerHTML = `
-                  <div class="friend-card h-100">
-                    <a class="text-decoration-none d-block" data-user-id="${safeHtml(id)}">
-                      <img class="friend-avatar" src="${safeHtml(ava)}" alt="${safeHtml(name)}">
-                      <div class="p-2">
-                    <div class="friend-name text-truncate">${safeHtml(name)}</div>
-                    <div class="friend-meta text-truncate">${mutual? safeHtml(mutual)+' bạn chung' : '&nbsp;'}</div>
-                      </div>
-                    </a>
-                  </div>`;
-                const a = col.querySelector('a');
-                a.addEventListener('click', (e)=>{
-                e.preventDefault();
-                if(!id) return;
-                window.location.href = '/user/' + encodeURIComponent(id);
-                  });
-                  frag.appendChild(col);
-              });
-              grid.appendChild(frag);
-            }
-
-            function applyFilters(){
-              const q = norm(search.value);
-              const sortBy = (sortEl.value||'name-asc');
-
-              filtered = !q ? [...fullList] : fullList.filter(item=>{
-                const name = norm(pickName(item));
-                const uname = norm(pickUser(item).username||'');
-                return name.includes(q) || uname.includes(q);
-              });
-
-              if(sortBy === 'name-asc' || sortBy === 'name-desc'){
-                filtered.sort((a,b)=>{
-              const an = norm(pickName(a));
-              const bn = norm(pickName(b));
-              return sortBy==='name-asc' ? an.localeCompare(bn) : bn.localeCompare(an);
+              const col = document.createElement('div');
+              col.className='col-6 col-md-4 col-lg-3';
+              col.innerHTML = `
+                <div class="friend-card h-100">
+                  <a class="text-decoration-none d-block" data-user-id="${safeHtml(id)}">
+                    <img class="friend-avatar" src="${safeHtml(ava)}" alt="${safeHtml(name)}">
+                    <div class="p-2">
+                  <div class="friend-name text-truncate">${safeHtml(name)}</div>
+                  <div class="friend-meta text-truncate">${mutual? safeHtml(mutual)+' bạn chung' : '&nbsp;'}</div>
+                    </div>
+                  </a>
+                </div>`;
+              const a = col.querySelector('a');
+              a.addEventListener('click', (e)=>{
+              e.preventDefault();
+              if(!id) return;
+              window.location.href = '/user/' + encodeURIComponent(id);
                 });
-              }else if(sortBy === 'recent'){
-                filtered.sort((a,b)=> new Date(pickAddedAt(b)) - new Date(pickAddedAt(a)));
-              }
-
-              render(filtered);
-            }
-
-            function setCounts(total){
-              totalEl.textContent = String(total);
-              resultEl.textContent= String(filtered.length || total);
-              document.getElementById('user-friend-count')?.textContent = String(total);
-            }
-
-            const debounce = (fn, wait=200)=>{
-              let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(null,args), wait); };
-            };
-
-            const debouncedFilter = debounce(applyFilters, 180);
-
-            search.addEventListener('input', ()=>{
-              clear.classList.toggle('d-none', !search.value);
-              debouncedFilter();
+                frag.appendChild(col);
             });
-            clear.addEventListener('click', ()=>{
-              search.value='';
-              clear.classList.add('d-none');
+            grid.appendChild(frag);
+          }
+
+          function applyFilters(){
+            const q = norm(search.value);
+            const sortBy = (sortEl.value||'name-asc');
+
+            filtered = !q ? [...fullList] : fullList.filter(item=>{
+              const name = norm(pickName(item));
+              const uname = norm(pickUser(item).username||'');
+              return name.includes(q) || uname.includes(q);
+            });
+
+            if(sortBy === 'name-asc' || sortBy === 'name-desc'){
+              filtered.sort((a,b)=>{
+            const an = norm(pickName(a));
+            const bn = norm(pickName(b));
+            return sortBy==='name-asc' ? an.localeCompare(bn) : bn.localeCompare(an);
+              });
+            }else if(sortBy === 'recent'){
+              filtered.sort((a,b)=> new Date(pickAddedAt(b)) - new Date(pickAddedAt(a)));
+            }
+
+            render(filtered);
+          }
+
+          function setCounts(total){
+            totalEl.textContent = String(total);
+            resultEl.textContent= String(filtered.length || total);
+            document.getElementById('user-friend-count')?.textContent = String(total);
+          }
+
+          const debounce = (fn, wait=200)=>{
+            let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(null,args), wait); };
+          };
+
+          const debouncedFilter = debounce(applyFilters, 180);
+
+          search.addEventListener('input', ()=>{
+            clear.classList.toggle('d-none', !search.value);
+            debouncedFilter();
+          });
+          clear.addEventListener('click', ()=>{
+            search.value='';
+            clear.classList.add('d-none');
+            applyFilters();
+          });
+          sortEl.addEventListener('change', applyFilters);
+
+          async function load(){
+            renderSkeleton();
+            try{
+              const uid = userId || '';
+              if(!uid){ throw new Error('Thiếu userId.'); }
+              const url = `/api/friends/${encodeURIComponent(uid)}`;
+              const r = await fetch(url, {
+                headers:{ 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' },
+                credentials:'include'
+              });
+              if(!r.ok) throw new Error('Không tải được danh sách bạn bè.');
+              const data = await r.json();
+              const items = Array.isArray(data) ? data : [];
+              fullList = items;
+              setCounts(items.length);
               applyFilters();
-            });
-            sortEl.addEventListener('change', applyFilters);
-
-            async function load(){
-              renderSkeleton();
-              try{
-                const uid = userId || '';
-                if(!uid){ throw new Error('Thiếu userId.'); }
-                const url = `/api/friends/${encodeURIComponent(uid)}`;
-                const r = await fetch(url, {
-                  headers:{ 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' },
-                  credentials:'include'
-                });
-                if(!r.ok) throw new Error('Không tải được danh sách bạn bè.');
-                const data = await r.json();
-                const items = Array.isArray(data) ? data : [];
-                fullList = items;
-                setCounts(items.length);
-                applyFilters();
-              }catch(e){
-                grid.innerHTML = `<div class="col-12"><div class="alert alert-warning mb-0">${e?.message||'Có lỗi xảy ra.'}</div></div>`;
-                setCounts(0);
-                empty.classList.add('d-none');
-              }
+            }catch(e){
+              grid.innerHTML = `<div class="col-12"><div class="alert alert-warning mb-0">${e?.message||'Có lỗi xảy ra.'}</div></div>`;
+              setCounts(0);
+              empty.classList.add('d-none');
             }
+          }
 
-            // Load when Friends tab is shown
-            const friendsTab = document.querySelector('#profile-tabs .nav-link[data-tab="friends"]');
-            let loaded = false;
-            friendsTab?.addEventListener('click', ()=>{
-              if(!loaded){ loaded = true; load(); }
-            });
-            if(friendsTab?.classList.contains('active')){
-              loaded = true; load();
-            }
-          })();
-        </script>
+          // Load when Friends tab is shown
+          const friendsTab = document.querySelector('#profile-tabs .nav-link[data-tab="friends"]');
+          let loaded = false;
+          friendsTab?.addEventListener('click', ()=>{
+            if(!loaded){ loaded = true; load(); }
+          });
+          if(friendsTab?.classList.contains('active')){
+            loaded = true; load();
+          }
+
+        })();
+      </script>
       <!-- Friends:END -->
 
       <!-- Photos:BEGIN -->

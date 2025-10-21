@@ -146,7 +146,13 @@
             try {
                 const data = await fetchJson('/api/posts/important');
                 const posts = normalizeToArray(data);
-                allPosts = posts;
+                allPosts = posts
+                    .slice()
+                    .sort((a, b) => {
+                        const ta = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+                        const tb = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+                        return tb - ta; // newest first
+                    });
                 if (posts.length === 0) {
                     show(emptyBox);
                     return;
