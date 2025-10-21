@@ -25,10 +25,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/views/**",
                         "/home",  // trang chủ
                         "/",
-                        "/qdtFavicon.png",
-                        "/oauth2/**",           // OAuth2 authorization
-                        "/login/oauth2/**",     // OAuth2 callback
-                        "/login"                // Spring Security login page
+                        "/qdtFavicon.png"
                 ); // bỏ qua các path không cần check session
     }
 }

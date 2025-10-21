@@ -64,6 +64,11 @@ public class UserService {
             throw new IllegalArgumentException("Email already exists");
         }
 
+        // Kiểm tra email có thuộc domain của trường không (@student.hcmute.edu.vn hoặc @hcmute.edu.vn)
+        if (!email.endsWith("@student.hcmute.edu.vn") && !email.endsWith("@hcmute.edu.vn")) {
+            throw new IllegalArgumentException("Email must belong to hcmute.edu.vn domain");
+        }
+
         // Sinh OTP và gửi mail
         String otp = otpService.generateOtp(email);
         emailService.sendSimpleEmail(
@@ -114,6 +119,12 @@ public class UserService {
 
     @Transactional
     public boolean sendOtpForForgotPassword(String email) {
+        // Kiểm tra email có tồn tại không
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new IllegalArgumentException("Email does not exist");
+        }
+
         // Sinh OTP và gửi mail
         String otp = otpService.generateOtp(email);
         emailService.sendSimpleEmail(

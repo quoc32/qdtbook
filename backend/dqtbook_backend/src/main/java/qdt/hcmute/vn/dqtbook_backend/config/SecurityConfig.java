@@ -28,17 +28,16 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())   // bật CORS (dùng bean CorsConfigurationSource)
             .csrf(csrf -> csrf.disable())      // tắt CSRF
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/views/login", "/oauth2/**", "/login/oauth2/**").permitAll()  // Allow OAuth2 endpoints
+                .requestMatchers("/login", "/oauth2/**", "/login/oauth2/**").permitAll()  // Allow OAuth2 endpoints
                 .anyRequest().permitAll()
             )
             .oauth2Login(oauth2 -> oauth2
-                .loginPage("/views/login")
-                .defaultSuccessUrl("/", true)
-                .failureUrl("/views/login?error=oauth2")
+                .loginPage("/login")
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                 )
                 .successHandler(oauth2LoginSuccessHandler)
+                .failureUrl("/login?error=oauth2_failed")
             );
 
         return http.build();

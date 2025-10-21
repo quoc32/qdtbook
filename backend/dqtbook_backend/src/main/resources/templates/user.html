@@ -307,6 +307,8 @@
                     }
                   }
                 });
+                
+                document.getElementById('friends-sort').value = 'name-asc';
               }
               tabs.forEach(tabEl=>{
                 tabEl.addEventListener('click', (e)=>{
@@ -1100,8 +1102,14 @@
       <section class="col-12 col-lg-11 mb-4 d-none" id="friends-section" th:attr="data-user-id=${viewingUserId}">
 
         <div class="d-flex align-items-center justify-content-between mb-3">
-          <h5 class="mb-0">Bạn bè</h5>
-          <div class="small text-muted"><span id="friends-result-count">0</span>/<span id="friends-count">0</span></div>
+          <h5 class="mb-0">
+        <span class="friends-title-pill">
+          <i class="bi bi-people-fill me-1"></i> Bạn bè
+        </span>
+          </h5>
+          <div class="small text-muted friends-count-pill">
+        <span id="friends-result-count">0</span>/<span id="friends-count">0</span>
+          </div>
         </div>
 
         <div class="friends-toolbar mb-3">
@@ -1114,7 +1122,7 @@
           </div>
         </div>
         <div class="col-12 col-md-4 text-md-end">
-          <select id="friends-sort" class="form-select form-select-sm w-auto ms-md-auto">
+          <select id="friends-sort" class="form-select form-select-sm w-auto ms-md-auto" default-value="name-asc" aria-label="Sắp xếp bạn bè">
             <option value="name-asc">Tên (A→Z)</option>
             <option value="name-desc">Tên (Z→A)</option>
             <option value="recent">Mới thêm</option>
@@ -1126,204 +1134,300 @@
         <div id="friends-grid" class="row g-3"></div>
         <div id="friends-empty" class="text-center text-muted py-4 d-none">Không tìm thấy bạn bè phù hợp.</div>
 
-      </section>
-      <style>
-          #friends-section .friends-toolbar{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:.6rem .8rem}
-          #friends-section .search-input{background:#f5f7fb;border:none;border-radius:20px;padding:.5rem 2.2rem .5rem 2.2rem;width:100%}
+        <style>
+          #friends-section {
+        --card-bg: #fff;
+        --card-br: 16px;
+        --border: #e6ebf2;
+        --soft: rgba(13,110,253,.08);
+        --shadow: 0 12px 28px -16px rgba(13,110,253,.28);
+        --shadow-sm: 0 8px 18px -14px rgba(13,110,253,.28);
+          }
+          #friends-section .friends-title-pill{
+        display:inline-flex;align-items:center;padding:.25rem .6rem;border-radius:999px;
+        background:linear-gradient(135deg,#eef4ff,#ffffff);
+        border:1px solid var(--border); color:#0d5ef4; font-weight:700; letter-spacing:.2px
+          }
+          #friends-section .friends-count-pill{
+        padding:.1rem .5rem;border-radius:999px;border:1px dashed var(--border);background:#fff
+          }
+
+          #friends-section .friends-toolbar{
+        background:linear-gradient(180deg,#ffffffcc,#f6f9ffcc);
+        border:1px solid var(--border); border-radius:14px; padding:.75rem .9rem;
+        backdrop-filter: blur(8px)
+          }
           #friends-section .search-wrap{position:relative}
-          #friends-section .search-wrap .bi-search{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:#6b7280}
-          #friends-section .search-wrap .clear-btn{position:absolute;right:.5rem;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#6b7280}
-          #friends-section .friend-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;transition:all .18s}
-          #friends-section .friend-card:hover{border-color:#cfe2ff;box-shadow:0 8px 20px -12px rgba(13,110,253,.5);transform:translateY(-2px)}
-          #friends-section .friend-avatar{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
-          #friends-section .friend-name{font-weight:600;color:#111827}
+          #friends-section .search-input{
+        background:#f5f7fb;border:1px solid #e9eef6;border-radius:999px;padding:.6rem 2.2rem .6rem 2.2rem;width:100%;
+        transition: box-shadow .2s, border-color .2s
+          }
+          #friends-section .search-input:focus{
+        outline:0; border-color:#bcd3ff; box-shadow:0 0 0 4px rgba(13,110,253,.12)
+          }
+          #friends-section .search-wrap .bi-search{
+        position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:#6b7280
+          }
+          #friends-section .search-wrap .clear-btn{
+        position:absolute;right:.5rem;top:50%;transform:translateY(-50%);
+        border:0;background:transparent;color:#6b7280;opacity:.75;transition:opacity .15s
+          }
+          #friends-section .search-wrap .clear-btn:hover{opacity:1}
+
+          #friends-section .friend-card{
+        background:var(--card-bg);
+        border:1px solid var(--border);
+        border-radius:var(--card-br);
+        overflow:hidden;
+        transition:transform .18s ease, box-shadow .18s ease, border-color .18s;
+        will-change: transform, box-shadow
+          }
+          #friends-section .friend-card:hover{
+        transform:translateY(-3px);
+        box-shadow:var(--shadow);
+        border-color:#cfe2ff
+          }
+          #friends-section .friend-link{color:inherit}
+          #friends-section .friend-media{position:relative;overflow:hidden}
+          #friends-section .friend-avatar{
+        width:100%;aspect-ratio:1/1;object-fit:cover;display:block;transform:scale(1);transition:transform .35s ease
+          }
+          #friends-section .friend-card:hover .friend-avatar{ transform:scale(1.05) }
+          #friends-section .friend-overlay{
+        position:absolute;inset:0;display:flex;align-items:end;justify-content:center;
+        background:linear-gradient(to top, rgba(0,0,0,.45), rgba(0,0,0,.0) 60%);
+        opacity:0; transition:opacity .2s
+          }
+          #friends-section .friend-card:hover .friend-overlay{ opacity:1 }
+          #friends-section .friend-cta{
+        margin:10px; padding:.3rem .6rem; font-weight:600
+          }
+          #friends-section .friend-name{font-weight:700;color:#0f172a}
           #friends-section .friend-meta{color:#6b7280;font-size:.875rem}
-          #friends-section .placeholder-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
-          #friends-section .ph-img{background:#e5e7eb;width:100%;aspect-ratio:1/1}
-          #friends-section .ph-line{height:10px;background:#e5e7eb;border-radius:8px}
-      </style>
-      <!-- >> Script xử lý Friends -->
-      <script>
-        (function(){
-          console.log('Initializing Friends Section...');
-          const section = document.getElementById('friends-section');
-          console.log(section)
-          if(!section) return;
 
-          const userId = section.dataset.userId || (function(){try{return JSON.parse(localStorage.getItem('auth')||'{}')?.id}catch(_){return ''}})();
-          console.log('Friends Section for User ID:', userId);
-          const grid   = document.getElementById('friends-grid');
-          const empty  = document.getElementById('friends-empty');
-          const search = document.getElementById('friends-search');
-          const clear  = document.getElementById('friends-clear');
-          const sortEl = document.getElementById('friends-sort');
-          const totalEl= document.getElementById('friends-count');
-          const resultEl=document.getElementById('friends-result-count');
+          /* Skeleton shimmer */
+          @keyframes shimmer {
+        0% { background-position: -450px 0 }
+        100% { background-position: 450px 0 }
+          }
+          #friends-section .placeholder-card{
+        background:#fff;border:1px solid var(--border);border-radius:var(--card-br);overflow:hidden
+          }
+          #friends-section .ph-img, #friends-section .ph-line{
+        background:#eef2f7;
+        background-image: linear-gradient(90deg,#eef2f7 0%,#f7faff 50%,#eef2f7 100%);
+        background-size: 900px 100%;
+        animation: shimmer 1.2s infinite linear
+          }
+          #friends-section .ph-img{width:100%;aspect-ratio:1/1}
+          #friends-section .ph-line{height:10px;border-radius:8px}
+          #friends-section .placeholder-card .p-2{padding:10px}
 
-          let fullList = [];
-          let filtered = [];
+          /* Subtle entrance */
+          @keyframes floatIn {
+        from { opacity:0; transform: translateY(8px) }
+        to   { opacity:1; transform: translateY(0) }
+          }
+          #friends-section .friend-card { animation: floatIn .25s ease both }
+        </style>
 
-          const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-          const safeHtml = (s)=> (s||'').toString()
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        <!-- >> Script xử lý Friends -->
+        <script>
+          (function(){
+        const section = document.getElementById('friends-section');
+        if(!section) return;
 
-          function renderSkeleton(n=8){
-            grid.innerHTML='';
-            for(let i=0;i<n;i++){
-              const col = document.createElement('div');
-              col.className='col-6 col-md-4 col-lg-3';
-              col.innerHTML=`
-            <div class="placeholder-card">
-              <div class="ph-img"></div>
-              <div class="p-2">
-                <div class="ph-line mb-2" style="width:70%"></div>
-                <div class="ph-line" style="width:45%"></div>
+        const userId = section.dataset.userId || (function(){try{return JSON.parse(localStorage.getItem('auth')||'{}')?.id}catch(_){return ''}})();
+        const grid   = document.getElementById('friends-grid');
+        const empty  = document.getElementById('friends-empty');
+        const search = document.getElementById('friends-search');
+        const clear  = document.getElementById('friends-clear');
+        const sortEl = document.getElementById('friends-sort');
+        const totalEl= document.getElementById('friends-count');
+        const resultEl=document.getElementById('friends-result-count');
+
+        let fullList = [];
+        let filtered = [];
+
+        const norm = (s)=> (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+        const safeHtml = (s)=> (s||'').toString()
+          .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+        function renderSkeleton(n=8){
+          grid.innerHTML='';
+          for(let i=0;i<n;i++){
+            const col = document.createElement('div');
+            col.className='col-6 col-md-4 col-lg-3';
+            col.innerHTML=`
+          <div class="placeholder-card">
+            <div class="ph-img"></div>
+            <div class="p-2">
+              <div class="ph-line mb-2" style="width:70%"></div>
+              <div class="ph-line" style="width:45%"></div>
+            </div>
+          </div>`;
+            grid.appendChild(col);
+          }
+        }
+
+        const pickUser = (item)=> item?.friend_info || item || {};
+        function pickName(item){
+          const u = pickUser(item);
+          return u.full_name || u.fullName || [u.first_name,u.last_name].filter(Boolean).join(' ') || u.name || u.username || 'Người dùng';
+        }
+        function pickAvatar(item){
+          const u = pickUser(item);
+          return u.avatar_url || u.avatarUrl || u.avatar || '/img/image1.png';
+        }
+        function pickId(item){
+          const u = pickUser(item);
+          return u.id ?? u.user_id ?? u.uid ?? '';
+        }
+        function pickAddedAt(item){ return item?.created_at || pickUser(item)?.created_at || ''; }
+
+        function render(list){
+          grid.innerHTML='';
+          if(!list.length){
+            empty.classList.remove('d-none');
+            resultEl.textContent='0';
+            return;
+          }
+          empty.classList.add('d-none');
+          resultEl.textContent=String(list.length);
+
+          const frag = document.createDocumentFragment();
+          list.forEach(item=>{
+            const id   = pickId(item);
+            const name = pickName(item);
+            const ava  = pickAvatar(item);
+            const bio  = pickUser(item)?.bio || '';
+            const mutual = 0; // quoc-add-moretinh: Placeholder for mutual friends count feature
+
+            const col = document.createElement('div');
+            col.className='col-6 col-md-4 col-lg-3';
+            col.innerHTML = `
+          <div class="friend-card h-100">
+            <a class="friend-link text-decoration-none d-block" data-user-id="${safeHtml(id)}" href="#">
+              <div class="friend-media">
+            <img class="friend-avatar" loading="lazy" src="${safeHtml(ava)}" alt="${safeHtml(name)}">
+            <div class="friend-overlay">
+              <span class="friend-cta btn btn-primary btn-sm">
+                <i class="bi bi-person-lines-fill me-1"></i> Xem hồ sơ
+              </span>
+            ${mutual ? '<span class="badge bg-light text-dark fw-semibold shadow-sm" style="position:absolute;left:10px;top:10px;backdrop-filter:blur(4px);opacity:.95;"><i class="bi bi-people-fill me-1"></i>' + safeHtml(mutual) + ' bạn chung</span>' : ''}
+            </div>
+            </div>
+            <div class="p-2">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="friend-name text-truncate fw-semibold" style="background:linear-gradient(90deg,#0d5ef4,#6aa9ff);-webkit-background-clip:text;background-clip:text;color:transparent;">
+              ${safeHtml(name)}
               </div>
-            </div>`;
-              grid.appendChild(col);
-            }
-          }
-
-          const pickUser = (item)=> item?.friend_info || item || {};
-          function pickName(item){
-            const u = pickUser(item);
-            return u.full_name || u.fullName || [u.first_name,u.last_name].filter(Boolean).join(' ') || u.name || u.username || 'Người dùng';
-          }
-          function pickAvatar(item){
-            const u = pickUser(item);
-            return u.avatar_url || u.avatarUrl || u.avatar || '/img/image1.png';
-          }
-          function pickId(item){
-            const u = pickUser(item);
-            return u.id ?? u.user_id ?? u.uid ?? '';
-          }
-          function pickAddedAt(item){
-            // prefer relation created_at
-            return item?.created_at || pickUser(item)?.created_at || '';
-          }
-
-          function render(list){
-            grid.innerHTML='';
-            if(!list.length){
-              empty.classList.remove('d-none');
-              resultEl.textContent='0';
-              return;
-            }
-            empty.classList.add('d-none');
-            resultEl.textContent=String(list.length);
-
-            const frag = document.createDocumentFragment();
-            list.forEach(item=>{
-              const id   = pickId(item);
-              const name = pickName(item);
-              const ava  = pickAvatar(item);
-              const mutual = 0;
-
-              const col = document.createElement('div');
-              col.className='col-6 col-md-4 col-lg-3';
-              col.innerHTML = `
-                <div class="friend-card h-100">
-                  <a class="text-decoration-none d-block" data-user-id="${safeHtml(id)}">
-                    <img class="friend-avatar" src="${safeHtml(ava)}" alt="${safeHtml(name)}">
-                    <div class="p-2">
-                  <div class="friend-name text-truncate">${safeHtml(name)}</div>
-                  <div class="friend-meta text-truncate">${mutual? safeHtml(mutual)+' bạn chung' : '&nbsp;'}</div>
-                    </div>
-                  </a>
-                </div>`;
-              const a = col.querySelector('a');
-              a.addEventListener('click', (e)=>{
-              e.preventDefault();
-              if(!id) return;
-              window.location.href = '/user/' + encodeURIComponent(id);
-                });
-                frag.appendChild(col);
+              <i class="bi bi-chevron-right text-muted ms-2"></i>
+            </div>
+            <div class="friend-bio small text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:1.25rem;">
+              ${bio ? safeHtml(bio) : ''}
+            </div>
+            <div class="friend-meta small text-truncate mt-1">
+              ${mutual ? '<i class="bi bi-people-fill me-1 text-primary"></i>' + safeHtml(mutual) + ' bạn chung' : '&nbsp;'}
+            </div>
+            </div>
+            </a>
+          </div>`;
+            const a = col.querySelector('.friend-link');
+            a.addEventListener('click', (e)=>{
+          e.preventDefault();
+          if(!id) return;
+          window.location.href = '/views/user/' + encodeURIComponent(id);
             });
-            grid.appendChild(frag);
-          }
-
-          function applyFilters(){
-            const q = norm(search.value);
-            const sortBy = (sortEl.value||'name-asc');
-
-            filtered = !q ? [...fullList] : fullList.filter(item=>{
-              const name = norm(pickName(item));
-              const uname = norm(pickUser(item).username||'');
-              return name.includes(q) || uname.includes(q);
-            });
-
-            if(sortBy === 'name-asc' || sortBy === 'name-desc'){
-              filtered.sort((a,b)=>{
-            const an = norm(pickName(a));
-            const bn = norm(pickName(b));
-            return sortBy==='name-asc' ? an.localeCompare(bn) : bn.localeCompare(an);
-              });
-            }else if(sortBy === 'recent'){
-              filtered.sort((a,b)=> new Date(pickAddedAt(b)) - new Date(pickAddedAt(a)));
-            }
-
-            render(filtered);
-          }
-
-          function setCounts(total){
-            totalEl.textContent = String(total);
-            resultEl.textContent= String(filtered.length || total);
-            document.getElementById('user-friend-count')?.textContent = String(total);
-          }
-
-          const debounce = (fn, wait=200)=>{
-            let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(null,args), wait); };
-          };
-
-          const debouncedFilter = debounce(applyFilters, 180);
-
-          search.addEventListener('input', ()=>{
-            clear.classList.toggle('d-none', !search.value);
-            debouncedFilter();
+            frag.appendChild(col);
           });
-          clear.addEventListener('click', ()=>{
-            search.value='';
-            clear.classList.add('d-none');
+          grid.appendChild(frag);
+        }
+
+        function applyFilters(){
+          const q = norm(search.value);
+          const sortBy = (sortEl.value||'name-asc');
+
+          filtered = !q ? [...fullList] : fullList.filter(item=>{
+            const name = norm(pickName(item));
+            const uname = norm(pickUser(item).username||'');
+            return name.includes(q) || uname.includes(q);
+          });
+
+          if(sortBy === 'name-asc' || sortBy === 'name-desc'){
+            filtered.sort((a,b)=>{
+          const an = norm(pickName(a));
+          const bn = norm(pickName(b));
+          return sortBy==='name-asc' ? an.localeCompare(bn) : bn.localeCompare(an);
+            });
+          }else if(sortBy === 'recent'){
+            filtered.sort((a,b)=> new Date(pickAddedAt(b)) - new Date(pickAddedAt(a)));
+          }
+
+          render(filtered);
+        }
+
+        function setCounts(total){
+          totalEl.textContent = String(total);
+          resultEl.textContent= String(filtered.length || total);
+          const userFriendCount = document.getElementById('user-friend-count');
+          if (userFriendCount) userFriendCount.textContent = String(total);
+        }
+
+        const debounce = (fn, wait=200)=>{
+          let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(null,args), wait); };
+        };
+        const debouncedFilter = debounce(applyFilters, 180);
+
+        search.addEventListener('input', ()=>{
+          clear.classList.toggle('d-none', !search.value);
+          debouncedFilter();
+        });
+        clear.addEventListener('click', ()=>{
+          search.value='';
+          clear.classList.add('d-none');
+          applyFilters();
+        });
+        sortEl.addEventListener('change', applyFilters);
+
+        async function load(){
+          renderSkeleton();
+          try{
+            const uid = userId || '';
+            if(!uid){ throw new Error('Thiếu userId.'); }
+            const url = `/api/friends/${encodeURIComponent(uid)}`;
+            const r = await fetch(url, {
+          headers:{ 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' },
+          credentials:'include'
+            });
+            if(!r.ok) throw new Error('Không tải được danh sách bạn bè.');
+            const data = await r.json();
+            const items = Array.isArray(data) ? data : [];
+            fullList = items;
+            setCounts(items.length);
             applyFilters();
-          });
-          sortEl.addEventListener('change', applyFilters);
-
-          async function load(){
-            renderSkeleton();
-            try{
-              const uid = userId || '';
-              if(!uid){ throw new Error('Thiếu userId.'); }
-              const url = `/api/friends/${encodeURIComponent(uid)}`;
-              const r = await fetch(url, {
-                headers:{ 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' },
-                credentials:'include'
-              });
-              if(!r.ok) throw new Error('Không tải được danh sách bạn bè.');
-              const data = await r.json();
-              const items = Array.isArray(data) ? data : [];
-              fullList = items;
-              setCounts(items.length);
-              applyFilters();
-            }catch(e){
-              grid.innerHTML = `<div class="col-12"><div class="alert alert-warning mb-0">${e?.message||'Có lỗi xảy ra.'}</div></div>`;
-              setCounts(0);
-              empty.classList.add('d-none');
-            }
+          }catch(e){
+            grid.innerHTML = `<div class="col-12"><div class="alert alert-warning mb-0">${e?.message||'Có lỗi xảy ra.'}</div></div>`;
+            setCounts(0);
+            empty.classList.add('d-none');
           }
+        }
 
-          // Load when Friends tab is shown
-          const friendsTab = document.querySelector('#profile-tabs .nav-link[data-tab="friends"]');
-          let loaded = false;
-          friendsTab?.addEventListener('click', ()=>{
-            if(!loaded){ loaded = true; load(); }
-          });
-          if(friendsTab?.classList.contains('active')){
-            loaded = true; load();
-          }
-
-        })();
-      </script>
+        // Load when Friends tab is shown
+        const friendsTab = document.querySelector('#profile-tabs .nav-link[data-tab="friends"]');
+        let loaded = false;
+        friendsTab?.addEventListener('click', ()=>{
+          if(!loaded){ loaded = true; load(); }
+        });
+        if(friendsTab?.classList.contains('active')){
+          loaded = true; load();
+        }
+        // Set default sort
+        document.getElementById('friends-sort').value = 'name-asc';
+          })();
+        </script>
+      </section>
       <!-- Friends:END -->
 
       <!-- Photos:BEGIN -->
