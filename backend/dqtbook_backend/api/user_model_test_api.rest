@@ -94,14 +94,11 @@ Content-Type: application/json
 
 
 ### 8. Update user (valid data)
-PUT http://localhost:8080/users/1
+PUT http://localhost:8080/api/users/1
 Content-Type: application/json
+Cookie: JSESSIONID=7B641AD77BA60455495CB217C0F8FA9F
 
 {
-  "full_name": "Diep Updated",
-  "email": "diep.updated@example.com",
-  "bio": "Updated bio information",
-  "phone": "+84-987654321",
   "city": "Ho Chi Minh City"
 }
 
