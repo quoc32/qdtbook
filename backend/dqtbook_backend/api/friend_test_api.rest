@@ -6,8 +6,9 @@
 GET http://localhost:8080/api/friends/10
 Cookie: 3CED276456E585C62B9E82F5F03E5315
 
-### 2. Get friends of user 2
-GET http://localhost:8080/api/friends/11
+### 2. Get friends of user 1
+GET http://localhost:8080/api/friends/1
+Cookie: JSESSIONID=D597376AF1FE02A391B2F7EB1F96D225
 
 ### 3. Get friends of non-existing user
 GET http://localhost:8080/api/friends/999

@@ -1211,45 +1211,49 @@
                     if(!btn) return;
                     if(btn.dataset._shareHandler === '1'){
                       // already attached
-                    } else {
+                  } else {
                       btn.dataset._shareHandler = '1';
                       btn.addEventListener('click', async function(){
                         try{
                           if(btn.dataset.sending==='1') return; // prevent double submit
                           btn.dataset.sending='1';
                           btn.disabled = true;
-                      try{
-                        var postId = article.dataset.postId; if(!postId) return;
-                        var text = (ta && ta.value||'').trim();
-                        var visEl = shareModal.querySelector('.share-visibility');
-                        var visibility = (visEl && visEl.value) || 'public';
-                        var body = { shared_text: text, visibility: visibility };
-                        var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
-                          method: 'POST', credentials: 'include',
-                          headers: {'Content-Type':'application/json'},
-                          body: JSON.stringify(body)
-                        });
-                        if(res.ok){
-                          // hide modal and show small toast-like feedback
-                          bootstrap.Modal.getInstance(shareModal).hide();
-                          try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
-                          // clear textarea
-                          try{ if(ta) ta.value = ''; }catch(e){}
-                          // refresh per-post share list
-                          try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
-                          // refresh global share count (ties to original post id on share cards)
-                          try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
-                          // refresh the whole feed so the new share appears as a feed item
-                          try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
-                          } else {
-                          var json = {};
-                          try{ json = await res.json(); }catch(e){}
-                          alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
-                        }
-                        }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
-                        finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
-                      });
-                    }
+
+                          try{
+                            var postId = article.dataset.postId; if(!postId) return;
+                            var text = (ta && ta.value||'').trim();
+                            var visEl = shareModal.querySelector('.share-visibility');
+                            var visibility = (visEl && visEl.value) || 'public';
+                            var body = { shared_text: text, visibility: visibility };
+                            var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
+                              method: 'POST', credentials: 'include',
+                              headers: {'Content-Type':'application/json'},
+                              body: JSON.stringify(body)
+                            });
+
+                            if(res.ok){
+                              // hide modal and show small toast-like feedback
+                              bootstrap.Modal.getInstance(shareModal).hide();
+                              try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
+                              // clear textarea
+                              try{ if(ta) ta.value = ''; }catch(e){}
+                              // refresh per-post share list
+                              try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
+                              // refresh global share count (ties to original post id on share cards)
+                              try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
+                              // refresh the whole feed so the new share appears as a feed item
+                              try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
+                              } else {
+                              var json = {};
+                              try{ json = await res.json(); }catch(e){}
+                              alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
+                            }
+
+                          }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
+                          finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
+                          
+                          });
+                  }
                     });
                       if(btn){
                         if(btn.dataset._shareHandler === '1'){
@@ -1291,8 +1295,10 @@
 
                     // auto-load shares on article render
                     try{ article._loadShares(); }catch(e){}
+
                   }catch(e){}
                 })();
+                
                 </script>
 
 
