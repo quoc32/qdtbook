@@ -1,0 +1,11 @@
+### Ví dụ 1: Xóa lịch sử tin nhắn của chat ID 1 bởi user ID 1 (admin)
+DELETE http://localhost:8080/api/messages/chat/1/history?userId=1
+Content-Type: application/json
+
+###
+
+### Ví dụ 2: Xóa lịch sử tin nhắn của chat ID 5 bởi user ID 3 (admin)
+DELETE http://localhost:8080/api/messages/chat/1/history?userId=10
+Content-Type: application/json
+
+###

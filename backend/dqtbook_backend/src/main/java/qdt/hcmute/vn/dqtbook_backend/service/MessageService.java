@@ -275,6 +275,41 @@ public class MessageService {
     }
 
     /**
+     * Xóa toàn bộ lịch sử tin nhắn của một đoạn chat
+     * 
+     * @param chatId ID của đoạn chat
+     * @param userId ID của người dùng thực hiện xóa
+     * @return true nếu thành công, false nếu thất bại
+     */
+    @Transactional
+    public boolean deleteChatHistory(Integer chatId, Integer userId) {
+        // Kiểm tra chat có tồn tại không
+        Optional<Chat> chatOpt = chatRepository.findById(chatId);
+        if (chatOpt.isEmpty()) {
+            return false;
+        }
+
+        // Kiểm tra người dùng có phải là thành viên của chat không
+        if (!chatMemberRepository.existsByChatIdAndUserId(chatId, userId)) {
+            return false; // Người dùng không phải là thành viên của chat
+        }
+
+        // Lấy tất cả tin nhắn trong chat
+        List<Message> messages = messageRepository.findByChatId(chatId);
+
+        // Xóa tất cả trạng thái đã đọc của các tin nhắn
+        for (Message message : messages) {
+            List<MessageReadStatus> readStatuses = messageReadStatusRepository.findByMessageId(message.getId());
+            messageReadStatusRepository.deleteAll(readStatuses);
+        }
+
+        // Xóa tất cả tin nhắn
+        messageRepository.deleteAll(messages);
+
+        return true;
+    }
+
+    /**
      * Convert a Message entity to a MessageResponseDTO
      * 
      * @param message The Message entity

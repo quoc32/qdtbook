@@ -2017,7 +2017,7 @@
                     </div>
                     <div class="info-item text-danger" onclick="confirmDeleteChat(${chatId})">
                         <span>🗑️</span>
-                        <span>Xóa cuộc trò chuyện</span>
+                        <span>Xóa lịch sử cuộc trò chuyện</span>
                     </div>
                 </div>
             `;
@@ -2080,6 +2080,10 @@
                                     <span>🔔</span>
                                     <span>Tắt thông báo</span>
                                 </div>
+                                <div class="info-item text-danger" onclick="confirmDeleteChat(${chatId})">
+                                    <span>🗑️</span>
+                                    <span>Xóa lịch sử cuộc trò chuyện</span>
+                                </div>
                                 <div class="info-item text-danger" onclick="confirmLeaveGroup(${chatId})">
                                     <span>🚪</span>
                                     <span>Rời khỏi nhóm</span>
@@ -2131,11 +2135,36 @@
         }
 
 
-        // Confirm delete chat (placeholder)
-        function confirmDeleteChat(chatId) {
-            if (confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này?')) {
-                // TODO: Implement delete chat functionality
-                alert('Tính năng xóa cuộc trò chuyện sẽ được triển khai sau');
+        // Confirm delete chat history
+        async function confirmDeleteChat(chatId) {
+            if (confirm('Bạn có chắc chắn muốn xóa lịch sử cuộc trò chuyện này? Hành động này không thể hoàn tác!')) {
+                try {
+                    // Lấy userId từ localStorage
+                    const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                    const currentUserId = auth.user_id;
+
+                    if (!currentUserId) {
+                        alert('Vui lòng đăng nhập để thực hiện thao tác này');
+                        return;
+                    }
+
+                    const response = await fetch(`/api/messages/chat/${chatId}/history?userId=${currentUserId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        alert('Đã xóa lịch sử cuộc trò chuyện thành công!');
+                        // Reload messages to show empty chat
+                        await loadMessagesFromAPI(chatId, currentUserId);
+                    } else {
+                        const error = await response.json();
+                        alert(error.error || 'Không thể xóa lịch sử cuộc trò chuyện');
+                    }
+                } catch (error) {
+                    console.error('Error deleting chat history:', error);
+                    alert('Đã xảy ra lỗi khi xóa lịch sử cuộc trò chuyện');
+                }
             }
         }
 

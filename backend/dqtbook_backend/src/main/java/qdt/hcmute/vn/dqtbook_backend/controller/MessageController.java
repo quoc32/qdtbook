@@ -146,4 +146,24 @@ public class MessageController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    /**
+     * Xóa toàn bộ lịch sử tin nhắn của một đoạn chat
+     * 
+     * @param chatId ID của đoạn chat
+     * @param userId ID của người dùng thực hiện xóa (phải là thành viên của chat)
+     * @return No content nếu thành công, bad request nếu thất bại
+     */
+    @DeleteMapping("/chat/{chatId}/history")
+    public ResponseEntity<?> deleteChatHistory(
+            @PathVariable Integer chatId,
+            @RequestParam Integer userId) {
+        boolean deleted = messageService.deleteChatHistory(chatId, userId);
+        if (deleted) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Không thể xóa lịch sử chat. Vui lòng kiểm tra bạn có phải là thành viên của chat không."));
+        }
+    }
 }
