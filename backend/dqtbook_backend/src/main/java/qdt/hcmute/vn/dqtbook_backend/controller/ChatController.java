@@ -168,4 +168,22 @@ public class ChatController {
         List<GroupChatListResponseDTO> groupChats = chatService.getGroupChatsByUserId(userId);
         return ResponseEntity.ok(groupChats);
     }
+
+    /**
+     * Get all direct chats for a user
+     * 
+     * @param userId User ID (path variable)
+     * @return List of direct chats the user belongs to
+     */
+    @GetMapping("/direct/user/{userId}")
+    public ResponseEntity<?> getDirectChatsByUserId(@PathVariable Integer userId) {
+        // Validate userId
+        if (userId == null || userId <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid user ID"));
+        }
+
+        List<DirectChatListResponseDTO> directChats = chatService.getDirectChatsByUserId(userId);
+        return ResponseEntity.ok(directChats);
+    }
 }
