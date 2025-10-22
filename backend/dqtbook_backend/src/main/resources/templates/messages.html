@@ -793,7 +793,7 @@
                     <div class="chat-search">
                         <div class="chat-search-wrapper">
                             <input type="text" placeholder="Tìm kiếm cuộc trò chuyện..." id="chatSearchInput">
-                            <button class="btn-create-group" onclick="openCreateGroupModal()">+ Tạo nhóm</button>
+                            <button class="btn-create-group" onclick="openCreateChatModal()">+ Tạo chat</button>
                         </div>
                     </div>
 
@@ -887,7 +887,7 @@
             }, 60000); // Refresh mỗi 1 phút
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
             loadChats();        // Load chats (friends + groups) ngay lập tức
             startHeartbeat();   // Bắt đầu heartbeat
             startChatsRefresh(); // Bắt đầu refresh chats
@@ -896,6 +896,32 @@
             console.log('🟢 Online status system initialized in messages page!');
             console.log('📡 Heartbeat: every 2 minutes');
             console.log('🔄 Chats refresh: every 1 minute');
+            
+            // Kiểm tra xem có chatId trong URL không (từ marketplace)
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatId = urlParams.get('chatId');
+            const sellerId = urlParams.get('sellerId');
+            
+            if (chatId && sellerId) {
+                // Đợi một chút để chats được load
+                setTimeout(async () => {
+                    try {
+                        // Lấy thông tin seller
+                        const sellerResponse = await fetch(`/api/users/${sellerId}`, {
+                            method: 'GET',
+                            credentials: 'include'
+                        });
+                        
+                        if (sellerResponse.ok) {
+                            const seller = await sellerResponse.json();
+                            // Mở chat với seller
+                            await openChat(sellerId, seller.full_name || 'Market Chat', seller.avatar_url || '/default-avatar.png');
+                        }
+                    } catch (error) {
+                        console.error('Error opening chat from marketplace:', error);
+                    }
+                }, 1000);
+            }
         });
         
         // ============================================
@@ -1171,8 +1197,8 @@
             `;
 
             try {
-                // 1. Load friends (direct chats)
-                const friendsResponse = await fetch(`/api/friends/${userId}/online-status`, {
+                // 1. Load direct chats (includes MarketChat and friend chats)
+                const directChatsResponse = await fetch(`/api/chats/direct/user/${userId}`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' }
@@ -1185,36 +1211,24 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (!friendsResponse.ok && !groupsResponse.ok) {
+                if (!directChatsResponse.ok && !groupsResponse.ok) {
                     throw new Error('Failed to fetch chats');
                 }
 
-                const friendsData = friendsResponse.ok ? await friendsResponse.json() : { friends: [] };
+                const directChatsData = directChatsResponse.ok ? await directChatsResponse.json() : [];
                 const groupsData = groupsResponse.ok ? await groupsResponse.json() : [];
 
-                console.log('Friends response:', friendsData);
+                console.log('Direct chats response:', directChatsData);
                 console.log('Groups response:', groupsData);
 
-                // Log each group to check memberIds
-                groupsData.forEach((group, index) => {
-                    console.log(`Group ${index}:`, group);
-                    console.log(`  - chatId:`, group.chatId);
-                    console.log(`  - chatName:`, group.chatName);
-                    console.log(`  - memberIds:`, group.memberIds);
-                    console.log(`  - memberCount:`, group.memberCount);
-                });
-
-                // Transform friends to chat format
-                const friends = friendsData.friends || [];
-                const friendChats = friends
-                    .filter(friendData => friendData.status === 'accepted')
-                    .map(friendData => transformFriendToChat(friendData, userId));
+                // Transform direct chats to chat format
+                const directChats = directChatsData.map(directChat => transformDirectChatToChat(directChat));
 
                 // Transform groups to chat format
                 const groupChats = groupsData.map(group => transformGroupToChat(group));
 
                 // Combine and sort by time (newest first)
-                const allChats = [...friendChats, ...groupChats];
+                const allChats = [...directChats, ...groupChats];
                 
                 displayChatList(allChats);
 
@@ -1244,23 +1258,20 @@
             return diffMinutes < 3;
         }
 
-        // Transform friend data to chat format
-        function transformFriendToChat(friendData, currentUserId) {
-            // Determine who is the friend (not the current user)
-            const friendInfo = friendData.friend_info;
-            const friendUserId = (friendData.sender_id === currentUserId) ? friendData.receiver_id : friendData.sender_id;
-
-            // Tính toán online status từ last_seen_at
-            const isOnline = calculateOnlineStatus(friendInfo.last_seen_at);
-
+        // Transform direct chat data to chat format
+        function transformDirectChatToChat(directChatData) {
+            // Use chatName if available (for MarketChat), otherwise use other user's name
+            const displayName = directChatData.chatName || directChatData.otherUserName;
+            
             return {
-                id: friendUserId, // Use friend's user ID as chat ID for direct chat
-                friendId: friendUserId,
-                name: friendInfo.full_name || `${friendInfo.first_name} ${friendInfo.last_name}`.trim(),
-                avatar: friendInfo.avatar_url || '/img/default-avatar.png',
+                id: directChatData.otherUserId, // Use other user's ID for opening chat
+                chatId: directChatData.chatId, // Store actual chat ID
+                friendId: directChatData.otherUserId,
+                name: displayName,
+                avatar: directChatData.otherUserAvatar || '/img/default-avatar.png',
                 lastMessage: 'Bắt đầu cuộc trò chuyện...', // Default message
-                time: formatTime(friendData.updated_at || friendData.created_at),
-                online: isOnline, // Use real online status
+                time: formatTime(directChatData.createdAt),
+                online: directChatData.isOnline || false,
                 isGroup: false // Direct chat
             };
         }
@@ -2198,25 +2209,58 @@
         }
 
         // ============================================
-        // CREATE GROUP MODAL
+        // CREATE CHAT/GROUP MODAL
         // ============================================
 
         let selectedFriends = [];
         let allFriends = [];
+        let currentChatType = null; // 'direct' or 'group'
 
-        // Open create group modal
-        async function openCreateGroupModal() {
+        // Open create chat modal
+        async function openCreateChatModal() {
             const modal = document.getElementById('createGroupModal');
             modal.classList.add('show');
             
-            // Reset form
+            // Reset to initial state
+            currentChatType = null;
+            document.getElementById('chatTypeSelection').style.display = 'block';
+            document.getElementById('groupNameSection').style.display = 'none';
+            document.getElementById('friendSelectionSection').style.display = 'none';
             document.getElementById('groupNameInput').value = '';
             selectedFriends = [];
             updateSelectedCount();
             updateCreateButton();
+        }
+
+        // Select chat type
+        async function selectChatType(type) {
+            currentChatType = type;
+            
+            // Hide type selection
+            document.getElementById('chatTypeSelection').style.display = 'none';
+            
+            // Show friend selection
+            document.getElementById('friendSelectionSection').style.display = 'block';
+            
+            if (type === 'group') {
+                // Show group name input for group chat
+                document.getElementById('groupNameSection').style.display = 'block';
+                document.getElementById('modalTitle').textContent = 'Tạo nhóm mới';
+                document.getElementById('friendSelectionLabel').innerHTML = 'Chọn thành viên <span style="color: red;">*</span>';
+            } else {
+                // Hide group name for direct chat
+                document.getElementById('groupNameSection').style.display = 'none';
+                document.getElementById('modalTitle').textContent = 'Tạo chat 1-1';
+                document.getElementById('friendSelectionLabel').innerHTML = 'Chọn bạn bè <span style="color: red;">*</span>';
+            }
             
             // Load friends list
             await loadFriendsForGroupCreation();
+        }
+
+        // Open create group modal (legacy function for compatibility)
+        async function openCreateGroupModal() {
+            await openCreateChatModal();
         }
 
         // Close create group modal
@@ -2304,12 +2348,29 @@
         function toggleFriendSelection(friendId) {
             const checkbox = document.getElementById(`friend_${friendId}`);
             
-            if (selectedFriends.includes(friendId)) {
-                selectedFriends = selectedFriends.filter(id => id !== friendId);
-                checkbox.checked = false;
+            if (currentChatType === 'direct') {
+                // For direct chat, only allow selecting 1 friend
+                if (selectedFriends.includes(friendId)) {
+                    selectedFriends = [];
+                    checkbox.checked = false;
+                } else {
+                    // Uncheck all other checkboxes
+                    selectedFriends.forEach(id => {
+                        const cb = document.getElementById(`friend_${id}`);
+                        if (cb) cb.checked = false;
+                    });
+                    selectedFriends = [friendId];
+                    checkbox.checked = true;
+                }
             } else {
-                selectedFriends.push(friendId);
-                checkbox.checked = true;
+                // For group chat, allow multiple selections
+                if (selectedFriends.includes(friendId)) {
+                    selectedFriends = selectedFriends.filter(id => id !== friendId);
+                    checkbox.checked = false;
+                } else {
+                    selectedFriends.push(friendId);
+                    checkbox.checked = true;
+                }
             }
 
             updateSelectedCount();
@@ -2324,11 +2385,18 @@
 
         // Update create button state
         function updateCreateButton() {
-            const groupName = document.getElementById('groupNameInput').value.trim();
             const btnCreate = document.getElementById('btnCreateGroup');
             
-            // Enable button if group name is not empty and at least 2 friends selected
-            btnCreate.disabled = !(groupName && selectedFriends.length >= 2);
+            if (currentChatType === 'direct') {
+                // For direct chat, need exactly 1 friend
+                btnCreate.disabled = selectedFriends.length !== 1;
+            } else if (currentChatType === 'group') {
+                // For group chat, need group name and at least 2 friends
+                const groupName = document.getElementById('groupNameInput').value.trim();
+                btnCreate.disabled = !(groupName && selectedFriends.length >= 2);
+            } else {
+                btnCreate.disabled = true;
+            }
         }
 
         // Listen to group name input
@@ -2338,6 +2406,86 @@
                 groupNameInput.addEventListener('input', updateCreateButton);
             }
         });
+
+        // Create chat or group based on type
+        async function createChatOrGroup() {
+            if (currentChatType === 'direct') {
+                await createDirectChat();
+            } else if (currentChatType === 'group') {
+                await createGroup();
+            }
+        }
+
+        // Create direct chat (1-1)
+        async function createDirectChat() {
+            try {
+                if (selectedFriends.length !== 1) {
+                    alert('Vui lòng chọn 1 bạn bè để tạo chat');
+                    return;
+                }
+
+                // Get current user ID
+                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+                const currentUserId = auth.user_id;
+
+                if (!currentUserId) {
+                    alert('Vui lòng đăng nhập lại');
+                    return;
+                }
+
+                const friendId = selectedFriends[0];
+
+                console.log('Creating direct chat:', { currentUserId, friendId });
+
+                // Disable button
+                const btnCreate = document.getElementById('btnCreateGroup');
+                btnCreate.disabled = true;
+                btnCreate.textContent = 'Đang tạo...';
+
+                // Call API to create direct chat
+                const response = await fetch('/api/chats/find-or-create-direct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        userId1: currentUserId,
+                        userId2: friendId
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || errorData.message || 'Không thể tạo chat');
+                }
+
+                const result = await response.json();
+                console.log('Direct chat created:', result);
+
+                // Chat created successfully
+                alert('Tạo chat thành công!');
+
+                // Close modal
+                closeCreateGroupModal();
+
+                // Reload chats to show new chat
+                await loadChats();
+
+                // Re-enable button
+                btnCreate.disabled = false;
+                btnCreate.textContent = 'Tạo';
+
+            } catch (error) {
+                console.error('Error creating direct chat:', error);
+                alert('Lỗi: ' + error.message);
+
+                // Re-enable button
+                const btnCreate = document.getElementById('btnCreateGroup');
+                btnCreate.disabled = false;
+                btnCreate.textContent = 'Tạo';
+            }
+        }
 
         // Create group
         async function createGroup() {
@@ -2401,7 +2549,7 @@
                     
                     // Re-enable button
                     btnCreate.disabled = false;
-                    btnCreate.textContent = 'Tạo nhóm';
+                    btnCreate.textContent = 'Tạo';
                     
                     // Clear selections to let user choose again
                     selectedFriends = [];
@@ -2433,7 +2581,7 @@
                 // Re-enable button
                 const btnCreate = document.getElementById('btnCreateGroup');
                 btnCreate.disabled = false;
-                btnCreate.textContent = 'Tạo nhóm';
+                btnCreate.textContent = 'Tạo';
             }
         }
     </script>
@@ -2442,16 +2590,28 @@
     <div class="create-group-modal" id="createGroupModal">
         <div class="modal-content-group">
             <div class="modal-header-group">
-                <h5>Tạo nhóm mới</h5>
+                <h5 id="modalTitle">Tạo chat mới</h5>
                 <button class="modal-close" onclick="closeCreateGroupModal()">×</button>
             </div>
             <div class="modal-body-group">
-                <div class="form-group-modal">
+                <!-- Chat Type Selection -->
+                <div class="form-group-modal" id="chatTypeSelection">
+                    <label>Loại chat</label>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn-modal btn-modal-create" onclick="selectChatType('direct')" style="flex: 1;">Chat 1-1</button>
+                        <button class="btn-modal btn-modal-create" onclick="selectChatType('group')" style="flex: 1;">Tạo nhóm</button>
+                    </div>
+                </div>
+
+                <!-- Group Name (only for group chat) -->
+                <div class="form-group-modal" id="groupNameSection" style="display: none;">
                     <label for="groupNameInput">Tên nhóm <span style="color: red;">*</span></label>
                     <input type="text" id="groupNameInput" placeholder="Nhập tên nhóm..." maxlength="50">
                 </div>
-                <div class="form-group-modal">
-                    <label>Chọn thành viên <span style="color: red;">*</span></label>
+
+                <!-- Friend Selection -->
+                <div class="form-group-modal" id="friendSelectionSection" style="display: none;">
+                    <label id="friendSelectionLabel">Chọn bạn bè <span style="color: red;">*</span></label>
                     <div class="selected-count" id="selectedCount">Đã chọn: 0 người</div>
                     <div class="friend-select-list" id="friendSelectList">
                         <div class="text-center py-3">
@@ -2462,7 +2622,7 @@
             </div>
             <div class="modal-footer-group">
                 <button class="btn-modal btn-modal-cancel" onclick="closeCreateGroupModal()">Hủy</button>
-                <button class="btn-modal btn-modal-create" id="btnCreateGroup" onclick="createGroup()" disabled>Tạo nhóm</button>
+                <button class="btn-modal btn-modal-create" id="btnCreateGroup" onclick="createChatOrGroup()" disabled>Tạo</button>
             </div>
         </div>
     </div>
