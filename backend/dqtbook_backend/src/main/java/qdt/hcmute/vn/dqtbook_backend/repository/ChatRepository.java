@@ -114,4 +114,19 @@ public interface ChatRepository extends JpaRepository<Chat, Integer> {
             ") " +
             "ORDER BY c.createdAt DESC")
     List<Chat> findGroupChatsByUserId(@Param("userId") Integer userId);
+
+    /**
+     * Find all direct chats (non-group chats) for a user
+     * 
+     * @param userId User ID
+     * @return List of direct chats the user belongs to
+     */
+    @Query("SELECT c FROM Chat c " +
+            "WHERE c.isGroup = false " +
+            "AND c.id IN (" +
+            "  SELECT cm.chat.id FROM ChatMember cm " +
+            "  WHERE cm.user.id = :userId" +
+            ") " +
+            "ORDER BY c.createdAt DESC")
+    List<Chat> findDirectChatsByUserId(@Param("userId") Integer userId);
 }
