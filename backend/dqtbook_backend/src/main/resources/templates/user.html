@@ -1431,8 +1431,261 @@
       <!-- Friends:END -->
 
       <!-- Photos:BEGIN -->
-      <section class="col-12 col-lg-11 mb-4 d-none" id="photos-section">
-        <h1>Photos</h1>
+      <section class="col-12 col-lg-11 mb-4 d-none" id="photos-section" th:attr="data-user-id=${viewingUserId}">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0">
+        <span class="d-inline-flex align-items-center">
+          <i class="bi bi-images me-2"></i> Ảnh/Video
+        </span>
+          </h5>
+          <div class="small text-muted"><span id="media-count">0</span></div>
+        </div>
+
+        <div class="mb-3 d-flex gap-2 flex-wrap">
+          <div class="btn-group btn-group-sm" role="group" aria-label="Filter">
+        <button type="button" class="btn btn-outline-primary active" data-filter="all">Tất cả</button>
+        <button type="button" class="btn btn-outline-primary" data-filter="image">Ảnh</button>
+        <button type="button" class="btn btn-outline-primary" data-filter="video">Video</button>
+          </div>
+        </div>
+
+        <div id="media-grid" class="row g-3"></div>
+        <div id="media-empty" class="text-center text-muted py-4 d-none">Chưa có tệp phương tiện nào.</div>
+
+        <style>
+          #photos-section {
+        --border: #e6ebf2;
+        --shadow: 0 12px 28px -16px rgba(13,110,253,.28);
+          }
+          #photos-section .media-card {
+        position: relative;
+        display: block;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s;
+          }
+          #photos-section .media-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+        border-color: #cfe2ff;
+          }
+          #photos-section .media-thumb {
+        width: 100%;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+        display: block;
+        background: #f3f4f6;
+          }
+          #photos-section .media-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        padding: .35rem .45rem;
+        background: linear-gradient(to top, rgba(0,0,0,.45), rgba(0,0,0,0) 60%);
+        color: #fff;
+        opacity: 0;
+        transition: opacity .2s;
+          }
+          #photos-section .media-card:hover .media-overlay { opacity: 1 }
+          #photos-section .badge-kind {
+        backdrop-filter: blur(4px);
+        background: rgba(255,255,255,.85);
+        color: #0d5ef4;
+        font-weight: 700;
+          }
+
+          /* Skeleton shimmer */
+          @keyframes shimmer {
+        0% { background-position: -450px 0 }
+        100% { background-position: 450px 0 }
+          }
+          #photos-section .ph-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+          }
+          #photos-section .ph-box {
+        background: #eef2f7;
+        background-image: linear-gradient(90deg,#eef2f7 0%,#f7faff 50%,#eef2f7 100%);
+        background-size: 900px 100%;
+        animation: shimmer 1.2s infinite linear;
+        width: 100%;
+        aspect-ratio: 1/1;
+          }
+        </style>
+
+        <!-- Viewer Modal -->
+        <div class="modal fade" id="mediaViewerModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-dark text-white">
+          <div class="modal-body p-0 position-relative">
+            <button type="button" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2" data-bs-dismiss="modal" aria-label="Close">
+          <i class="bi bi-x-lg"></i>
+            </button>
+            <img id="viewer-img" class="w-100 d-none" alt="media">
+            <video id="viewer-video" class="w-100 d-none" controls playsinline></video>
+          </div>
+        </div>
+          </div>
+        </div>
+
+        <script>
+          (function(){
+        const section = document.getElementById('photos-section');
+        if(!section) return;
+
+        const grid = document.getElementById('media-grid');
+        const emptyEl = document.getElementById('media-empty');
+        const countEl = document.getElementById('media-count');
+        const filterBtns = section.querySelectorAll('[data-filter]');
+        const viewerImg = document.getElementById('viewer-img');
+        const viewerVideo = document.getElementById('viewer-video');
+
+        const userId = section.dataset.userId || (function(){ try{ return JSON.parse(localStorage.getItem('auth')||'{}')?.id }catch(_){ return '' } })();
+        let loaded = false;
+        let full = [];
+        let filtered = [];
+        let currentFilter = 'all';
+
+        const toAbs = (p)=> (typeof p==='string' && /^https?:\/\//i.test(p)) ? p : ('http://localhost:8080' + (p||''));
+        const isImage = (u)=> /\.(jpe?g|png|gif|webp|bmp|svg)(\?.*)?$/i.test((u||'').split('#')[0]);
+        const isVideo = (u)=> /\.(mp4|webm|ogg|ogv|mov|m4v)(\?.*)?$/i.test((u||'').split('#')[0]);
+
+        function renderSkeleton(n=8){
+          grid.innerHTML = '';
+          for(let i=0;i<n;i++){
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-4 col-lg-3';
+            col.innerHTML = '<div class="ph-card"><div class="ph-box"></div></div>';
+            grid.appendChild(col);
+          }
+        }
+
+        function render(list){
+          grid.innerHTML = '';
+          if(!list.length){
+            emptyEl.classList.remove('d-none');
+            return;
+          }
+          emptyEl.classList.add('d-none');
+
+          const frag = document.createDocumentFragment();
+          list.forEach(item=>{
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-4 col-lg-3';
+            const kindIcon = item.type === 'video' ? 'bi bi-play-btn-fill' : 'bi bi-image-fill';
+            col.innerHTML = `
+          <a href="#" class="media-card" data-url="${encodeURIComponent(item.url)}" data-type="${item.type}">
+            ${item.type === 'image'
+              ? `<img loading="lazy" src="${item.url}" class="media-thumb" alt="media">`
+              : `<video class="media-thumb" preload="metadata" muted playsinline>
+               <source src="${item.url}" type="video/${(item.url.split('.').pop()||'mp4').toLowerCase()}">
+             </video>`}
+            <div class="media-overlay">
+              <span class="badge badge-kind">${item.type === 'video' ? 'Video' : 'Ảnh'}</span>
+              <i class="${kindIcon} fs-5"></i>
+            </div>
+          </a>
+            `;
+            frag.appendChild(col);
+          });
+          grid.appendChild(frag);
+        }
+
+        function applyFilter(){
+          if(currentFilter === 'image') filtered = full.filter(i=>i.type==='image');
+          else if(currentFilter === 'video') filtered = full.filter(i=>i.type==='video');
+          else filtered = full.slice();
+          render(filtered);
+          countEl.textContent = String(filtered.length || 0);
+        }
+
+        async function load(){
+          renderSkeleton();
+          try{
+            if(!userId) throw new Error('Thiếu userId.');
+            const r = await fetch(`/api/media/related/user/${encodeURIComponent(userId)}`, {
+          credentials: 'include',
+          headers: { 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest' }
+            });
+            if(!r.ok) throw new Error('Không tải được danh sách media.');
+            const data = await r.json();
+            const arr = Array.isArray(data) ? data : [];
+            full = arr.map((p, idx)=>{
+          const url = toAbs(typeof p === 'string' ? p : (p?.url || ''));
+          return { id: idx, url, type: isVideo(url) ? 'video' : 'image' };
+            });
+            countEl.textContent = String(full.length);
+            applyFilter();
+          }catch(e){
+            grid.innerHTML = `<div class="col-12"><div class="alert alert-warning mb-0">${e?.message || 'Có lỗi xảy ra.'}</div></div>`;
+            emptyEl.classList.add('d-none');
+            countEl.textContent = '0';
+          }
+        }
+
+        // Filter buttons
+        filterBtns.forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            filterBtns.forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter || 'all';
+            applyFilter();
+          });
+        });
+
+        // Open viewer
+        function openViewer(url, type){
+          if(!url) return;
+          if(type === 'image'){
+            viewerVideo.pause();
+            viewerVideo.classList.add('d-none');
+            viewerImg.src = url;
+            viewerImg.classList.remove('d-none');
+          }else{
+            viewerImg.classList.add('d-none');
+            viewerImg.removeAttribute('src');
+            viewerVideo.classList.remove('d-none');
+            viewerVideo.src = url;
+            viewerVideo.currentTime = 0;
+            viewerVideo.play().catch(()=>{});
+          }
+          if(window.bootstrap){
+            const modal = new bootstrap.Modal(document.getElementById('mediaViewerModal'));
+            modal.show();
+          }
+        }
+
+        grid.addEventListener('click', (e)=>{
+          const a = e.target.closest('.media-card');
+          if(!a) return;
+          e.preventDefault();
+          const url = decodeURIComponent(a.dataset.url || '');
+          const type = a.dataset.type || 'image';
+          openViewer(url, type);
+        });
+
+        // Load when Photos tab is shown
+        const photosTab = document.querySelector('#profile-tabs .nav-link[data-tab="photos"]');
+        photosTab?.addEventListener('click', ()=>{
+          if(!loaded){ loaded = true; load(); }
+        });
+        if(photosTab?.classList.contains('active')){
+          loaded = true; load();
+        }
+
+        // Cleanup sources on modal hide
+        document.getElementById('mediaViewerModal')?.addEventListener('hidden.bs.modal', ()=>{
+          if(!viewerVideo.classList.contains('d-none')) { viewerVideo.pause(); viewerVideo.removeAttribute('src'); }
+          if(!viewerImg.classList.contains('d-none')) { viewerImg.removeAttribute('src'); }
+        });
+          })();
+        </script>
       </section>
       <!-- Photos:END -->
 

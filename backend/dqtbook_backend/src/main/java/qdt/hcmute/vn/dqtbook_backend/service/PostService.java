@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpSession;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostUpdateRequest;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,8 @@ public class PostService {
     private final FriendRepository friendRepository;
     private final NotificationRepository notificationRepository;
 
+    @Autowired
+    private FileStorageService fileStorageService;
     @Autowired
     private HttpSession session;
 
@@ -560,6 +563,30 @@ public class PostService {
         }
 
         return Optional.of(saved);
+    }
+
+    @Transactional
+    public void deletePostMediaFiles(Integer postId) throws IOException {
+        // Lấy danh sách PostMedia của bài viết
+        List<PostMedia> medias = postMediaRepository.findByPostId(postId);
+        // Danh mục các file cần xóa
+        List<String> fileNamesToDelete = new ArrayList<>();
+        for (PostMedia pm : medias) {
+            String mediaUrl = pm.getMediaUrl();
+            if (mediaUrl != null && !mediaUrl.isEmpty()) {
+                String[] parts = mediaUrl.split("/");
+                String fileName = parts[parts.length - 1];
+                fileNamesToDelete.add(fileName);
+            }
+        }
+        // Xóa file khỏi hệ thống lưu trữ
+        for (String fileName : fileNamesToDelete) {
+            try {
+                fileStorageService.deleteFile(fileName);
+            } catch (IOException e) {
+                // Log error but continue
+            }
+        }
     }
 
     public void deletePost(Integer id) {
