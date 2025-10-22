@@ -1,0 +1,26 @@
+### Test 1: Tạo hoặc tìm chat giữa user 10 và seller 1 với custom chatName
+POST http://localhost:8080/api/chats/find-or-create-direct
+Content-Type: application/json
+
+{
+  "userId1": 10,
+  "userId2": 1,
+  "chatName": "MarketChat 1 10"
+}
+
+###
+
+### Test 2: Lấy thông tin seller (user ID 1)
+GET http://localhost:8080/api/users/1
+
+###
+
+### Test 3: Lấy tất cả direct chats của user 10
+GET http://localhost:8080/api/chats/direct/user/10
+
+###
+
+### Test 4: Mở trang messages với chatId (thay chatId bằng kết quả từ Test 1)
+# Mở trong browser: http://localhost:8080/views/messages?chatId=1&sellerId=1
+
+###

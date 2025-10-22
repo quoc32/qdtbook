@@ -459,9 +459,64 @@
           document.getElementById('mk_detail_desc').textContent = p.description || '';
 
           const msgBtn = document.getElementById('mk_detail_msg_btn');
-          msgBtn.onclick = ()=>{
-            // Placeholder: sau sẽ nối API tạo cuộc trò chuyện/nhắn tin
-            alert('Chức năng nhắn tin sẽ được bổ sung sau.');
+          msgBtn.onclick = async ()=>{
+            try {
+              // Lấy thông tin user hiện tại từ localStorage
+              const auth = JSON.parse(localStorage.getItem('auth') || '{}');
+              const currentUserId = auth.user_id;
+              
+              console.log('Current User ID:', currentUserId);
+              console.log('Seller ID:', p.sellerId);
+              console.log('Product data:', p);
+              
+              if (!currentUserId) {
+                alert('Vui lòng đăng nhập để nhắn tin');
+                window.location.href = '/views/login';
+                return;
+              }
+              
+              // Kiểm tra sellerId có tồn tại không
+              if (!p.sellerId) {
+                alert('Không tìm thấy thông tin người bán');
+                return;
+              }
+              
+              // Kiểm tra không nhắn tin với chính mình
+              if (currentUserId === p.sellerId) {
+                alert('Bạn không thể nhắn tin với chính mình');
+                return;
+              }
+              
+              // Gọi API tạo hoặc tìm chat với seller
+              const response = await fetch('/api/chats/find-or-create-direct', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  userId1: currentUserId,
+                  userId2: p.sellerId,
+                  chatName: `MarketChat ${p.sellerId} ${currentUserId}`
+                })
+              });
+              
+              console.log('Create chat response status:', response.status);
+              
+              if (response.ok) {
+                const chatData = await response.json();
+                console.log('Chat created/found:', chatData);
+                // Chuyển đến trang messages với chatId để tự động mở chat
+                window.location.href = `/views/messages?chatId=${chatData.chatId}&sellerId=${p.sellerId}`;
+              } else {
+                const error = await response.json();
+                console.error('Error response:', error);
+                alert(error.error || 'Không thể tạo cuộc trò chuyện');
+              }
+            } catch (error) {
+              console.error('Error creating chat:', error);
+              alert('Đã xảy ra lỗi khi tạo cuộc trò chuyện');
+            }
           };
 
           // Show modal

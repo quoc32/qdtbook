@@ -90,8 +90,8 @@ public class ChatService {
                 // Chat already exists
                 chat = existingChat.get();
             } else {
-                // Create new chat
-                chat = createNewDirectChat(user1, user2);
+                // Create new chat with optional custom name
+                chat = createNewDirectChat(user1, user2, request.getChatName());
             }
 
             // Create response DTO
@@ -140,13 +140,15 @@ public class ChatService {
      * 
      * @param user1 First user
      * @param user2 Second user
+     * @param chatName Optional custom chat name (can be null)
      * @return The created chat
      */
-    private Chat createNewDirectChat(User user1, User user2) {
+    private Chat createNewDirectChat(User user1, User user2, String chatName) {
         // Create new chat
         Chat chat = new Chat();
         chat.setIsGroup(false);
-        chat.setChatName(null); // Direct chats don't need names
+        // Use custom chat name if provided, otherwise null for direct chats
+        chat.setChatName(chatName);
         chat.setChatAvatarUrl(null); // Direct chats use user avatars
         chat.setCreatedAt(Instant.now());
 
@@ -321,6 +323,68 @@ public class ChatService {
                 dto.setCreatedAt(chat.getCreatedAt());
 
                 responseDTOs.add(dto);
+            }
+
+            return responseDTOs;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get all direct chats for a user
+     * 
+     * @param userId User ID
+     * @return List of DirectChatListResponseDTO
+     */
+    public List<DirectChatListResponseDTO> getDirectChatsByUserId(Integer userId) {
+        try {
+            // Validate user exists
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            // Get all direct chats (non-group chats) for this user
+            List<Chat> directChats = chatRepository.findDirectChatsByUserId(userId);
+            List<DirectChatListResponseDTO> responseDTOs = new ArrayList<>();
+
+            for (Chat chat : directChats) {
+                // Get all members for this chat
+                List<ChatMember> members = chatMemberRepository.findByChatId(chat.getId());
+                
+                // Find the other user (not the current user)
+                User otherUser = null;
+                for (ChatMember member : members) {
+                    if (!member.getUser().getId().equals(userId)) {
+                        otherUser = member.getUser();
+                        break;
+                    }
+                }
+
+                if (otherUser != null) {
+                    // Calculate online status
+                    boolean isOnline = false;
+                    if (otherUser.getLastSeenAt() != null) {
+                        Instant now = Instant.now();
+                        long diffMinutes = (now.toEpochMilli() - otherUser.getLastSeenAt().toEpochMilli()) / (1000 * 60);
+                        isOnline = diffMinutes < 3; // Online if last seen within 3 minutes
+                    }
+
+                    // Create response DTO
+                    DirectChatListResponseDTO dto = DirectChatListResponseDTO.builder()
+                            .chatId(chat.getId())
+                            .chatName(chat.getChatName()) // This will be "MarketChat X Y" or null
+                            .otherUserId(otherUser.getId())
+                            .otherUserName(otherUser.getFullName())
+                            .otherUserAvatar(otherUser.getAvatarUrl())
+                            .isOnline(isOnline)
+                            .createdAt(chat.getCreatedAt())
+                            .build();
+
+                    responseDTOs.add(dto);
+                }
             }
 
             return responseDTOs;
