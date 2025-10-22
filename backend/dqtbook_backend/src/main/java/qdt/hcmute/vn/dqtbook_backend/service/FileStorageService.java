@@ -4,15 +4,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import jakarta.servlet.http.HttpSession;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 
 @Service
 public class FileStorageService {
@@ -57,8 +61,36 @@ public class FileStorageService {
      * @throws IOException nếu xảy ra lỗi I/O trong quá trình xóa file
      */
     public void deleteFile(String fileName) throws IOException {
-        Path filePath = Paths.get(uploadDir).resolve(fileName);
-        Files.deleteIfExists(filePath);
+        try {
+            Path filePath = Paths.get(uploadDir).resolve(fileName);
+            Files.deleteIfExists(filePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Lấy danh sách tệp (Resource) của người dùng theo ID, lọc các tệp khớp mẫu "userId_*"
+     * trong thư mục lưu trữ và chỉ bao gồm tệp tồn tại, đọc được. Trả về danh sách rỗng
+     * nếu thư mục chưa tồn tại hoặc không có tệp phù hợp.
+     *
+     * @param userId ID người dùng cần truy xuất tệp
+     * @return danh sách Resource các tệp của người dùng; rỗng nếu không tìm thấy
+     * @throws IOException nếu xảy ra lỗi I/O khi duyệt thư mục hoặc truy cập tệp
+     */
+    public List<String> getFilesByUserId(String userId) throws IOException {
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            return Collections.emptyList();
+        }
+
+        List<String> fileNames = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(uploadPath, userId + "_*")) {
+            for (Path entry : stream) {
+                fileNames.add(entry.getFileName().toString());
+            }
+        }
+        return fileNames;
     }
 }
 

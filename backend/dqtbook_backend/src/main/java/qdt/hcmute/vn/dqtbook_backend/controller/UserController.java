@@ -7,6 +7,7 @@ import qdt.hcmute.vn.dqtbook_backend.dto.UserCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.service.UserService;
+import java.io.IOException;
 
 import java.util.List;
 import java.util.Optional;
@@ -88,12 +89,18 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserUpdateRequestDTO dto) {
-        Optional<UserResponseDTO> user = userService.updateUser(id, dto);
-        if (user.isPresent()) {
-            return ResponseEntity.ok(user.get());
-        } else {
-            return ResponseEntity.badRequest().body("Error updating user");
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserUpdateRequestDTO dto) throws IOException {
+        System.out.println("QUOC:1");
+        try {
+            Optional<UserResponseDTO> user = userService.updateUser(id, dto);
+            System.out.println("QUOC:2");
+            if (user.isPresent()) {
+                return ResponseEntity.ok(user.get());
+            } else {
+                return ResponseEntity.badRequest().body("Error updating user");
+            }
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user: " + ex.getMessage());
         }
     }
 

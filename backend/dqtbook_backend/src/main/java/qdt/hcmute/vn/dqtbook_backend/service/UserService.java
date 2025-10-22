@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.io.IOException;
 
 @Service
 public class UserService {
@@ -32,6 +33,9 @@ public class UserService {
 
     @Autowired
     private OtpService otpService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     public UserService(UserRepository userRepository,
             DepartmentRepository departmentRepository,
@@ -154,7 +158,7 @@ public class UserService {
     }
 
     @Transactional
-    public Optional<UserResponseDTO> updateUser(Integer id, UserUpdateRequestDTO dto) {
+    public Optional<UserResponseDTO> updateUser(Integer id, UserUpdateRequestDTO dto) throws IOException {
         Optional<User> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
             throw new IllegalArgumentException("User with id " + id + " does not exist");
@@ -167,13 +171,14 @@ public class UserService {
 
         User user = userOpt.get();
 
+        System.out.println("QUOC:3");
         // Check if email is being changed and if new email already exists
         if (dto.getEmail() != null && !dto.getEmail().equals(user.getEmail())) {
             if (userRepository.findByEmail(dto.getEmail()) != null) {
                 return Optional.empty();
             }
         }
-
+        System.out.println("QUOC:4");
         // Update fields if provided
         if (dto.getFullName() != null)
             user.setFullName(dto.getFullName());
@@ -189,10 +194,35 @@ public class UserService {
             user.setGender(dto.getGender());
         if (dto.getDateOfBirth() != null)
             user.setDateOfBirth(dto.getDateOfBirth());
-        if (dto.getAvatarUrl() != null)
+        if (dto.getAvatarUrl() != null) {
+            // Delete old avatar file if exists
+            if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+                String[] parts = user.getAvatarUrl().split("/");
+                String oldFileName = parts[parts.length - 1];
+                try {
+                    System.out.println("QUOC:5");
+                    fileStorageService.deleteFile(oldFileName);
+                    System.out.println("QUOC:6");
+                } catch (IOException e) {
+                    // Log error but continue
+                }
+            }
             user.setAvatarUrl(dto.getAvatarUrl());
-        if (dto.getCoverPhotoUrl() != null)
+        }
+        if (dto.getCoverPhotoUrl() != null){
+            // Delete old cover photo file if exists
+            if (user.getCoverPhotoUrl() != null && !user.getCoverPhotoUrl().isEmpty()) {
+                String[] parts = user.getCoverPhotoUrl().split("/");
+                String oldFileName = parts[parts.length - 1];
+                try {
+                    fileStorageService.deleteFile(oldFileName);
+                } catch (IOException e) {
+                    // Log error but continue
+                    System.err.println("Failed to delete old cover photo file: " + e.getMessage());
+                }
+            }
             user.setCoverPhotoUrl(dto.getCoverPhotoUrl());
+        }
         if (dto.getBio() != null)
             user.setBio(dto.getBio());
         if (dto.getSchoolId() != null)

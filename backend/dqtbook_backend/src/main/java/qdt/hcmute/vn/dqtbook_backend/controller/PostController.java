@@ -8,7 +8,9 @@ import qdt.hcmute.vn.dqtbook_backend.dto.PostCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostUpdateRequest;
 import qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostContentResponseDTO;
+import qdt.hcmute.vn.dqtbook_backend.model.Post;
 
+import java.util.Optional;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -131,13 +133,17 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deletePost(@PathVariable Integer id) {
+    public ResponseEntity<Object> deletePost(@PathVariable Integer id) throws Exception {
         try {
             // Check existence first so we can return a JSON error when the post doesn't exist
-            if (postService.findById(id).isEmpty()) {
+            Optional<Post> post = postService.findById(id); 
+            if (post.isEmpty()) {
                 ErrorResponse err = new ErrorResponse(404, "post not found for id=" + id);
                 return ResponseEntity.status(404).body(err);
             }
+
+            // Delete post media files
+            postService.deletePostMediaFiles(id);
 
             postService.deletePost(id);
             return ResponseEntity.noContent().build();
