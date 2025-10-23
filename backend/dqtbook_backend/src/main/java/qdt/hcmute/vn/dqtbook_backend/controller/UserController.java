@@ -138,4 +138,19 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found or upgrade failed");
         }
     }
+
+    // >> Ban và unBan 1 user (chỉ dành cho admin)
+    @PostMapping("/ban")
+    public ResponseEntity<?> banUser(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        userService.banUser(email);
+        return ResponseEntity.ok("User with email " + email + " has been banned.");
+    }
+    @PostMapping("/unban")
+    public ResponseEntity<?> unbanUser(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        userService.unbanUser(email);
+        return ResponseEntity.ok("User with email " + email + " has been unbanned.");
+    }
+    // >> ==========================================================
 }

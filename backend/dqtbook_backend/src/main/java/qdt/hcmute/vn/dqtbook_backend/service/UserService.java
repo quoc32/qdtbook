@@ -446,4 +446,61 @@ public class UserService {
         return userRepository.save(newUser);
     }
 
+    /**
+     * Cấm (ban) người dùng theo ID.
+     * Nếu người dùng tồn tại, đặt trạng thái bị cấm và cập nhật thời gian chỉnh sửa, sau đó lưu thay đổi.
+     * Nếu không tìm thấy người dùng, phương thức không thực hiện thay đổi nào.
+     *
+     * @param email email của người dùng cần cấm
+     */
+    public void banUser(String email) {
+        // Check user thực hiện hành động có phải admin không
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        String sessionUserRole = (String) session.getAttribute("role");
+        if (sessionUserId == null || sessionUserRole == null || !sessionUserRole.equals("admin")) {
+            throw new IllegalArgumentException("Only admin can upgrade user roles");
+        }
+
+        User user_ = userRepository.findByEmail(email);
+        Optional<User> userOpt = Optional.ofNullable(user_);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setBanned(true);
+            user.setUpdatedAt(Instant.now());
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * Gỡ cấm người dùng theo ID.
+     * Nếu tìm thấy, đặt banned = false và cập nhật updatedAt; nếu không, bỏ qua.
+     * @param email email người dùng cần gỡ cấm
+     */
+    public void unbanUser(String email) {
+        // Check user thực hiện hành động có phải admin không
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        String sessionUserRole = (String) session.getAttribute("role");
+        if (sessionUserId == null || sessionUserRole == null || !sessionUserRole.equals("admin")) {
+            throw new IllegalArgumentException("Only admin can upgrade user roles");
+        }
+
+        User user_ = userRepository.findByEmail(email);
+        Optional<User> userOpt = Optional.ofNullable(user_);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setBanned(false);
+            user.setUpdatedAt(Instant.now());
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * Kiểm tra xem người dùng có bị cấm không dựa trên email.
+     * @param email Email của người dùng cần kiểm tra 
+     */
+    public boolean isUserBanned(String email) {
+        User user = userRepository.findByEmail(email);
+        return user != null && Boolean.TRUE.equals(user.isBanned());
+    }
+
 }

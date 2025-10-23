@@ -106,6 +106,10 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Column(name = "is_banned", nullable = false)
+    @ColumnDefault("0")
+    private boolean banned;
+
     // OAuth2 fields
     @Column(name = "oauth_provider", length = 50)
     private String oauthProvider;  // "google", "facebook", null for local users

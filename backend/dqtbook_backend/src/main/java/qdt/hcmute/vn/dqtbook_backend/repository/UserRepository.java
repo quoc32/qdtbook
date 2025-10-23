@@ -11,9 +11,13 @@ import qdt.hcmute.vn.dqtbook_backend.model.User;
 public interface UserRepository extends JpaRepository<User, Integer> {
   User findByEmail(String email);
 
+  List<User> findTop5ByEmailContainingIgnoreCase(String keyword);
+
   // OAuth2 methods
   User findByOauthProviderAndOauthId(String oauthProvider, String oauthId);
 
   @Query("SELECT u FROM User u WHERE u.id <> :userId AND u.id NOT IN :friendIds")
   List<User> findSuggestions(Integer userId, List<Integer> friendIds, Pageable pageable);
+
+  
 }
