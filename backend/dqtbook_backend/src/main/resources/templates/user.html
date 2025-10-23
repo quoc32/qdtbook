@@ -325,7 +325,7 @@
           </script>
           <!-- Phần NavBar con:END -->
 
-          <!-- Modal: Edit avatar / cover / bio -->
+          <!-- Modal: Edit avatar / cover / bio:BEGIN -->
           <div class="modal fade" id="profileEditModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
               <form id="profile-edit-form">
@@ -385,7 +385,7 @@
               </form> 
             </div>
           </div>
-
+          <!-- Modal: Edit avatar / cover / bio:END -->
         </div>
         
         <script>
@@ -555,7 +555,7 @@
 
         <!-- Nhúng fragment postComposer -->
         <div th:replace="fragments/postComposer :: postComposer"></div>
-          <!-- Nhúng fragment postComposerModal -->
+        <!-- Nhúng fragment postComposerModal -->
         <div th:replace="fragments/postComposer :: postComposerModal"></div>
         <!-- Nhúng fragment postSegment -->
         <div th:replace="~{fragments/postSegment :: postSegment(
@@ -564,7 +564,7 @@
         )}"></div>
 
         <!-- Infinite scroll sentinel -->
-        <div id="feed-end" class="text-center text-muted py-3 small" aria-live="polite">Loading...</div>
+        <!-- <div id="feed-end" class="text-center text-muted py-3 small" aria-live="polite">Loading...</div> -->
       </section>
       <!-- Feed:END -->
 
@@ -1101,6 +1101,7 @@
       <!-- Friends:BEGIN -->
       <section class="col-12 col-lg-11 mb-4 d-none" id="friends-section" th:attr="data-user-id=${viewingUserId}">
 
+        <!-- Header -->
         <div class="d-flex align-items-center justify-content-between mb-3">
           <h5 class="mb-0">
         <span class="friends-title-pill">
@@ -1112,6 +1113,7 @@
           </div>
         </div>
 
+        <!-- Fillter -->
         <div class="friends-toolbar mb-3">
           <div class="row g-2 align-items-center">
         <div class="col-12 col-md-8">
@@ -1122,19 +1124,71 @@
           </div>
         </div>
         <div class="col-12 col-md-4 text-md-end">
-          <select id="friends-sort" class="form-select form-select-sm w-auto ms-md-auto" default-value="name-asc" aria-label="Sắp xếp bạn bè">
-            <option value="name-asc">Tên (A→Z)</option>
-            <option value="name-desc">Tên (Z→A)</option>
-            <option value="recent">Mới thêm</option>
-          </select>
+          <div class="sort-select-wrap d-inline-flex align-items-center">
+            <i class="bi bi-funnel sort-ic" aria-hidden="true"></i>
+            <select id="friends-sort" class="form-select form-select-sm sort-select" default-value="name-asc" aria-label="Sắp xếp bạn bè">
+              <option value="name-asc">Tên (A→Z)</option>
+              <option value="name-desc">Tên (Z→A)</option>
+              <option value="recent">Mới thêm</option>
+            </select>
+            <span class="sort-caret" aria-hidden="true"><i class="bi bi-chevron-down"></i></span>
+          </div>
         </div>
           </div>
         </div>
 
-        <div id="friends-grid" class="row g-3"></div>
-        <div id="friends-empty" class="text-center text-muted py-4 d-none">Không tìm thấy bạn bè phù hợp.</div>
+        <div id="friends-grid-container" style="height: 560px; overflow-y: auto; overflow-x: hidden;">
+          <div id="friends-grid" class="row g-3"></div>
+          <div id="friends-empty" class="text-center text-muted py-4 d-none">Không tìm thấy bạn bè phù hợp.</div>
+        </div>
 
         <style>
+                    #friends-section .sort-select-wrap{
+            background: linear-gradient(135deg,#f7faff,#eef4ff);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .2rem .6rem;
+            box-shadow: var(--shadow-sm);
+            transition: background .2s, border-color .2s, box-shadow .2s;
+          }
+          #friends-section .sort-select-wrap:hover{
+            background: linear-gradient(135deg,#ffffff,#f2f7ff);
+            border-color: #cfe2ff;
+            box-shadow: var(--shadow);
+          }
+          #friends-section .sort-select-wrap:focus-within{
+            border-color: #bcd3ff;
+            box-shadow: 0 0 0 4px rgba(13,110,253,.12), var(--shadow-sm);
+          }
+          #friends-section .sort-ic{
+            color: #0d5ef4;
+            margin-right: .35rem;
+          }
+          #friends-section .sort-caret{
+            color: #6b7280;
+            margin-left: .35rem;
+            pointer-events: none;
+          }
+          #friends-section .sort-select{
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+            padding: .35rem 1.1rem .35rem .1rem;
+            font-weight: 600;
+            color: #445169;
+            min-width: 170px;
+            outline: none;
+          }
+          #friends-section .sort-select:focus{
+            outline: none;
+            box-shadow: none;
+          }
+          @media (max-width: 576px){
+            #friends-section .sort-select{ min-width: 140px; }
+          }
           #friends-section {
         --card-bg: #fff;
         --card-br: 16px;
@@ -1688,13 +1742,6 @@
         </script>
       </section>
       <!-- Photos:END -->
-
-      <!-- Right sidebar:END -->
-      <!-- <aside class="col-12 col-lg-3 mb-4 right-col">
-
-        
-      </aside> -->
-      <!-- Right sidebar:END -->
 
     </div>
   </main>
