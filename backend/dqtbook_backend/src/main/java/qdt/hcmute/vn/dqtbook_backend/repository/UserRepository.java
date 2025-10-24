@@ -16,4 +16,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
   @Query("SELECT u FROM User u WHERE u.id <> :userId AND u.id NOT IN :friendIds")
   List<User> findSuggestions(Integer userId, List<Integer> friendIds, Pageable pageable);
+
+  @Query("SELECT u FROM User u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+  List<User> searchByFullNameOrEmail(String keyword);
 }

@@ -57,6 +57,12 @@ public class UserService {
         return Optional.ofNullable(user).map(this::convertToResponseDTO);
     }
 
+    public List<UserResponseDTO> searchUsers(String keyword) {
+        return userRepository.searchByFullNameOrEmail(keyword).stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public boolean sendOtpForRegistration(String email) {
         // Kiểm tra email có tồn tại chưa

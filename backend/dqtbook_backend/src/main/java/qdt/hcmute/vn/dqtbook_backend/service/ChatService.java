@@ -393,4 +393,66 @@ public class ChatService {
             return new ArrayList<>();
         }
     }
+
+    /**
+     * Leave a group chat
+     * 
+     * @param chatId Chat ID
+     * @param userId User ID who wants to leave
+     * @return true if successfully left, false otherwise
+     */
+    public boolean leaveGroupChat(Integer chatId, Integer userId) {
+        try {
+            // Validate chat exists and is a group
+            Optional<Chat> chatOpt = chatRepository.findById(chatId);
+            if (chatOpt.isEmpty()) {
+                System.err.println("Chat not found: " + chatId);
+                return false;
+            }
+
+            Chat chat = chatOpt.get();
+            if (!chat.getIsGroup()) {
+                System.err.println("Cannot leave a direct chat: " + chatId);
+                return false;
+            }
+
+            // Validate user exists
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isEmpty()) {
+                System.err.println("User not found: " + userId);
+                return false;
+            }
+
+            // Check if user is a member of the chat
+            ChatMemberId chatMemberId = new ChatMemberId();
+            chatMemberId.setChatId(chatId);
+            chatMemberId.setUserId(userId);
+
+            Optional<ChatMember> chatMemberOpt = chatMemberRepository.findById(chatMemberId);
+            if (chatMemberOpt.isEmpty()) {
+                System.err.println("User is not a member of this chat: userId=" + userId + ", chatId=" + chatId);
+                return false;
+            }
+
+            // Remove the user from the chat
+            chatMemberRepository.deleteById(chatMemberId);
+            System.out.println("User " + userId + " successfully left chat " + chatId);
+
+            // Check if the group is now empty
+            List<ChatMember> remainingMembers = chatMemberRepository.findByChatId(chatId);
+            if (remainingMembers.isEmpty()) {
+                // If no members left, optionally delete the chat
+                System.out.println("No members left in chat " + chatId + ". Consider deleting the chat.");
+                // Uncomment the following line if you want to auto-delete empty chats
+                // chatRepository.deleteById(chatId);
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("Error leaving group chat: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
