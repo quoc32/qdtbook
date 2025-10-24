@@ -31,6 +31,29 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUsers(@RequestParam("keyword") String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "message", "Từ khóa tìm kiếm không được để trống"
+            ));
+        }
+        
+        List<UserResponseDTO> users = userService.searchUsers(keyword.trim());
+        
+        if (users.isEmpty()) {
+            return ResponseEntity.ok(Map.of(
+                "message", "Không tìm thấy người dùng nào phù hợp với từ khóa: " + keyword,
+                "data", users
+            ));
+        }
+        
+        return ResponseEntity.ok(Map.of(
+            "message", "Tìm thấy " + users.size() + " người dùng",
+            "data", users
+        ));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Integer id) {
         Optional<UserResponseDTO> user = userService.getUserById(id);

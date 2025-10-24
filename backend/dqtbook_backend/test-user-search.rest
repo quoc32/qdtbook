@@ -1,0 +1,49 @@
+### Test API tìm kiếm user theo fullName hoặc email
+
+### 1. Tìm kiếm user theo tên (keyword: "nguyen")
+GET http://localhost:8080/api/users/search?keyword=Tung
+Content-Type: application/json
+
+### 2. Tìm kiếm user theo email (keyword: "gmail")
+GET http://localhost:8080/api/users/search?keyword=gmail
+Content-Type: application/json
+
+### 3. Tìm kiếm user với keyword ngắn (keyword: "a")
+GET http://localhost:8080/api/users/search?keyword=a
+Content-Type: application/json
+
+### 4. Tìm kiếm user với email cụ thể
+GET http://localhost:8080/api/users/search?keyword=example@gmail.com
+Content-Type: application/json
+
+### 5. Test với keyword trống (sẽ trả về lỗi)
+GET http://localhost:8080/api/users/search?keyword=
+Content-Type: application/json
+
+### 6. Test với keyword không tồn tại
+GET http://localhost:8080/api/users/search?keyword=xyzabc123notfound
+Content-Type: application/json
+
+### 7. Tìm kiếm với khoảng trắng (sẽ tự động trim)
+GET http://localhost:8080/api/users/search?keyword=  nguyen  
+Content-Type: application/json
+
+### 8. Tìm kiếm không phân biệt hoa thường
+GET http://localhost:8080/api/users/search?keyword=NGUYEN
+Content-Type: application/json
+
+###
+### Các API khác để tham khảo
+###
+
+### Lấy tất cả users
+GET http://localhost:8080/api/users/api
+Content-Type: application/json
+
+### Lấy user theo ID
+GET http://localhost:8080/api/users/1
+Content-Type: application/json
+
+### Tìm user theo email (API cũ)
+GET http://localhost:8080/api/users/find/by-email?email=example@gmail.com
+Content-Type: application/json
