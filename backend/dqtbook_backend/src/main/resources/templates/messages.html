@@ -1,1240 +1,1276 @@
 <!DOCTYPE html>
 <html lang="vi">
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>QDTBook - Messages</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <!-- Bootstrap 5 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/png" href="/static/favicon.png">
-    
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="/static/favicon.png" />
+
     <!-- WebSocket Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <style>
-        body {
-            background: #f0f2f5;
-            font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
+      body {
+        background: #f0f2f5;
+        font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+      }
+
+      .chat-container {
+        height: calc(100vh - 90px);
+        background: #f0f2f5;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin: 8px;
+      }
+
+      /* Left Sidebar - Chat List */
+      .chat-sidebar {
+        background: #fff;
+        border-right: 1px solid #e4e6ea;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        width: 320px;
+        min-width: 320px;
+        max-width: 320px;
+      }
+
+      .sidebar-header {
+        padding: 16px 16px 8px;
+        border-bottom: none;
+        background: #fff;
+        color: #050505;
+        flex-shrink: 0;
+      }
+
+      .sidebar-header h4 {
+        margin: 0;
+        font-weight: 800;
+        font-size: 24px;
+        color: #050505;
+      }
+
+      .chat-search {
+        padding: 8px 16px 16px;
+        border-bottom: none;
+        flex-shrink: 0;
+      }
+
+      .chat-search-wrapper {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .chat-search input {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 20px;
+        background: #f0f2f5;
+        font-size: 15px;
+        color: #050505;
+      }
+
+      .chat-search input:focus {
+        outline: none;
+        background: #e4e6ea;
+      }
+
+      .chat-search input::placeholder {
+        color: #65676b;
+      }
+
+      .btn-create-group {
+        padding: 8px 16px;
+        background: #0084ff;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.2s;
+      }
+
+      .btn-create-group:hover {
+        background: #0073e6;
+      }
+
+      .chat-list {
+        padding: 0;
+        flex: 1;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #bcc0c4 transparent;
+      }
+
+      /* Custom Scrollbar for Chat List */
+      .chat-list::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .chat-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .chat-list::-webkit-scrollbar-thumb {
+        background: #bcc0c4;
+        border-radius: 10px;
+      }
+
+      .chat-list::-webkit-scrollbar-thumb:hover {
+        background: #8a8d91;
+      }
+
+      .chat-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-bottom: none;
+        cursor: pointer;
+        transition: background-color 0.1s ease;
+        text-decoration: none;
+        color: inherit;
+        border-radius: 8px;
+        margin: 0 8px 2px;
+      }
+
+      .chat-item:hover {
+        background: #f2f3f5;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .chat-item.active {
+        background: #e7f3ff;
+        border-radius: 8px;
+      }
+
+      .chat-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px;
+        position: relative;
+      }
+
+      .chat-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .chat-name {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #050505;
+      }
+
+      .chat-last-message {
+        font-size: 13px;
+        color: #65676b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .chat-time {
+        font-size: 12px;
+        color: #65676b;
+        margin-left: 8px;
+        white-space: nowrap;
+      }
+
+      .online-indicator {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 16px;
+        height: 16px;
+        background: #31a24c;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(49, 162, 76, 0.3);
+        z-index: 1;
+      }
+
+      .offline-indicator {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 16px;
+        height: 16px;
+        background: #666;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        z-index: 1;
+      }
+
+      /* Center - Chat Content */
+      .chat-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #f0f2f5;
+        border: none;
+        border-radius: 0;
+        margin: 0;
+        box-shadow: none;
+        overflow: hidden;
+      }
+
+      .chat-header {
+        padding: 15px 20px;
+        background: #fff;
+        border-bottom: 1px solid #e4e6ea;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border-radius: 8px 8px 0 0;
+        flex-shrink: 0;
+      }
+
+      .chat-header-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .chat-header-info h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #050505;
+      }
+
+      .chat-header-info .status {
+        font-size: 12px;
+        color: #42b883;
+        margin-top: 2px;
+      }
+
+      .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        height: calc(100vh - 260px);
+        max-height: calc(100vh - 260px);
+      }
+
+      /* Custom Scrollbar for Chat Messages */
+      .chat-messages::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .chat-messages::-webkit-scrollbar-thumb {
+        background: #bcc0c4;
+        border-radius: 10px;
+      }
+
+      .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: #8a8d91;
+      }
+
+      .message {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 8px;
+        max-width: 60%;
+        align-items: flex-start;
+      }
+
+      .message.sent {
+        margin-left: auto;
+        align-items: flex-end;
+      }
+
+      .message-bubble {
+        background: #f0f0f0;
+        padding: 8px 12px;
+        border-radius: 18px;
+        position: relative;
+        word-wrap: break-word;
+        font-size: 15px;
+        line-height: 1.3;
+      }
+
+      .message.sent .message-bubble {
+        background: #0084ff;
+        color: #fff;
+      }
+
+      .message-time {
+        font-size: 11px;
+        opacity: 0.6;
+        margin-top: 4px;
+        text-align: right;
+      }
+
+      .message.sent .message-time {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Sender info for group chats */
+      .message-sender {
+        margin-bottom: 4px;
+        padding-left: 8px;
+      }
+
+      .message-sender-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #65676b;
+      }
+
+      .message.sent .message-sender-name {
+        color: #0084ff;
+      }
+
+      /* Hide sender info for sent messages in group chat */
+      .message.sent .message-sender {
+        display: none;
+      }
+
+      .chat-input-area {
+        padding: 16px 20px;
+        background: #fff;
+        border-top: 0px solid #e4e6ea;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+        margin-top: 0;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f0f2f5;
+        border-radius: 20px;
+        padding: 8px 12px;
+        min-height: 40px;
+        border: 1px solid #e4e6ea;
+        width: 100%;
+      }
+
+      .message-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 10px 12px;
+        font-size: 15px;
+        resize: none;
+        outline: none;
+        color: #050505;
+        line-height: 1.4;
+      }
+
+      .message-input::placeholder {
+        color: #65676b;
+      }
+
+      .send-btn {
+        border: 0;
+        background: #0084ff;
+        color: #fff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.1s ease;
+        cursor: pointer;
+      }
+
+      .send-btn:hover {
+        background: #0073e6;
+        transform: scale(1.05);
+      }
+
+      .send-btn:disabled {
+        background: #bcc0c4;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* Right Sidebar - Chat Info */
+      .chat-info-sidebar {
+        background: #fff;
+        border-left: 1px solid #e4e6ea;
+        height: 100%;
+        overflow-y: auto;
+        width: 280px;
+        min-width: 280px;
+        max-width: 280px;
+      }
+
+      /* Custom Scrollbar for Chat Info Sidebar */
+      .chat-info-sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .chat-info-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .chat-info-sidebar::-webkit-scrollbar-thumb {
+        background: #bcc0c4;
+        border-radius: 10px;
+      }
+
+      .chat-info-sidebar::-webkit-scrollbar-thumb:hover {
+        background: #8a8d91;
+      }
+
+      .info-header {
+        padding: 24px 16px;
+        text-align: center;
+        border-bottom: 1px solid #e4e6ea;
+      }
+
+      .info-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 auto 12px;
+      }
+
+      .info-name {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: #050505;
+      }
+
+      .info-status {
+        font-size: 14px;
+        color: #42b883;
+      }
+
+      .info-section {
+        padding: 16px;
+        border-bottom: 1px solid #e4e6ea;
+      }
+
+      .info-section h6 {
+        margin-bottom: 12px;
+        font-weight: 600;
+        color: #050505;
+        font-size: 14px;
+      }
+
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        font-size: 14px;
+        color: #65676b;
+        cursor: pointer;
+        border-radius: 8px;
+        padding: 8px 8px;
+        margin: 2px 0;
+        transition: background-color 0.1s ease;
+      }
+
+      .info-item:hover {
+        background: #f2f3f5;
+      }
+
+      .info-item span:first-child {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+      }
+
+      /* Empty State */
+      .empty-chat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #65676b;
+        text-align: center;
+        padding: 32px;
+      }
+
+      .empty-chat .empty-icon {
+        width: 96px;
+        height: 96px;
+        background: #f0f2f5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: #bcc0c4;
+      }
+
+      .empty-chat h5 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #050505;
+      }
+
+      .empty-chat p {
+        font-size: 14px;
+        color: #65676b;
+        margin: 0;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .chat-info-sidebar {
+          display: none;
         }
 
-        .chat-container {
-            height: calc(100vh - 90px);
-            background: #f0f2f5;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin: 8px;
-        }
-
-        /* Left Sidebar - Chat List */
         .chat-sidebar {
-            background: #fff;
-            border-right: 1px solid #e4e6ea;
-            height: 100%;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            width: 320px;
-            min-width: 320px;
-            max-width: 320px;
-        }
-
-        .sidebar-header {
-            padding: 16px 16px 8px;
-            border-bottom: none;
-            background: #fff;
-            color: #050505;
-            flex-shrink: 0;
-        }
-
-        .sidebar-header h4 {
-            margin: 0;
-            font-weight: 800;
-            font-size: 24px;
-            color: #050505;
-        }
-
-        .chat-search {
-            padding: 8px 16px 16px;
-            border-bottom: none;
-            flex-shrink: 0;
-        }
-
-        .chat-search-wrapper {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .chat-search input {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 20px;
-            background: #f0f2f5;
-            font-size: 15px;
-            color: #050505;
-        }
-
-        .chat-search input:focus {
-            outline: none;
-            background: #e4e6ea;
-        }
-
-        .chat-search input::placeholder {
-            color: #65676b;
-        }
-
-        .btn-create-group {
-            padding: 8px 16px;
-            background: #0084ff;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.2s;
-        }
-
-        .btn-create-group:hover {
-            background: #0073e6;
-        }
-
-        .chat-list {
-            padding: 0;
-            flex: 1;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #bcc0c4 transparent;
-        }
-
-        /* Custom Scrollbar for Chat List */
-        .chat-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-list::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chat-list::-webkit-scrollbar-thumb {
-            background: #bcc0c4;
-            border-radius: 10px;
-        }
-
-        .chat-list::-webkit-scrollbar-thumb:hover {
-            background: #8a8d91;
-        }
-
-        .chat-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 16px;
-            border-bottom: none;
-            cursor: pointer;
-            transition: background-color 0.1s ease;
-            text-decoration: none;
-            color: inherit;
-            border-radius: 8px;
-            margin: 0 8px 2px;
-        }
-
-        .chat-item:hover {
-            background: #f2f3f5;
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .chat-item.active {
-            background: #e7f3ff;
-            border-radius: 8px;
-        }
-
-        .chat-avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 12px;
-            position: relative;
-        }
-
-        .chat-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .chat-name {
-            font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #050505;
-        }
-
-        .chat-last-message {
-            font-size: 13px;
-            color: #65676b;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-time {
-            font-size: 12px;
-            color: #65676b;
-            margin-left: 8px;
-            white-space: nowrap;
-        }
-
-        .online-indicator {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 16px;
-            height: 16px;
-            background: #31a24c;
-            border: 3px solid #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 0 2px rgba(49, 162, 76, 0.3);
-            z-index: 1;
-        }
-
-        .offline-indicator {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 16px;
-            height: 16px;
-            background: #666;
-            border: 3px solid #fff;
-            border-radius: 50%;
-            z-index: 1;
-        }
-
-        /* Center - Chat Content */
-        .chat-content {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            background: #f0f2f5;
-            border: none;
-            border-radius: 0;
-            margin: 0;
-            box-shadow: none;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            padding: 15px 20px;
-            background: #fff;
-            border-bottom: 1px solid #e4e6ea;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-radius: 8px 8px 0 0;
-            flex-shrink: 0;
-        }
-
-        .chat-header-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .chat-header-info h5 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: #050505;
-        }
-
-        .chat-header-info .status {
-            font-size: 12px;
-            color: #42b883;
-            margin-top: 2px;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            height: calc(100vh - 260px);
-            max-height: calc(100vh - 260px);
-        }
-
-        /* Custom Scrollbar for Chat Messages */
-        .chat-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: #bcc0c4;
-            border-radius: 10px;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb:hover {
-            background: #8a8d91;
-        }
-
-        .message {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 8px;
-            max-width: 60%;
-            align-items: flex-start;
-        }
-
-        .message.sent {
-            margin-left: auto;
-            align-items: flex-end;
-        }
-
-        .message-bubble {
-            background: #f0f0f0;
-            padding: 8px 12px;
-            border-radius: 18px;
-            position: relative;
-            word-wrap: break-word;
-            font-size: 15px;
-            line-height: 1.3;
-        }
-
-        .message.sent .message-bubble {
-            background: #0084ff;
-            color: #fff;
-        }
-
-        .message-time {
-            font-size: 11px;
-            opacity: 0.6;
-            margin-top: 4px;
-            text-align: right;
-        }
-
-        .message.sent .message-time {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Sender info for group chats */
-        .message-sender {
-            margin-bottom: 4px;
-            padding-left: 8px;
-        }
-
-        .message-sender-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #65676b;
-        }
-
-        .message.sent .message-sender-name {
-            color: #0084ff;
-        }
-
-        /* Hide sender info for sent messages in group chat */
-        .message.sent .message-sender {
-            display: none;
-        }
-
-        .chat-input-area {
-            padding: 16px 20px;
-            background: #fff;
-            border-top: 0px solid #e4e6ea;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0;
-            margin-top: 0;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #f0f2f5;
-            border-radius: 20px;
-            padding: 8px 12px;
-            min-height: 40px;
-            border: 1px solid #e4e6ea;
-            width: 100%;
-        }
-
-        .message-input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            padding: 10px 12px;
-            font-size: 15px;
-            resize: none;
-            outline: none;
-            color: #050505;
-            line-height: 1.4;
-        }
-
-        .message-input::placeholder {
-            color: #65676b;
-        }
-
-        .send-btn {
-            border: 0;
-            background: #0084ff;
-            color: #fff;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s ease;
-            cursor: pointer;
-        }
-
-        .send-btn:hover {
-            background: #0073e6;
-            transform: scale(1.05);
-        }
-
-        .send-btn:disabled {
-            background: #bcc0c4;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Right Sidebar - Chat Info */
-        .chat-info-sidebar {
-            background: #fff;
-            border-left: 1px solid #e4e6ea;
-            height: 100%;
-            overflow-y: auto;
-            width: 280px;
-            min-width: 280px;
-            max-width: 280px;
-        }
-
-        /* Custom Scrollbar for Chat Info Sidebar */
-        .chat-info-sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-info-sidebar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chat-info-sidebar::-webkit-scrollbar-thumb {
-            background: #bcc0c4;
-            border-radius: 10px;
-        }
-
-        .chat-info-sidebar::-webkit-scrollbar-thumb:hover {
-            background: #8a8d91;
-        }
-
-        .info-header {
-            padding: 24px 16px;
-            text-align: center;
-            border-bottom: 1px solid #e4e6ea;
-        }
-
-        .info-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 0 auto 12px;
-        }
-
-        .info-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: #050505;
-        }
-
-        .info-status {
-            font-size: 14px;
-            color: #42b883;
-        }
-
-        .info-section {
-            padding: 16px;
-            border-bottom: 1px solid #e4e6ea;
-        }
-
-        .info-section h6 {
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: #050505;
-            font-size: 14px;
-        }
-
-        .info-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 0;
-            font-size: 14px;
-            color: #65676b;
-            cursor: pointer;
-            border-radius: 8px;
-            padding: 8px 8px;
-            margin: 2px 0;
-            transition: background-color 0.1s ease;
-        }
-
-        .info-item:hover {
-            background: #f2f3f5;
-        }
-
-        .info-item span:first-child {
-            font-size: 16px;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Empty State */
-        .empty-chat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #65676b;
-            text-align: center;
-            padding: 32px;
-        }
-
-        .empty-chat .empty-icon {
-            width: 96px;
-            height: 96px;
-            background: #f0f2f5;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            margin-bottom: 16px;
-            color: #bcc0c4;
-        }
-
-        .empty-chat h5 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #050505;
-        }
-
-        .empty-chat p {
-            font-size: 14px;
-            color: #65676b;
-            margin: 0;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .chat-info-sidebar {
-                display: none;
-            }
-
-            .chat-sidebar {
-                width: 280px;
-                min-width: 280px;
-                max-width: 280px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .chat-sidebar {
-                position: absolute;
-                left: -100%;
-                width: 100%;
-                max-width: 100%;
-                z-index: 1000;
-                transition: left 0.3s;
-            }
-
-            .chat-sidebar.show {
-                left: 0;
-            }
-        }
-
-        /* Create Group Modal */
-        .create-group-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .create-group-modal.show {
-            display: flex;
-        }
-
-        .modal-content-group {
-            background: white;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-        }
-
-        .modal-header-group {
-            padding: 20px;
-            border-bottom: 1px solid #e4e6ea;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header-group h5 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 700;
-            color: #050505;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #65676b;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-
-        .modal-close:hover {
-            background: #f0f2f5;
-        }
-
-        .modal-body-group {
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .form-group-modal {
-            margin-bottom: 20px;
-        }
-
-        .form-group-modal label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #050505;
-            font-size: 14px;
-        }
-
-        .form-group-modal input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #e4e6ea;
-            border-radius: 8px;
-            font-size: 15px;
-            color: #050505;
-        }
-
-        .form-group-modal input:focus {
-            outline: none;
-            border-color: #0084ff;
-        }
-
-        .friend-select-list {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #e4e6ea;
-            border-radius: 8px;
-            padding: 8px;
-        }
-
-        .friend-select-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .friend-select-item:hover {
-            background: #f0f2f5;
-        }
-
-        .friend-select-item input[type="checkbox"] {
-            margin-right: 12px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .friend-select-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 12px;
-            object-fit: cover;
-        }
-
-        .friend-select-info {
-            flex: 1;
-        }
-
-        .friend-select-name {
-            font-weight: 600;
-            color: #050505;
-            font-size: 15px;
-        }
-
-        .modal-footer-group {
-            padding: 16px 20px;
-            border-top: 1px solid #e4e6ea;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .btn-modal {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-modal-cancel {
-            background: #e4e6ea;
-            color: #050505;
-        }
-
-        .btn-modal-cancel:hover {
-            background: #d0d2d6;
-        }
-
-        .btn-modal-create {
-            background: #0084ff;
-            color: white;
-        }
-
-        .btn-modal-create:hover {
-            background: #0073e6;
-        }
-
-        .btn-modal-create:disabled {
-            background: #bcc0c4;
-            cursor: not-allowed;
-        }
-
-        .selected-count {
-            color: #65676b;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-
-        /* Firefox Scrollbar */
-        .chat-sidebar,
-        .chat-messages,
-        .chat-info-sidebar {
-            scrollbar-width: thin;
-            scrollbar-color: #bcc0c4 transparent;
-        }
+          width: 280px;
+          min-width: 280px;
+          max-width: 280px;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .chat-sidebar {
+          position: absolute;
+          left: -100%;
+          width: 100%;
+          max-width: 100%;
+          z-index: 1000;
+          transition: left 0.3s;
+        }
+
+        .chat-sidebar.show {
+          left: 0;
+        }
+      }
+
+      /* Create Group Modal */
+      .create-group-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .create-group-modal.show {
+        display: flex;
+      }
+
+      .modal-content-group {
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+      }
+
+      .modal-header-group {
+        padding: 20px;
+        border-bottom: 1px solid #e4e6ea;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header-group h5 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #050505;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #65676b;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+      }
+
+      .modal-close:hover {
+        background: #f0f2f5;
+      }
+
+      .modal-body-group {
+        padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .form-group-modal {
+        margin-bottom: 20px;
+      }
+
+      .form-group-modal label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #050505;
+        font-size: 14px;
+      }
+
+      .form-group-modal input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e4e6ea;
+        border-radius: 8px;
+        font-size: 15px;
+        color: #050505;
+      }
+
+      .form-group-modal input:focus {
+        outline: none;
+        border-color: #0084ff;
+      }
+
+      .friend-select-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #e4e6ea;
+        border-radius: 8px;
+        padding: 8px;
+      }
+
+      .friend-select-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .friend-select-item:hover {
+        background: #f0f2f5;
+      }
+
+      .friend-select-item input[type="checkbox"] {
+        margin-right: 12px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .friend-select-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 12px;
+        object-fit: cover;
+      }
+
+      .friend-select-info {
+        flex: 1;
+      }
+
+      .friend-select-name {
+        font-weight: 600;
+        color: #050505;
+        font-size: 15px;
+      }
+
+      .modal-footer-group {
+        padding: 16px 20px;
+        border-top: 1px solid #e4e6ea;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .btn-modal {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-modal-cancel {
+        background: #e4e6ea;
+        color: #050505;
+      }
+
+      .btn-modal-cancel:hover {
+        background: #d0d2d6;
+      }
+
+      .btn-modal-create {
+        background: #0084ff;
+        color: white;
+      }
+
+      .btn-modal-create:hover {
+        background: #0073e6;
+      }
+
+      .btn-modal-create:disabled {
+        background: #bcc0c4;
+        cursor: not-allowed;
+      }
+
+      .selected-count {
+        color: #65676b;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+
+      /* Firefox Scrollbar */
+      .chat-sidebar,
+      .chat-messages,
+      .chat-info-sidebar {
+        scrollbar-width: thin;
+        scrollbar-color: #bcc0c4 transparent;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <!-- Nhúng fragment navbar -->
     <div th:replace="fragments/navbar :: navbar"></div>
 
     <!-- Main Chat Container -->
     <div class="container-fluid p-0 h-100">
-        <div class="chat-container">
-            <div class="d-flex h-100">
-
-                <!-- Left Sidebar - Chat List -->
-                <div class="chat-sidebar">
-                    <div class="sidebar-header">
-                        <h4>Tin nhắn</h4>
-                    </div>
-
-                    <div class="chat-search">
-                        <div class="chat-search-wrapper">
-                            <input type="text" placeholder="Tìm kiếm cuộc trò chuyện..." id="chatSearchInput">
-                            <button class="btn-create-group" onclick="openCreateChatModal()">+ Tạo chat</button>
-                        </div>
-                    </div>
-
-                    <div class="chat-list" id="chatList">
-                        <!-- Demo chat items -->
-                        <div class="text-center py-4">
-                            <small class="text-muted">Đang tải danh sách chat...</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Center - Chat Content -->
-                <div class=" flex-fill">
-                    <div class="chat-content">
-                        <div id="chatArea" class="h-100 d-flex flex-column">
-                            <!-- Empty state -->
-                            <div class="empty-chat">
-                                <div class="empty-icon">💬</div>
-                                <h5>Chọn một cuộc trò chuyện</h5>
-                                <p>Chọn từ danh sách bên trái để bắt đầu trò chuyện</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Sidebar - Chat Info -->
-                <div class="chat-info-sidebar">
-                    <div id="chatInfoArea">
-                        <div class="empty-chat">
-                            <div class="empty-icon">ℹ️</div>
-                            <h6>Thông tin cuộc trò chuyện</h6>
-                            <p class="small text-muted">Chọn một cuộc trò chuyện để xem thông tin</p>
-                        </div>
-                    </div>
-                </div>
-
+      <div class="chat-container">
+        <div class="d-flex h-100">
+          <!-- Left Sidebar - Chat List -->
+          <div class="chat-sidebar">
+            <div class="sidebar-header">
+              <h4>Tin nhắn</h4>
             </div>
+
+            <div class="chat-search">
+              <div class="chat-search-wrapper">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm cuộc trò chuyện..."
+                  id="chatSearchInput"
+                />
+                <button
+                  class="btn-create-group"
+                  onclick="openCreateChatModal()"
+                >
+                  + Tạo chat
+                </button>
+              </div>
+            </div>
+
+            <div class="chat-list" id="chatList">
+              <!-- Demo chat items -->
+              <div class="text-center py-4">
+                <small class="text-muted">Đang tải danh sách chat...</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center - Chat Content -->
+          <div class="flex-fill">
+            <div class="chat-content">
+              <div id="chatArea" class="h-100 d-flex flex-column">
+                <!-- Empty state -->
+                <div class="empty-chat">
+                  <div class="empty-icon">💬</div>
+                  <h5>Chọn một cuộc trò chuyện</h5>
+                  <p>Chọn từ danh sách bên trái để bắt đầu trò chuyện</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Sidebar - Chat Info -->
+          <div class="chat-info-sidebar">
+            <div id="chatInfoArea">
+              <div class="empty-chat">
+                <div class="empty-icon">ℹ️</div>
+                <h6>Thông tin cuộc trò chuyện</h6>
+                <p class="small text-muted">
+                  Chọn một cuộc trò chuyện để xem thông tin
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- JavaScript -->
     <script>
-        let currentChatId = null;
-        let selectedChatName = '';
-        let selectedAvatarUrl = '';
-        
-        // ============================================
-        // WEBSOCKET CONFIGURATION
-        // ============================================
-        let stompClient = null;  // STOMP client cho WebSocket
-        let currentSubscription = null;  // Subscription hiện tại cho chat
-        let currentReadStatusSubscription = null;  // Subscription cho read status
-        let isWebSocketConnected = false;  // Trạng thái kết nối WebSocket
+      let currentChatId = null;
+      let selectedChatName = "";
+      let selectedAvatarUrl = "";
 
-        // Initialize with real friend data
-        // Heartbeat mechanism để cập nhật last_seen_at
-        function startHeartbeat() {
-            // Gửi heartbeat ngay lập tức
-            sendHeartbeat();
+      // ============================================
+      // WEBSOCKET CONFIGURATION
+      // ============================================
+      let stompClient = null; // STOMP client cho WebSocket
+      let currentSubscription = null; // Subscription hiện tại cho chat
+      let currentReadStatusSubscription = null; // Subscription cho read status
+      let isWebSocketConnected = false; // Trạng thái kết nối WebSocket
 
-            // Sau đó gửi mỗi 2 phút
-            setInterval(() => {
-                sendHeartbeat();
-            }, 120000); // 120000ms = 2 phút
+      // Initialize with real friend data
+      // Heartbeat mechanism để cập nhật last_seen_at
+      function startHeartbeat() {
+        // Gửi heartbeat ngay lập tức
+        sendHeartbeat();
+
+        // Sau đó gửi mỗi 2 phút
+        setInterval(() => {
+          sendHeartbeat();
+        }, 120000); // 120000ms = 2 phút
+      }
+
+      async function sendHeartbeat() {
+        try {
+          const response = await fetch("/api/presence/heartbeat", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            console.log("Heartbeat sent successfully");
+          } else {
+            console.warn("Heartbeat failed:", response.status);
+          }
+        } catch (error) {
+          console.error("Heartbeat error:", error);
         }
+      }
 
-        async function sendHeartbeat() {
+      // Refresh chats list định kỳ để cập nhật online status
+      function startChatsRefresh() {
+        setInterval(() => {
+          loadChats();
+        }, 60000); // Refresh mỗi 1 phút
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        loadChats(); // Load chats (friends + groups) ngay lập tức
+        startHeartbeat(); // Bắt đầu heartbeat
+        startChatsRefresh(); // Bắt đầu refresh chats
+        connectWebSocket(); // Kết nối WebSocket
+
+        console.log("🟢 Online status system initialized in messages page!");
+        console.log("📡 Heartbeat: every 2 minutes");
+        console.log("🔄 Chats refresh: every 1 minute");
+
+        // Kiểm tra xem có chatId trong URL không (từ marketplace)
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatId = urlParams.get("chatId");
+        const sellerId = urlParams.get("sellerId");
+
+        if (chatId && sellerId) {
+          // Đợi một chút để chats được load
+          setTimeout(async () => {
             try {
-                const response = await fetch('/api/presence/heartbeat', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+              // Lấy thông tin seller
+              const sellerResponse = await fetch(`/api/users/${sellerId}`, {
+                method: "GET",
+                credentials: "include",
+              });
 
-                if (response.ok) {
-                    console.log('Heartbeat sent successfully');
-                } else {
-                    console.warn('Heartbeat failed:', response.status);
-                }
-            } catch (error) {
-                console.error('Heartbeat error:', error);
-            }
-        }
-
-        // Refresh chats list định kỳ để cập nhật online status
-        function startChatsRefresh() {
-            setInterval(() => {
-                loadChats();
-            }, 60000); // Refresh mỗi 1 phút
-        }
-
-        document.addEventListener('DOMContentLoaded', async function () {
-            loadChats();        // Load chats (friends + groups) ngay lập tức
-            startHeartbeat();   // Bắt đầu heartbeat
-            startChatsRefresh(); // Bắt đầu refresh chats
-            connectWebSocket(); // Kết nối WebSocket
-
-            console.log('🟢 Online status system initialized in messages page!');
-            console.log('📡 Heartbeat: every 2 minutes');
-            console.log('🔄 Chats refresh: every 1 minute');
-            
-            // Kiểm tra xem có chatId trong URL không (từ marketplace)
-            const urlParams = new URLSearchParams(window.location.search);
-            const chatId = urlParams.get('chatId');
-            const sellerId = urlParams.get('sellerId');
-            
-            if (chatId && sellerId) {
-                // Đợi một chút để chats được load
-                setTimeout(async () => {
-                    try {
-                        // Lấy thông tin seller
-                        const sellerResponse = await fetch(`/api/users/${sellerId}`, {
-                            method: 'GET',
-                            credentials: 'include'
-                        });
-                        
-                        if (sellerResponse.ok) {
-                            const seller = await sellerResponse.json();
-                            // Mở chat với seller
-                            await openChat(sellerId, seller.full_name || 'Market Chat', seller.avatar_url || '/default-avatar.png');
-                        }
-                    } catch (error) {
-                        console.error('Error opening chat from marketplace:', error);
-                    }
-                }, 1000);
-            }
-        });
-        
-        // ============================================
-        // WEBSOCKET CONNECTION
-        // ============================================
-        
-        /**
-         * Kết nối WebSocket sử dụng SockJS và STOMP
-         */
-        function connectWebSocket() {
-            console.log('🔌 Đang kết nối WebSocket...');
-            
-            // Tạo SockJS connection
-            const socket = new SockJS('/ws');
-            
-            // Tạo STOMP client từ SockJS
-            stompClient = Stomp.over(socket);
-            
-            // Tắt debug log (bật lại nếu cần debug)
-            stompClient.debug = null;
-            
-            // Kết nối đến WebSocket server
-            stompClient.connect({}, 
-                function onConnected(frame) {
-                    isWebSocketConnected = true;
-                    console.log('✅ WebSocket connected:', frame);
-                    console.log('🎉 Sẵn sàng chat realtime!');
-                },
-                function onError(error) {
-                    isWebSocketConnected = false;
-                    console.error('❌ WebSocket connection error:', error);
-                    console.log('⚠️ Sẽ thử kết nối lại sau 5 giây...');
-                    
-                    // Thử kết nối lại sau 5 giây
-                    setTimeout(connectWebSocket, 5000);
-                }
-            );
-        }
-        
-        /**
-         * Subscribe vào topic của chat để nhận tin nhắn realtime và read status
-         * @param {number} chatId - ID của chat cần subscribe
-         */
-        function subscribeToChat(chatId) {
-            if (!stompClient || !isWebSocketConnected) {
-                console.warn('⚠️ WebSocket chưa kết nối, không thể subscribe');
-                return;
-            }
-            
-            // Unsubscribe chat cũ nếu có
-            if (currentSubscription) {
-                currentSubscription.unsubscribe();
-                console.log('📤 Unsubscribed từ chat cũ');
-            }
-            if (currentReadStatusSubscription) {
-                currentReadStatusSubscription.unsubscribe();
-                console.log('📤 Unsubscribed từ read status cũ');
-            }
-            
-            // 1. Subscribe vào topic tin nhắn
-            const messageTopic = '/topic/chat.' + chatId;
-            console.log('📥 Subscribing to messages:', messageTopic);
-            
-            currentSubscription = stompClient.subscribe(messageTopic, function(message) {
-                // Nhận tin nhắn từ server
-                const messageData = JSON.parse(message.body);
-                console.log('📨 Nhận tin nhắn mới:', messageData);
-                
-                // Hiển thị tin nhắn lên UI
-                displayReceivedMessage(messageData);
-                
-                // Tự động đánh dấu đã đọc nếu không phải tin nhắn của mình
-                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                const currentUserId = auth.user_id;
-                if (messageData.senderId !== currentUserId) {
-                    // Đợi 500ms để đảm bảo tin nhắn đã hiển thị
-                    setTimeout(() => {
-                        markMessageAsRead(messageData.id, chatId);
-                    }, 500);
-                }
-            });
-            
-            // 2. Subscribe vào topic read status
-            const readStatusTopic = '/topic/chat.' + chatId + '.readStatus';
-            console.log('📥 Subscribing to read status:', readStatusTopic);
-            
-            currentReadStatusSubscription = stompClient.subscribe(readStatusTopic, function(message) {
-                // Nhận thông báo read status từ server
-                const readStatus = JSON.parse(message.body);
-                console.log('👁️ Nhận read status:', readStatus);
-                
-                // Cập nhật UI hiển thị checkmark
-                updateMessageReadStatus(readStatus);
-            });
-            
-            console.log('✅ Đã subscribe vào chat:', chatId);
-        }
-        
-        /**
-         * Hiển thị tin nhắn nhận được từ WebSocket
-         * @param {object} messageData - Dữ liệu tin nhắn từ server
-         */
-        function displayReceivedMessage(messageData) {
-            // Lấy userId hiện tại
-            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-            const currentUserId = auth.user_id;
-            
-            // Kiểm tra xem tin nhắn có phải của mình không
-            const isCurrentUser = (messageData.senderId === currentUserId);
-            
-            // Tạo object tin nhắn
-            const newMessage = {
-                id: messageData.id,
-                content: messageData.content,
-                isCurrentUser: isCurrentUser,
-                time: formatMessageTime(messageData.timestamp),
-                senderName: messageData.senderName,
-                senderAvatar: messageData.senderAvatar
-            };
-            
-            // Thêm tin nhắn vào UI
-            const chatMessages = document.getElementById('chatMessages');
-            if (chatMessages) {
-                const messageDiv = createRealMessageElement(newMessage);
-                chatMessages.appendChild(messageDiv);
-                
-                // Scroll xuống cuối
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-        }
-        
-        // ============================================
-        // READ RECEIPTS (ĐÃ XEM TIN NHẮN)
-        // ============================================
-        
-        /**
-         * Đánh dấu tin nhắn là đã đọc và gửi qua WebSocket
-         * @param {number} messageId - ID của tin nhắn
-         * @param {number} chatId - ID của chat
-         */
-        function markMessageAsRead(messageId, chatId) {
-            if (!stompClient || !isWebSocketConnected) {
-                console.warn('⚠️ WebSocket chưa kết nối, không thể gửi read status');
-                return;
-            }
-            
-            // Lấy userId hiện tại
-            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-            const currentUserId = auth.user_id;
-            
-            if (!currentUserId) {
-                return;
-            }
-            
-            try {
-                console.log(`👁️ Đánh dấu tin nhắn ${messageId} là đã đọc`);
-                
-                // Tạo read status payload
-                const readStatusPayload = {
-                    chatId: chatId,
-                    userId: currentUserId,
-                    messageId: messageId
-                };
-                
-                // Gửi read status qua WebSocket
-                stompClient.send(
-                    '/app/chat.readStatus',
-                    {},
-                    JSON.stringify(readStatusPayload)
+              if (sellerResponse.ok) {
+                const seller = await sellerResponse.json();
+                // Mở chat với seller
+                await openChat(
+                  sellerId,
+                  seller.full_name || "Market Chat",
+                  seller.avatar_url || "/default-avatar.png"
                 );
-                
-                console.log('✅ Read status đã được gửi');
-                
+              }
             } catch (error) {
-                console.error('❌ Lỗi khi gửi read status:', error);
+              console.error("Error opening chat from marketplace:", error);
             }
+          }, 1000);
         }
-        
-        /**
-         * Cập nhật UI hiển thị checkmark khi nhận read status
-         * Chỉ hiển thị checkmark ở tin nhắn mới nhất, xóa checkmark cũ
-         * @param {object} readStatus - Dữ liệu read status từ server
-         */
-        function updateMessageReadStatus(readStatus) {
-            // Lấy userId hiện tại
-            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-            const currentUserId = auth.user_id;
-            
-            // Chỉ hiển thị checkmark cho tin nhắn của mình (sent messages)
-            const chatMessages = document.getElementById('chatMessages');
-            if (!chatMessages) return;
-            
-            // Xóa tất cả checkmark cũ (nếu có)
-            const oldIndicators = chatMessages.querySelectorAll('.read-indicator');
-            oldIndicators.forEach(indicator => indicator.remove());
-            
-            // Tìm tin nhắn mới nhất của mình (sent)
-            const sentMessages = chatMessages.querySelectorAll('.message.sent');
-            if (sentMessages.length === 0) return;
-            
-            // Lấy tin nhắn mới nhất
-            const lastSentMessage = sentMessages[sentMessages.length - 1];
-            
-            // Thêm checkmark vào tin nhắn mới nhất
-            const messageTime = lastSentMessage.querySelector('.message-time');
-            if (messageTime) {
-                // Tạo read indicator mới
-                const readIndicator = document.createElement('span');
-                readIndicator.className = 'read-indicator';
-                readIndicator.style.fontSize = '11px';
-                readIndicator.style.marginLeft = '5px';
-                readIndicator.innerHTML = ' ✓✓';
-                readIndicator.style.color = '#000';
-                
-                messageTime.appendChild(readIndicator);
-                
-                console.log(`✅ Hiển thị checkmark ở tin nhắn mới nhất`);
-            }
-        }
-        
-        /**
-         * Đánh dấu CHI TIN NHẮN MỚI NHẤT của người khác là đã đọc
-         * (Thay vì đánh dấu tất cả để giao diện đẹp hưn)
-         */
-        function markAllVisibleMessagesAsRead() {
-            if (!currentChatId) return;
-            
-            // Lấy userId hiện tại
-            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-            const currentUserId = auth.user_id;
-            
-            // Tìm tất cả tin nhắn KHÔNG phải của mình
-            const chatMessages = document.getElementById('chatMessages');
-            if (chatMessages) {
-                const messageElements = chatMessages.querySelectorAll('.message:not(.sent)');
-                
-                if (messageElements.length > 0) {
-                    // Lấy tin nhắn cuối cùng (mới nhất)
-                    const lastMessage = messageElements[messageElements.length - 1];
-                    const messageId = lastMessage.getAttribute('data-message-id');
-                    
-                    if (messageId) {
-                        console.log(`👁️ Chỉ đánh dấu tin nhắn mới nhất: ${messageId}`);
-                        // Chỉ đánh dấu tin nhắn mới nhất
-                        markMessageAsRead(parseInt(messageId), currentChatId);
-                    }
-                }
-            }
+      });
+
+      // ============================================
+      // WEBSOCKET CONNECTION
+      // ============================================
+
+      /**
+       * Kết nối WebSocket sử dụng SockJS và STOMP
+       */
+      function connectWebSocket() {
+        console.log("🔌 Đang kết nối WebSocket...");
+
+        // Tạo SockJS connection
+        const socket = new SockJS("/ws");
+
+        // Tạo STOMP client từ SockJS
+        stompClient = Stomp.over(socket);
+
+        // Tắt debug log (bật lại nếu cần debug)
+        stompClient.debug = null;
+
+        // Kết nối đến WebSocket server
+        stompClient.connect(
+          {},
+          function onConnected(frame) {
+            isWebSocketConnected = true;
+            console.log("✅ WebSocket connected:", frame);
+            console.log("🎉 Sẵn sàng chat realtime!");
+          },
+          function onError(error) {
+            isWebSocketConnected = false;
+            console.error("❌ WebSocket connection error:", error);
+            console.log("⚠️ Sẽ thử kết nối lại sau 5 giây...");
+
+            // Thử kết nối lại sau 5 giây
+            setTimeout(connectWebSocket, 5000);
+          }
+        );
+      }
+
+      /**
+       * Subscribe vào topic của chat để nhận tin nhắn realtime và read status
+       * @param {number} chatId - ID của chat cần subscribe
+       */
+      function subscribeToChat(chatId) {
+        if (!stompClient || !isWebSocketConnected) {
+          console.warn("⚠️ WebSocket chưa kết nối, không thể subscribe");
+          return;
         }
 
-        // Load all chats (friends + groups)
-        async function loadChats() {
-            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-            const userId = auth.user_id;
-            const chatList = document.getElementById('chatList');
+        // Unsubscribe chat cũ nếu có
+        if (currentSubscription) {
+          currentSubscription.unsubscribe();
+          console.log("📤 Unsubscribed từ chat cũ");
+        }
+        if (currentReadStatusSubscription) {
+          currentReadStatusSubscription.unsubscribe();
+          console.log("📤 Unsubscribed từ read status cũ");
+        }
 
-            if (!userId) {
-                chatList.innerHTML = `
+        // 1. Subscribe vào topic tin nhắn
+        const messageTopic = "/topic/chat." + chatId;
+        console.log("📥 Subscribing to messages:", messageTopic);
+
+        currentSubscription = stompClient.subscribe(
+          messageTopic,
+          function (message) {
+            // Nhận tin nhắn từ server
+            const messageData = JSON.parse(message.body);
+            console.log("📨 Nhận tin nhắn mới:", messageData);
+
+            // Hiển thị tin nhắn lên UI
+            displayReceivedMessage(messageData);
+
+            // Tự động đánh dấu đã đọc nếu không phải tin nhắn của mình
+            const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+            const currentUserId = auth.user_id;
+            if (messageData.senderId !== currentUserId) {
+              // Đợi 500ms để đảm bảo tin nhắn đã hiển thị
+              setTimeout(() => {
+                markMessageAsRead(messageData.id, chatId);
+              }, 500);
+            }
+          }
+        );
+
+        // 2. Subscribe vào topic read status
+        const readStatusTopic = "/topic/chat." + chatId + ".readStatus";
+        console.log("📥 Subscribing to read status:", readStatusTopic);
+
+        currentReadStatusSubscription = stompClient.subscribe(
+          readStatusTopic,
+          function (message) {
+            // Nhận thông báo read status từ server
+            const readStatus = JSON.parse(message.body);
+            console.log("👁️ Nhận read status:", readStatus);
+
+            // Cập nhật UI hiển thị checkmark
+            updateMessageReadStatus(readStatus);
+          }
+        );
+
+        console.log("✅ Đã subscribe vào chat:", chatId);
+      }
+
+      /**
+       * Hiển thị tin nhắn nhận được từ WebSocket
+       * @param {object} messageData - Dữ liệu tin nhắn từ server
+       */
+      function displayReceivedMessage(messageData) {
+        // Lấy userId hiện tại
+        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+        const currentUserId = auth.user_id;
+
+        // Kiểm tra xem tin nhắn có phải của mình không
+        const isCurrentUser = messageData.senderId === currentUserId;
+
+        // Tạo object tin nhắn
+        const newMessage = {
+          id: messageData.id,
+          content: messageData.content,
+          isCurrentUser: isCurrentUser,
+          time: formatMessageTime(messageData.timestamp),
+          senderName: messageData.senderName,
+          senderAvatar: messageData.senderAvatar,
+        };
+
+        // Thêm tin nhắn vào UI
+        const chatMessages = document.getElementById("chatMessages");
+        if (chatMessages) {
+          const messageDiv = createRealMessageElement(newMessage);
+          chatMessages.appendChild(messageDiv);
+
+          // Scroll xuống cuối
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      }
+
+      // ============================================
+      // READ RECEIPTS (ĐÃ XEM TIN NHẮN)
+      // ============================================
+
+      /**
+       * Đánh dấu tin nhắn là đã đọc và gửi qua WebSocket
+       * @param {number} messageId - ID của tin nhắn
+       * @param {number} chatId - ID của chat
+       */
+      function markMessageAsRead(messageId, chatId) {
+        if (!stompClient || !isWebSocketConnected) {
+          console.warn("⚠️ WebSocket chưa kết nối, không thể gửi read status");
+          return;
+        }
+
+        // Lấy userId hiện tại
+        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+        const currentUserId = auth.user_id;
+
+        if (!currentUserId) {
+          return;
+        }
+
+        try {
+          console.log(`👁️ Đánh dấu tin nhắn ${messageId} là đã đọc`);
+
+          // Tạo read status payload
+          const readStatusPayload = {
+            chatId: chatId,
+            userId: currentUserId,
+            messageId: messageId,
+          };
+
+          // Gửi read status qua WebSocket
+          stompClient.send(
+            "/app/chat.readStatus",
+            {},
+            JSON.stringify(readStatusPayload)
+          );
+
+          console.log("✅ Read status đã được gửi");
+        } catch (error) {
+          console.error("❌ Lỗi khi gửi read status:", error);
+        }
+      }
+
+      /**
+       * Cập nhật UI hiển thị checkmark khi nhận read status
+       * Chỉ hiển thị checkmark ở tin nhắn mới nhất, xóa checkmark cũ
+       * @param {object} readStatus - Dữ liệu read status từ server
+       */
+      function updateMessageReadStatus(readStatus) {
+        // Lấy userId hiện tại
+        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+        const currentUserId = auth.user_id;
+
+        // Chỉ hiển thị checkmark cho tin nhắn của mình (sent messages)
+        const chatMessages = document.getElementById("chatMessages");
+        if (!chatMessages) return;
+
+        // Xóa tất cả checkmark cũ (nếu có)
+        const oldIndicators = chatMessages.querySelectorAll(".read-indicator");
+        oldIndicators.forEach((indicator) => indicator.remove());
+
+        // Tìm tin nhắn mới nhất của mình (sent)
+        const sentMessages = chatMessages.querySelectorAll(".message.sent");
+        if (sentMessages.length === 0) return;
+
+        // Lấy tin nhắn mới nhất
+        const lastSentMessage = sentMessages[sentMessages.length - 1];
+
+        // Thêm checkmark vào tin nhắn mới nhất
+        const messageTime = lastSentMessage.querySelector(".message-time");
+        if (messageTime) {
+          // Tạo read indicator mới
+          const readIndicator = document.createElement("span");
+          readIndicator.className = "read-indicator";
+          readIndicator.style.fontSize = "11px";
+          readIndicator.style.marginLeft = "5px";
+          readIndicator.innerHTML = " ✓✓";
+          readIndicator.style.color = "#000";
+
+          messageTime.appendChild(readIndicator);
+
+          console.log(`✅ Hiển thị checkmark ở tin nhắn mới nhất`);
+        }
+      }
+
+      /**
+       * Đánh dấu CHI TIN NHẮN MỚI NHẤT của người khác là đã đọc
+       * (Thay vì đánh dấu tất cả để giao diện đẹp hưn)
+       */
+      function markAllVisibleMessagesAsRead() {
+        if (!currentChatId) return;
+
+        // Lấy userId hiện tại
+        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+        const currentUserId = auth.user_id;
+
+        // Tìm tất cả tin nhắn KHÔNG phải của mình
+        const chatMessages = document.getElementById("chatMessages");
+        if (chatMessages) {
+          const messageElements = chatMessages.querySelectorAll(
+            ".message:not(.sent)"
+          );
+
+          if (messageElements.length > 0) {
+            // Lấy tin nhắn cuối cùng (mới nhất)
+            const lastMessage = messageElements[messageElements.length - 1];
+            const messageId = lastMessage.getAttribute("data-message-id");
+
+            if (messageId) {
+              console.log(`👁️ Chỉ đánh dấu tin nhắn mới nhất: ${messageId}`);
+              // Chỉ đánh dấu tin nhắn mới nhất
+              markMessageAsRead(parseInt(messageId), currentChatId);
+            }
+          }
+        }
+      }
+
+      // Load all chats (friends + groups)
+      async function loadChats() {
+        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+        const userId = auth.user_id;
+        const chatList = document.getElementById("chatList");
+
+        if (!userId) {
+          chatList.innerHTML = `
                     <div class="text-center py-4">
                         <small class="text-danger">User not logged in</small>
                     </div>
                 `;
-                return;
-            }
+          return;
+        }
 
-            console.log('Loading chats for userId:', userId);
+        console.log("Loading chats for userId:", userId);
 
-            // Show loading
-            chatList.innerHTML = `
+        // Show loading
+        chatList.innerHTML = `
                 <div class="text-center py-4">
                     <small class="text-muted">Đang tải danh sách chat...</small>
                 </div>
             `;
 
-            try {
-                // 1. Load direct chats (includes MarketChat and friend chats)
-                const directChatsResponse = await fetch(`/api/chats/direct/user/${userId}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+        try {
+          // 1. Load direct chats (includes MarketChat and friend chats)
+          const directChatsResponse = await fetch(
+            `/api/chats/direct/user/${userId}`,
+            {
+              method: "GET",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
 
-                // 2. Load group chats
-                const groupsResponse = await fetch(`/api/chats/groups/user/${userId}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+          // 2. Load group chats
+          const groupsResponse = await fetch(
+            `/api/chats/groups/user/${userId}`,
+            {
+              method: "GET",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
 
-                if (!directChatsResponse.ok && !groupsResponse.ok) {
-                    throw new Error('Failed to fetch chats');
-                }
+          if (!directChatsResponse.ok && !groupsResponse.ok) {
+            throw new Error("Failed to fetch chats");
+          }
 
-                const directChatsData = directChatsResponse.ok ? await directChatsResponse.json() : [];
-                const groupsData = groupsResponse.ok ? await groupsResponse.json() : [];
+          const directChatsData = directChatsResponse.ok
+            ? await directChatsResponse.json()
+            : [];
+          const groupsData = groupsResponse.ok
+            ? await groupsResponse.json()
+            : [];
 
-                console.log('Direct chats response:', directChatsData);
-                console.log('Groups response:', groupsData);
+          console.log("Direct chats response:", directChatsData);
+          console.log("Groups response:", groupsData);
 
-                // Transform direct chats to chat format
-                const directChats = directChatsData.map(directChat => transformDirectChatToChat(directChat));
+          // Transform direct chats to chat format
+          const directChats = directChatsData.map((directChat) =>
+            transformDirectChatToChat(directChat)
+          );
 
-                // Transform groups to chat format
-                const groupChats = groupsData.map(group => transformGroupToChat(group));
+          // Transform groups to chat format
+          const groupChats = groupsData.map((group) =>
+            transformGroupToChat(group)
+          );
 
-                // Combine and sort by time (newest first)
-                const allChats = [...directChats, ...groupChats];
-                
-                displayChatList(allChats);
+          // Combine and sort by time (newest first)
+          const allChats = [...directChats, ...groupChats];
 
-            } catch (error) {
-                console.error('Error loading chats:', error);
-                chatList.innerHTML = `
+          displayChatList(allChats);
+        } catch (error) {
+          console.error("Error loading chats:", error);
+          chatList.innerHTML = `
                     <div class="text-center py-4">
                         <small class="text-danger">Không thể tải danh sách chat</small>
                         <br>
@@ -1243,353 +1279,385 @@
                         </button>
                     </div>
                 `;
-            }
         }
+      }
 
-        // Calculate online status based on last_seen_at
-        function calculateOnlineStatus(lastSeenAt) {
-            if (!lastSeenAt) return false;
+      // Calculate online status based on last_seen_at
+      function calculateOnlineStatus(lastSeenAt) {
+        if (!lastSeenAt) return false;
 
-            const lastSeen = new Date(lastSeenAt);
-            const now = new Date();
-            const diffMinutes = (now - lastSeen) / (1000 * 60);
+        const lastSeen = new Date(lastSeenAt);
+        const now = new Date();
+        const diffMinutes = (now - lastSeen) / (1000 * 60);
 
-            // Online nếu last_seen_at trong vòng 3 phút
-            return diffMinutes < 3;
+        // Online nếu last_seen_at trong vòng 3 phút
+        return diffMinutes < 3;
+      }
+
+      // Transform direct chat data to chat format
+      function transformDirectChatToChat(directChatData) {
+        // Use chatName if available (for MarketChat), otherwise use other user's name
+        const displayName =
+          directChatData.chatName || directChatData.otherUserName;
+
+        return {
+          id: directChatData.otherUserId, // Use other user's ID for opening chat
+          chatId: directChatData.chatId, // Store actual chat ID
+          friendId: directChatData.otherUserId,
+          name: displayName,
+          avatar: directChatData.otherUserAvatar || "/img/default-avatar.png",
+          lastMessage: "Bắt đầu cuộc trò chuyện...", // Default message
+          time: formatTime(directChatData.createdAt),
+          online: directChatData.isOnline || false,
+          isGroup: false, // Direct chat
+        };
+      }
+
+      // Transform group data to chat format
+      function transformGroupToChat(groupData) {
+        // Always use default avatar for groups to avoid loading issues
+        const defaultGroupAvatar =
+          "https://ui-avatars.com/api/?name=" +
+          encodeURIComponent(groupData.chatName || "Group") +
+          "&background=0D8ABC&color=fff&size=200&bold=true";
+
+        return {
+          id: groupData.chatId,
+          chatId: groupData.chatId,
+          name: groupData.chatName || "Nhóm chat",
+          avatar: defaultGroupAvatar, // Use generated avatar
+          lastMessage: `${groupData.memberCount} thành viên`,
+          time: formatTime(groupData.createdAt),
+          online: false, // Groups don't have online status
+          isGroup: true, // Group chat
+          memberCount: groupData.memberCount,
+          memberIds: groupData.memberIds,
+        };
+      }
+
+      // Format time for display
+      function formatTime(timestamp) {
+        if (!timestamp) return "";
+
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+          return date.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        } else if (diffDays === 1) {
+          return "Hôm qua";
+        } else if (diffDays < 7) {
+          return `${diffDays} ngày trước`;
+        } else {
+          return date.toLocaleDateString("vi-VN");
         }
+      }
 
-        // Transform direct chat data to chat format
-        function transformDirectChatToChat(directChatData) {
-            // Use chatName if available (for MarketChat), otherwise use other user's name
-            const displayName = directChatData.chatName || directChatData.otherUserName;
-            
-            return {
-                id: directChatData.otherUserId, // Use other user's ID for opening chat
-                chatId: directChatData.chatId, // Store actual chat ID
-                friendId: directChatData.otherUserId,
-                name: displayName,
-                avatar: directChatData.otherUserAvatar || '/img/default-avatar.png',
-                lastMessage: 'Bắt đầu cuộc trò chuyện...', // Default message
-                time: formatTime(directChatData.createdAt),
-                online: directChatData.isOnline || false,
-                isGroup: false // Direct chat
-            };
-        }
+      // Display chat list
+      function displayChatList(chats) {
+        const chatList = document.getElementById("chatList");
+        chatList.innerHTML = "";
 
-        // Transform group data to chat format
-        function transformGroupToChat(groupData) {
-            // Always use default avatar for groups to avoid loading issues
-            const defaultGroupAvatar = 'https://ui-avatars.com/api/?name=' + 
-                encodeURIComponent(groupData.chatName || 'Group') + 
-                '&background=0D8ABC&color=fff&size=200&bold=true';
-            
-            return {
-                id: groupData.chatId,
-                chatId: groupData.chatId,
-                name: groupData.chatName || 'Nhóm chat',
-                avatar: defaultGroupAvatar, // Use generated avatar
-                lastMessage: `${groupData.memberCount} thành viên`,
-                time: formatTime(groupData.createdAt),
-                online: false, // Groups don't have online status
-                isGroup: true, // Group chat
-                memberCount: groupData.memberCount,
-                memberIds: groupData.memberIds
-            };
-        }
-
-        // Format time for display
-        function formatTime(timestamp) {
-            if (!timestamp) return '';
-
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 0) {
-                return date.toLocaleTimeString('vi-VN', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } else if (diffDays === 1) {
-                return 'Hôm qua';
-            } else if (diffDays < 7) {
-                return `${diffDays} ngày trước`;
-            } else {
-                return date.toLocaleDateString('vi-VN');
-            }
-        }
-
-        // Display chat list
-        function displayChatList(chats) {
-            const chatList = document.getElementById('chatList');
-            chatList.innerHTML = '';
-
-            if (chats.length === 0) {
-                chatList.innerHTML = `
+        if (chats.length === 0) {
+          chatList.innerHTML = `
                     <div class="text-center py-4">
                         <small class="text-muted">Chưa có bạn bè nào</small>
                         <br>
                         <small class="text-muted">Hãy kết bạn để bắt đầu trò chuyện</small>
                     </div>
                 `;
-                return;
-            }
-
-            chats.forEach(chat => {
-                const chatItem = createChatItem(chat);
-                chatList.appendChild(chatItem);
-            });
+          return;
         }
 
-        // Create chat item element
-        function createChatItem(chat) {
-            const div = document.createElement('div');
+        chats.forEach((chat) => {
+          const chatItem = createChatItem(chat);
+          chatList.appendChild(chatItem);
+        });
+      }
 
-            // Only show online indicator for direct chats
-            const onlineIndicator = chat.isGroup 
-                ? '' 
-                : (chat.online ? '<span class="online-indicator"></span>' : '<span class="offline-indicator"></span>');
+      // Create chat item element
+      function createChatItem(chat) {
+        const div = document.createElement("div");
 
-            const chatItem = document.createElement('a');
-            chatItem.href = '#';
-            chatItem.className = 'chat-item';
-            chatItem.setAttribute('data-chat-id', chat.id);
-            chatItem.setAttribute('data-chat-name', chat.name);
-            chatItem.setAttribute('data-chat-avatar', chat.avatar);
-            chatItem.setAttribute('data-is-group', chat.isGroup);
-            
-            if (chat.isGroup) {
-                chatItem.setAttribute('data-member-ids', JSON.stringify(chat.memberIds));
-            } else {
-                chatItem.setAttribute('data-friend-id', chat.friendId);
-                chatItem.setAttribute('data-online', chat.online);
-            }
+        // Only show online indicator for direct chats
+        const onlineIndicator = chat.isGroup
+          ? ""
+          : chat.online
+          ? '<span class="online-indicator"></span>'
+          : '<span class="offline-indicator"></span>';
 
-            chatItem.innerHTML = `
+        const chatItem = document.createElement("a");
+        chatItem.href = "#";
+        chatItem.className = "chat-item";
+        chatItem.setAttribute("data-chat-id", chat.id);
+        chatItem.setAttribute("data-chat-name", chat.name);
+        chatItem.setAttribute("data-chat-avatar", chat.avatar);
+        chatItem.setAttribute("data-is-group", chat.isGroup);
+
+        if (chat.isGroup) {
+          chatItem.setAttribute(
+            "data-member-ids",
+            JSON.stringify(chat.memberIds)
+          );
+        } else {
+          chatItem.setAttribute("data-friend-id", chat.friendId);
+          chatItem.setAttribute("data-online", chat.online);
+        }
+
+        chatItem.innerHTML = `
                 <div class="position-relative">
-                    <img src="${chat.avatar}" class="chat-avatar" alt="${escapeHtml(chat.name)}">
+                    <img src="${
+                      chat.avatar
+                    }" class="chat-avatar" alt="${escapeHtml(chat.name)}">
                     ${onlineIndicator}
                 </div>
                 <div class="chat-info">
                     <div class="chat-name">
-                        ${chat.isGroup ? '👥 ' : ''}${escapeHtml(chat.name)}
+                        ${chat.isGroup ? "👥 " : ""}${escapeHtml(chat.name)}
                     </div>
-                    <div class="chat-last-message">${escapeHtml(chat.lastMessage)}</div>
+                    <div class="chat-last-message">${escapeHtml(
+                      chat.lastMessage
+                    )}</div>
                 </div>
                 <div class="chat-time">
                     ${chat.time}
                 </div>
             `;
 
-            // Add click event listener
-            chatItem.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Update active state
-                document.querySelectorAll('.chat-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                const isGroup = this.getAttribute('data-is-group') === 'true';
-                const chatId = parseInt(this.getAttribute('data-chat-id'));
-                const chatName = this.getAttribute('data-chat-name');
-                const avatarUrl = this.getAttribute('data-chat-avatar');
-                
-                if (isGroup) {
-                    const memberIds = JSON.parse(this.getAttribute('data-member-ids'));
-                    openGroupChat(chatId, chatName, avatarUrl, memberIds);
-                } else {
-                    const friendId = parseInt(this.getAttribute('data-friend-id'));
-                    openChat(friendId, chatName, avatarUrl);
-                }
-            });
+        // Add click event listener
+        chatItem.addEventListener("click", function (e) {
+          e.preventDefault();
 
-            div.appendChild(chatItem);
-            return div;
+          // Update active state
+          document.querySelectorAll(".chat-item").forEach((item) => {
+            item.classList.remove("active");
+          });
+          this.classList.add("active");
+
+          const isGroup = this.getAttribute("data-is-group") === "true";
+          const chatId = parseInt(this.getAttribute("data-chat-id"));
+          const chatName = this.getAttribute("data-chat-name");
+          const avatarUrl = this.getAttribute("data-chat-avatar");
+
+          if (isGroup) {
+            const memberIds = JSON.parse(this.getAttribute("data-member-ids"));
+            openGroupChat(chatId, chatName, avatarUrl, memberIds);
+          } else {
+            const friendId = parseInt(this.getAttribute("data-friend-id"));
+            openChat(friendId, chatName, avatarUrl);
+          }
+        });
+
+        div.appendChild(chatItem);
+        return div;
+      }
+
+      // Open direct chat with real API integration
+      async function openChat(friendId, chatName, avatarUrl) {
+        try {
+          // Get current user ID
+          const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+          const currentUserId = auth.user_id;
+
+          if (!currentUserId) {
+            console.error("Current user ID not found");
+            alert("Vui lòng đăng nhập lại");
+            return;
+          }
+
+          console.log(
+            `Opening direct chat: Current User ${currentUserId} with Friend ${friendId}`
+          );
+
+          // Show loading state
+          showChatLoadingState(chatName, avatarUrl);
+
+          // Step 1: Check if chat exists, if not create it
+          const chatId = await findOrCreateDirectChat(currentUserId, friendId);
+
+          if (chatId) {
+            // Set current chat info
+            currentChatId = chatId;
+            selectedChatName = chatName;
+            selectedAvatarUrl = avatarUrl;
+
+            // Step 2: Load real chat content
+            await loadRealChatContent(
+              chatId,
+              chatName,
+              avatarUrl,
+              currentUserId
+            );
+
+            // Step 3: Load chat info
+            loadChatInfo(chatId, chatName, avatarUrl);
+
+            console.log(
+              `✅ Direct chat opened successfully with ID: ${chatId}`
+            );
+          } else {
+            throw new Error("Failed to create or find chat");
+          }
+        } catch (error) {
+          console.error("Error opening chat:", error);
+          showChatErrorState(chatName, avatarUrl, error.message);
         }
+      }
 
-        // Open direct chat with real API integration
-        async function openChat(friendId, chatName, avatarUrl) {
+      // Open group chat
+      async function openGroupChat(chatId, chatName, avatarUrl, memberIds) {
+        try {
+          // Get current user ID
+          const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+          const currentUserId = auth.user_id;
+
+          if (!currentUserId) {
+            console.error("Current user ID not found");
+            alert("Vui lòng đăng nhập lại");
+            return;
+          }
+
+          console.log(`Opening group chat: ${chatName} (ID: ${chatId})`);
+          console.log("📋 Member IDs:", memberIds);
+
+          // Show loading state
+          showChatLoadingState(chatName, avatarUrl);
+
+          // Group chat already exists, use the chatId directly
+          console.log(`💬 Using existing chat ID: ${chatId}`);
+
+          // Set current chat info
+          currentChatId = chatId;
+          selectedChatName = chatName;
+          selectedAvatarUrl = avatarUrl;
+
+          // Step 1: Load chat content with messages
+          await loadRealChatContent(chatId, chatName, avatarUrl, currentUserId);
+
+          // Step 2: Load chat info sidebar
+          loadGroupChatInfo(chatId, chatName, avatarUrl);
+
+          console.log(`✅ Group chat opened successfully with ID: ${chatId}`);
+        } catch (error) {
+          console.error("Error opening group chat:", error);
+          showChatErrorState(chatName, avatarUrl, error.message);
+        }
+      }
+
+      // Find or create group chat using API
+      async function findOrCreateGroupChat(memberIds, groupName = null) {
+        try {
+          console.log(
+            `🔍 Finding or creating group chat with members:`,
+            memberIds
+          );
+          console.log(`📝 Group name:`, groupName);
+
+          const requestBody = {
+            userIds: memberIds,
+            groupName: groupName,
+          };
+          console.log(`📤 Request body:`, JSON.stringify(requestBody));
+
+          const response = await fetch("/api/chats/find-or-create-group", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(requestBody),
+          });
+
+          console.log(
+            `📥 Response status:`,
+            response.status,
+            response.statusText
+          );
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("❌ Error response:", errorText);
+
+            let errorData;
             try {
-                // Get current user ID
-                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                const currentUserId = auth.user_id;
-
-                if (!currentUserId) {
-                    console.error('Current user ID not found');
-                    alert('Vui lòng đăng nhập lại');
-                    return;
-                }
-
-                console.log(`Opening direct chat: Current User ${currentUserId} with Friend ${friendId}`);
-
-                // Show loading state
-                showChatLoadingState(chatName, avatarUrl);
-
-                // Step 1: Check if chat exists, if not create it
-                const chatId = await findOrCreateDirectChat(currentUserId, friendId);
-
-                if (chatId) {
-                    // Set current chat info
-                    currentChatId = chatId;
-                    selectedChatName = chatName;
-                    selectedAvatarUrl = avatarUrl;
-
-                    // Step 2: Load real chat content
-                    await loadRealChatContent(chatId, chatName, avatarUrl, currentUserId);
-
-                    // Step 3: Load chat info
-                    loadChatInfo(chatId, chatName, avatarUrl);
-
-                    console.log(`✅ Direct chat opened successfully with ID: ${chatId}`);
-                } else {
-                    throw new Error('Failed to create or find chat');
-                }
-
-            } catch (error) {
-                console.error('Error opening chat:', error);
-                showChatErrorState(chatName, avatarUrl, error.message);
+              errorData = JSON.parse(errorText);
+            } catch (e) {
+              errorData = { error: errorText };
             }
+
+            throw new Error(
+              errorData.error ||
+                errorData.message ||
+                `HTTP ${response.status}: ${response.statusText}`
+            );
+          }
+
+          const chatData = await response.json();
+          console.log("💬 Group chat data received:", chatData);
+          console.log("🔑 Chat ID:", chatData.chatId || chatData.chat_id);
+
+          // Return chatId
+          const finalChatId = chatData.chatId || chatData.chat_id;
+
+          if (!finalChatId) {
+            console.error("❌ No chatId in response:", chatData);
+            throw new Error("Response does not contain chatId");
+          }
+
+          return finalChatId;
+        } catch (error) {
+          console.error("❌ Error finding/creating group chat:", error);
+          console.error("❌ Error details:", error.message);
+          throw error; // Re-throw để caller có thể handle
         }
+      }
 
-        // Open group chat
-        async function openGroupChat(chatId, chatName, avatarUrl, memberIds) {
-            try {
-                // Get current user ID
-                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                const currentUserId = auth.user_id;
+      // Find or create direct chat using API
+      async function findOrCreateDirectChat(userId1, userId2) {
+        try {
+          console.log(
+            `🔍 Finding or creating chat between users ${userId1} and ${userId2}`
+          );
 
-                if (!currentUserId) {
-                    console.error('Current user ID not found');
-                    alert('Vui lòng đăng nhập lại');
-                    return;
-                }
+          const response = await fetch("/api/chats/find-or-create-direct", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              userId1: userId1,
+              userId2: userId2,
+            }),
+          });
 
-                console.log(`Opening group chat: ${chatName} (ID: ${chatId})`);
-                console.log('📋 Member IDs:', memberIds);
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              errorData.error ||
+                `HTTP ${response.status}: ${response.statusText}`
+            );
+          }
 
-                // Show loading state
-                showChatLoadingState(chatName, avatarUrl);
+          const chatData = await response.json();
+          console.log("💬 Chat data received:", chatData);
 
-                // Group chat already exists, use the chatId directly
-                console.log(`💬 Using existing chat ID: ${chatId}`);
-
-                // Set current chat info
-                currentChatId = chatId;
-                selectedChatName = chatName;
-                selectedAvatarUrl = avatarUrl;
-
-                // Step 1: Load chat content with messages
-                await loadRealChatContent(chatId, chatName, avatarUrl, currentUserId);
-
-                // Step 2: Load chat info sidebar
-                loadGroupChatInfo(chatId, chatName, avatarUrl);
-
-                console.log(`✅ Group chat opened successfully with ID: ${chatId}`);
-
-            } catch (error) {
-                console.error('Error opening group chat:', error);
-                showChatErrorState(chatName, avatarUrl, error.message);
-            }
+          return chatData.chatId;
+        } catch (error) {
+          console.error("❌ Error in findOrCreateDirectChat:", error);
+          throw error;
         }
+      }
 
-        // Find or create group chat using API
-        async function findOrCreateGroupChat(memberIds, groupName = null) {
-            try {
-                console.log(`🔍 Finding or creating group chat with members:`, memberIds);
-                console.log(`📝 Group name:`, groupName);
-
-                const requestBody = {
-                    userIds: memberIds,
-                    groupName: groupName
-                };
-                console.log(`📤 Request body:`, JSON.stringify(requestBody));
-
-                const response = await fetch('/api/chats/find-or-create-group', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(requestBody)
-                });
-
-                console.log(`📥 Response status:`, response.status, response.statusText);
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('❌ Error response:', errorText);
-                    
-                    let errorData;
-                    try {
-                        errorData = JSON.parse(errorText);
-                    } catch (e) {
-                        errorData = { error: errorText };
-                    }
-                    
-                    throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const chatData = await response.json();
-                console.log('💬 Group chat data received:', chatData);
-                console.log('🔑 Chat ID:', chatData.chatId || chatData.chat_id);
-
-                // Return chatId
-                const finalChatId = chatData.chatId || chatData.chat_id;
-                
-                if (!finalChatId) {
-                    console.error('❌ No chatId in response:', chatData);
-                    throw new Error('Response does not contain chatId');
-                }
-                
-                return finalChatId;
-
-            } catch (error) {
-                console.error('❌ Error finding/creating group chat:', error);
-                console.error('❌ Error details:', error.message);
-                throw error; // Re-throw để caller có thể handle
-            }
-        }
-
-        // Find or create direct chat using API
-        async function findOrCreateDirectChat(userId1, userId2) {
-            try {
-                console.log(`🔍 Finding or creating chat between users ${userId1} and ${userId2}`);
-
-                const response = await fetch('/api/chats/find-or-create-direct', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        userId1: userId1,
-                        userId2: userId2
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const chatData = await response.json();
-                console.log('💬 Chat data received:', chatData);
-
-                return chatData.chatId;
-
-            } catch (error) {
-                console.error('❌ Error in findOrCreateDirectChat:', error);
-                throw error;
-            }
-        }
-
-        // Show loading state while opening chat
-        function showChatLoadingState(chatName, avatarUrl) {
-            const chatArea = document.getElementById('chatArea');
-            chatArea.innerHTML = `
+      // Show loading state while opening chat
+      function showChatLoadingState(chatName, avatarUrl) {
+        const chatArea = document.getElementById("chatArea");
+        chatArea.innerHTML = `
                 <div class="chat-header">
                     <img src="${avatarUrl}" class="chat-header-avatar" alt="${chatName}">
                     <div class="chat-header-info">
@@ -1618,12 +1686,12 @@
                     </div>
                 </div>
             `;
-        }
+      }
 
-        // Show error state if chat fails to load
-        function showChatErrorState(chatName, avatarUrl, errorMessage) {
-            const chatArea = document.getElementById('chatArea');
-            chatArea.innerHTML = `
+      // Show error state if chat fails to load
+      function showChatErrorState(chatName, avatarUrl, errorMessage) {
+        const chatArea = document.getElementById("chatArea");
+        chatArea.innerHTML = `
                 <div class="chat-header">
                     <img src="${avatarUrl}" class="chat-header-avatar" alt="${chatName}">
                     <div class="chat-header-info">
@@ -1639,7 +1707,9 @@
                         </div>
                         <h6 class="text-danger">Không thể mở cuộc trò chuyện</h6>
                         <p class="text-muted small">${errorMessage}</p>
-                        <button class="btn btn-outline-primary btn-sm" onclick="openChat(${currentChatId}, '${escapeHtml(chatName)}', '${avatarUrl}')">
+                        <button class="btn btn-outline-primary btn-sm" onclick="openChat(${currentChatId}, '${escapeHtml(
+          chatName
+        )}', '${avatarUrl}')">
                             Thử lại
                         </button>
                     </div>
@@ -1654,15 +1724,20 @@
                     </div>
                 </div>
             `;
-        }
+      }
 
-        // Load real chat content with messages from API
-        async function loadRealChatContent(chatId, chatName, avatarUrl, currentUserId) {
-            const chatArea = document.getElementById('chatArea');
+      // Load real chat content with messages from API
+      async function loadRealChatContent(
+        chatId,
+        chatName,
+        avatarUrl,
+        currentUserId
+      ) {
+        const chatArea = document.getElementById("chatArea");
 
-            try {
-                // Show chat interface first
-                chatArea.innerHTML = `
+        try {
+          // Show chat interface first
+          chatArea.innerHTML = `
                     <div class="chat-header">
                         <img src="${avatarUrl}" class="chat-header-avatar" alt="${chatName}">
                         <div class="chat-header-info">
@@ -1692,65 +1767,72 @@
                     </div>
                 `;
 
-                // Load messages from API
-                await loadMessagesFromAPI(chatId, currentUserId);
-                
-                // Subscribe vào WebSocket topic của chat này để nhận tin nhắn realtime
-                subscribeToChat(chatId);
+          // Load messages from API
+          await loadMessagesFromAPI(chatId, currentUserId);
 
-                // Setup input handlers
-                const messageInput = document.getElementById('messageInput');
-                messageInput.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendRealMessage();
-                    }
-                });
+          // Subscribe vào WebSocket topic của chat này để nhận tin nhắn realtime
+          subscribeToChat(chatId);
 
-            } catch (error) {
-                console.error('Error loading chat content:', error);
-                showChatErrorState(chatName, avatarUrl, 'Không thể tải nội dung cuộc trò chuyện');
+          // Setup input handlers
+          const messageInput = document.getElementById("messageInput");
+          messageInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendRealMessage();
             }
+          });
+        } catch (error) {
+          console.error("Error loading chat content:", error);
+          showChatErrorState(
+            chatName,
+            avatarUrl,
+            "Không thể tải nội dung cuộc trò chuyện"
+          );
         }
+      }
 
-        // Load messages from API
-        async function loadMessagesFromAPI(chatId, currentUserId) {
-            try {
-                console.log(`📨 Loading messages for chat ${chatId}`);
+      // Load messages from API
+      async function loadMessagesFromAPI(chatId, currentUserId) {
+        try {
+          console.log(`📨 Loading messages for chat ${chatId}`);
 
-                const response = await fetch(`/api/messages/chat/${chatId}?userId=${currentUserId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
+          const response = await fetch(
+            `/api/messages/chat/${chatId}?userId=${currentUserId}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            }
+          );
 
-                if (!response.ok) {
-                    throw new Error(`Failed to load messages: ${response.status} ${response.statusText}`);
-                }
+          if (!response.ok) {
+            throw new Error(
+              `Failed to load messages: ${response.status} ${response.statusText}`
+            );
+          }
 
-                const messages = await response.json();
-                console.log('📨 Messages loaded:', messages);
+          const messages = await response.json();
+          console.log("📨 Messages loaded:", messages);
 
-                // Transform API messages to display format, keep original timestamp for sorting
-                const displayMessages = messages.map(msg => ({
-                    id: msg.message_id,
-                    content: msg.content || '[Media]',
-                    mediaUrl: msg.media_url,
-                    isCurrentUser: msg.sender_id === currentUserId,
-                    time: formatMessageTime(msg.created_at),
-                    senderName: msg.sender_full_name,
-                    senderAvatar: msg.sender_avatar_url,
-                    created_at: msg.created_at // keep original timestamp for sorting
-                }));
+          // Transform API messages to display format, keep original timestamp for sorting
+          const displayMessages = messages.map((msg) => ({
+            id: msg.message_id,
+            content: msg.content || "[Media]",
+            mediaUrl: msg.media_url,
+            isCurrentUser: msg.sender_id === currentUserId,
+            time: formatMessageTime(msg.created_at),
+            senderName: msg.sender_full_name,
+            senderAvatar: msg.sender_avatar_url,
+            created_at: msg.created_at, // keep original timestamp for sorting
+          }));
 
-                displayRealMessages(displayMessages);
-
-            } catch (error) {
-                console.error('❌ Error loading messages:', error);
-                const chatMessages = document.getElementById('chatMessages');
-                chatMessages.innerHTML = `
+          displayRealMessages(displayMessages);
+        } catch (error) {
+          console.error("❌ Error loading messages:", error);
+          const chatMessages = document.getElementById("chatMessages");
+          chatMessages.innerHTML = `
                     <div class="text-center py-4">
                         <small class="text-danger">Không thể tải tin nhắn</small>
                         <br>
@@ -1759,16 +1841,16 @@
                         </button>
                     </div>
                 `;
-            }
         }
+      }
 
-        // Display real messages
-        function displayRealMessages(messages) {
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = '';
+      // Display real messages
+      function displayRealMessages(messages) {
+        const chatMessages = document.getElementById("chatMessages");
+        chatMessages.innerHTML = "";
 
-            if (messages.length === 0) {
-                chatMessages.innerHTML = `
+        if (messages.length === 0) {
+          chatMessages.innerHTML = `
                     <div class="text-center py-4">
                         <div class="text-muted">
                             <i class="fas fa-comments fa-2x mb-3 opacity-50"></i>
@@ -1777,57 +1859,59 @@
                         </div>
                     </div>
                 `;
-                return;
-            }
-
-            // Sort messages by created_at (timestamp) ascending (oldest to newest)
-            messages.sort((a, b) => {
-                // Always use created_at for sorting
-                return new Date(a.created_at) - new Date(b.created_at);
-            });
-
-            messages.forEach(message => {
-                const messageDiv = createRealMessageElement(message);
-                chatMessages.appendChild(messageDiv);
-            });
-
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Tự động đánh dấu tất cả tin nhắn của người khác là đã đọc
-            // Đợi 1s để đảm bảo UI đã render xong
-            setTimeout(() => {
-                markAllVisibleMessagesAsRead();
-            }, 1000);
+          return;
         }
 
-        // Create real message element
-        function createRealMessageElement(message) {
-            const div = document.createElement('div');
+        // Sort messages by created_at (timestamp) ascending (oldest to newest)
+        messages.sort((a, b) => {
+          // Always use created_at for sorting
+          return new Date(a.created_at) - new Date(b.created_at);
+        });
 
-            div.className = `message ${message.isCurrentUser ? 'sent' : ''}`;
-            // Thêm data-message-id để có thể tìm và cập nhật read status sau
-            div.setAttribute('data-message-id', message.id);
+        messages.forEach((message) => {
+          const messageDiv = createRealMessageElement(message);
+          chatMessages.appendChild(messageDiv);
+        });
 
-            let contentHtml = '';
-            if (message.content) {
-                contentHtml += `<div>${escapeHtml(message.content)}</div>`;
-            }
-            if (message.mediaUrl) {
-                contentHtml += `<div class="mt-2"><a href="${message.mediaUrl}" target="_blank" class="text-decoration-none">📎 Media</a></div>`;
-            }
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // Add sender info (will be hidden for sent messages via CSS)
-            let senderInfoHtml = '';
-            if (message.senderName) {
-                senderInfoHtml = `
+        // Tự động đánh dấu tất cả tin nhắn của người khác là đã đọc
+        // Đợi 1s để đảm bảo UI đã render xong
+        setTimeout(() => {
+          markAllVisibleMessagesAsRead();
+        }, 1000);
+      }
+
+      // Create real message element
+      function createRealMessageElement(message) {
+        const div = document.createElement("div");
+
+        div.className = `message ${message.isCurrentUser ? "sent" : ""}`;
+        // Thêm data-message-id để có thể tìm và cập nhật read status sau
+        div.setAttribute("data-message-id", message.id);
+
+        let contentHtml = "";
+        if (message.content) {
+          contentHtml += `<div>${escapeHtml(message.content)}</div>`;
+        }
+        if (message.mediaUrl) {
+          contentHtml += `<div class="mt-2"><a href="${message.mediaUrl}" target="_blank" class="text-decoration-none">📎 Media</a></div>`;
+        }
+
+        // Add sender info (will be hidden for sent messages via CSS)
+        let senderInfoHtml = "";
+        if (message.senderName) {
+          senderInfoHtml = `
                     <div class="message-sender">
-                        <span class="message-sender-name">${escapeHtml(message.senderName)}</span>
+                        <span class="message-sender-name">${escapeHtml(
+                          message.senderName
+                        )}</span>
                     </div>
                 `;
-            }
+        }
 
-            div.innerHTML = `
+        div.innerHTML = `
                 ${senderInfoHtml}
                 <div class="message-bubble">
                     ${contentHtml}
@@ -1835,169 +1919,186 @@
                 </div>
             `;
 
-            return div;
+        return div;
+      }
+
+      // Format message time from API timestamp
+      function formatMessageTime(timestamp) {
+        if (!timestamp) return "";
+
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+          return date.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        } else if (diffDays === 1) {
+          return (
+            "Hôm qua " +
+            date.toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          );
+        } else {
+          return (
+            date.toLocaleDateString("vi-VN") +
+            " " +
+            date.toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          );
         }
+      }
 
-        // Format message time from API timestamp
-        function formatMessageTime(timestamp) {
-            if (!timestamp) return '';
+      // Search functionality
+      document
+        .getElementById("chatSearchInput")
+        .addEventListener("input", function (e) {
+          const searchTerm = e.target.value.toLowerCase();
+          const chatItems = document.querySelectorAll(".chat-item");
 
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          chatItems.forEach((item) => {
+            const chatName = item
+              .querySelector(".chat-name")
+              .textContent.toLowerCase();
+            const chatMessage = item
+              .querySelector(".chat-last-message")
+              .textContent.toLowerCase();
 
-            if (diffDays === 0) {
-                return date.toLocaleTimeString('vi-VN', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } else if (diffDays === 1) {
-                return 'Hôm qua ' + date.toLocaleTimeString('vi-VN', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+            if (
+              chatName.includes(searchTerm) ||
+              chatMessage.includes(searchTerm)
+            ) {
+              item.style.display = "flex";
             } else {
-                return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+              item.style.display = "none";
             }
-        }
-
-        // Search functionality
-        document.getElementById('chatSearchInput').addEventListener('input', function (e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const chatItems = document.querySelectorAll('.chat-item');
-
-            chatItems.forEach(item => {
-                const chatName = item.querySelector('.chat-name').textContent.toLowerCase();
-                const chatMessage = item.querySelector('.chat-last-message').textContent.toLowerCase();
-
-                if (chatName.includes(searchTerm) || chatMessage.includes(searchTerm)) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+          });
         });
 
-        // Utility function
-        function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
+      // Utility function
+      function escapeHtml(text) {
+        const map = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;",
+        };
+        return text.replace(/[&<>"']/g, (m) => map[m]);
+      }
 
-        // Display messages
-        function displayMessages(messages) {
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = '';
+      // Display messages
+      function displayMessages(messages) {
+        const chatMessages = document.getElementById("chatMessages");
+        chatMessages.innerHTML = "";
 
-            messages.forEach(message => {
-                const messageDiv = createMessageElement(message);
-                chatMessages.appendChild(messageDiv);
-            });
+        messages.forEach((message) => {
+          const messageDiv = createMessageElement(message);
+          chatMessages.appendChild(messageDiv);
+        });
 
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
 
-        // Create message element
-        function createMessageElement(message) {
-            const div = document.createElement('div');
+      // Create message element
+      function createMessageElement(message) {
+        const div = document.createElement("div");
 
-            div.className = `message ${message.isCurrentUser ? 'sent' : ''}`;
-            div.innerHTML = `
+        div.className = `message ${message.isCurrentUser ? "sent" : ""}`;
+        div.innerHTML = `
                 <div class="message-bubble">
                     <div>${escapeHtml(message.content)}</div>
                     <div class="message-time">${message.time}</div>
                 </div>
             `;
 
-            return div;
+        return div;
+      }
+
+      // ============================================
+      // GỬI TIN NHẮN QUA WEBSOCKET
+      // ============================================
+
+      /**
+       * Gửi tin nhắn sử dụng WebSocket (thay vì REST API)
+       */
+      function sendRealMessage() {
+        const messageInput = document.getElementById("messageInput");
+        const content = messageInput.value.trim();
+
+        if (!content || !currentChatId) return;
+
+        // Lấy userId hiện tại
+        const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+        const currentUserId = auth.user_id;
+
+        if (!currentUserId) {
+          alert("Vui lòng đăng nhập lại");
+          return;
         }
 
-        // ============================================
-        // GỬI TIN NHẮN QUA WEBSOCKET
-        // ============================================
-        
-        /**
-         * Gửi tin nhắn sử dụng WebSocket (thay vì REST API)
-         */
-        function sendRealMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const content = messageInput.value.trim();
-
-            if (!content || !currentChatId) return;
-
-            // Lấy userId hiện tại
-            const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-            const currentUserId = auth.user_id;
-
-            if (!currentUserId) {
-                alert('Vui lòng đăng nhập lại');
-                return;
-            }
-            
-            // Kiểm tra WebSocket đã kết nối chưa
-            if (!stompClient || !isWebSocketConnected) {
-                alert('WebSocket chưa kết nối. Vui lòng đợi...');
-                return;
-            }
-
-            // Disable input trong khi gửi
-            messageInput.disabled = true;
-            const sendBtn = messageInput.parentElement.querySelector('.send-btn');
-            sendBtn.disabled = true;
-
-            try {
-                console.log(`📤 Gửi tin nhắn qua WebSocket đến chat ${currentChatId}`);
-
-                // Tạo message object theo format ChatMessageDTO
-                const messagePayload = {
-                    chatId: currentChatId,
-                    senderId: currentUserId,
-                    content: content,
-                    messageType: 'TEXT'
-                };
-                
-                // Gửi tin nhắn qua WebSocket đến endpoint /app/chat.sendMessage
-                stompClient.send(
-                    '/app/chat.sendMessage',
-                    {},  // Headers (để trống)
-                    JSON.stringify(messagePayload)  // Body
-                );
-                
-                console.log('✅ Tin nhắn đã được gửi qua WebSocket');
-
-                // Xóa nội dung input
-                messageInput.value = '';
-                
-                // Lưu ý: Tin nhắn sẽ được hiển thị khi nhận lại từ server qua subscription
-                // Không cần thêm vào UI ngay lập tức
-
-            } catch (error) {
-                console.error('❌ Lỗi khi gửi tin nhắn:', error);
-                alert('Không thể gửi tin nhắn: ' + error.message);
-            } finally {
-                // Bật lại input
-                messageInput.disabled = false;
-                sendBtn.disabled = false;
-                messageInput.focus();
-            }
+        // Kiểm tra WebSocket đã kết nối chưa
+        if (!stompClient || !isWebSocketConnected) {
+          alert("WebSocket chưa kết nối. Vui lòng đợi...");
+          return;
         }
 
-        // Load direct chat info with real data
-        function loadChatInfo(chatId, chatName, avatarUrl) {
-            const chatInfoArea = document.getElementById('chatInfoArea');
+        // Disable input trong khi gửi
+        messageInput.disabled = true;
+        const sendBtn = messageInput.parentElement.querySelector(".send-btn");
+        sendBtn.disabled = true;
 
-            chatInfoArea.innerHTML = `
+        try {
+          console.log(
+            `📤 Gửi tin nhắn qua WebSocket đến chat ${currentChatId}`
+          );
+
+          // Tạo message object theo format ChatMessageDTO
+          const messagePayload = {
+            chatId: currentChatId,
+            senderId: currentUserId,
+            content: content,
+            messageType: "TEXT",
+          };
+
+          // Gửi tin nhắn qua WebSocket đến endpoint /app/chat.sendMessage
+          stompClient.send(
+            "/app/chat.sendMessage",
+            {}, // Headers (để trống)
+            JSON.stringify(messagePayload) // Body
+          );
+
+          console.log("✅ Tin nhắn đã được gửi qua WebSocket");
+
+          // Xóa nội dung input
+          messageInput.value = "";
+
+          // Lưu ý: Tin nhắn sẽ được hiển thị khi nhận lại từ server qua subscription
+          // Không cần thêm vào UI ngay lập tức
+        } catch (error) {
+          console.error("❌ Lỗi khi gửi tin nhắn:", error);
+          alert("Không thể gửi tin nhắn: " + error.message);
+        } finally {
+          // Bật lại input
+          messageInput.disabled = false;
+          sendBtn.disabled = false;
+          messageInput.focus();
+        }
+      }
+
+      // Load direct chat info with real data
+      function loadChatInfo(chatId, chatName, avatarUrl) {
+        const chatInfoArea = document.getElementById("chatInfoArea");
+
+        chatInfoArea.innerHTML = `
                 <div class="info-header">
                     <img src="${avatarUrl}" class="info-avatar" alt="${chatName}">
                     <div class="info-name">${chatName}</div>
@@ -2032,33 +2133,35 @@
                     </div>
                 </div>
             `;
-        }
+      }
 
-        // Load group chat info
-        async function loadGroupChatInfo(chatId, chatName, avatarUrl) {
-            const chatInfoArea = document.getElementById('chatInfoArea');
+      // Load group chat info
+      async function loadGroupChatInfo(chatId, chatName, avatarUrl) {
+        const chatInfoArea = document.getElementById("chatInfoArea");
 
-            try {
-                // Fetch group details from API
-                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                const userId = auth.user_id;
-                
-                const response = await fetch(`/api/chats/groups/user/${userId}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+        try {
+          // Fetch group details from API
+          const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+          const userId = auth.user_id;
 
-                if (response.ok) {
-                    const groups = await response.json();
-                    const currentGroup = groups.find(g => g.chatId === chatId);
-                    
-                    if (currentGroup) {
-                        chatInfoArea.innerHTML = `
+          const response = await fetch(`/api/chats/groups/user/${userId}`, {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (response.ok) {
+            const groups = await response.json();
+            const currentGroup = groups.find((g) => g.chatId === chatId);
+
+            if (currentGroup) {
+              chatInfoArea.innerHTML = `
                             <div class="info-header">
                                 <img src="${avatarUrl}" class="info-avatar" alt="${chatName}">
                                 <div class="info-name">${chatName}</div>
-                                <div class="info-status">${currentGroup.memberCount} thành viên</div>
+                                <div class="info-status">${
+                                  currentGroup.memberCount
+                                } thành viên</div>
                             </div>
                             
                             <div class="info-section">
@@ -2069,19 +2172,27 @@
                                 </div>
                                 <div class="info-item">
                                     <span>👥</span>
-                                    <span>Nhóm chat (${currentGroup.memberCount} người)</span>
+                                    <span>Nhóm chat (${
+                                      currentGroup.memberCount
+                                    } người)</span>
                                 </div>
                                 <div class="info-item">
                                     <span>📅</span>
-                                    <span>Tạo: ${formatTime(currentGroup.createdAt)}</span>
+                                    <span>Tạo: ${formatTime(
+                                      currentGroup.createdAt
+                                    )}</span>
                                 </div>
                             </div>
                             
                             <div class="info-section">
-                                <h6>Thành viên (${currentGroup.memberCount})</h6>
+                                <h6>Thành viên (${
+                                  currentGroup.memberCount
+                                })</h6>
                                 <div class="info-item">
                                     <span>👤</span>
-                                    <span>Member IDs: ${currentGroup.memberIds.join(', ')}</span>
+                                    <span>Member IDs: ${currentGroup.memberIds.join(
+                                      ", "
+                                    )}</span>
                                 </div>
                             </div>
                             
@@ -2101,12 +2212,12 @@
                                 </div>
                             </div>
                         `;
-                        return;
-                    }
-                }
-                
-                // Fallback if API fails
-                chatInfoArea.innerHTML = `
+              return;
+            }
+          }
+
+          // Fallback if API fails
+          chatInfoArea.innerHTML = `
                     <div class="info-header">
                         <img src="${avatarUrl}" class="info-avatar" alt="${chatName}">
                         <div class="info-name">${chatName}</div>
@@ -2125,510 +2236,639 @@
                         </div>
                     </div>
                 `;
-                
-            } catch (error) {
-                console.error('Error loading group info:', error);
-                chatInfoArea.innerHTML = `
+        } catch (error) {
+          console.error("Error loading group info:", error);
+          chatInfoArea.innerHTML = `
                     <div class="empty-chat">
                         <div class="empty-icon">ℹ️</div>
                         <h6>Không thể tải thông tin nhóm</h6>
                     </div>
                 `;
-            }
         }
+      }
 
-        // Confirm leave group
-        function confirmLeaveGroup(chatId) {
-            if (confirm('Bạn có chắc chắn muốn rời khỏi nhóm này?')) {
-                // TODO: Implement leave group functionality
-                alert('Tính năng rời nhóm sẽ được triển khai sau');
-            }
+      // Confirm leave group
+      function confirmLeaveGroup(chatId) {
+        if (confirm("Bạn có chắc chắn muốn rời khỏi nhóm này?")) {
+          // TODO: Implement leave group functionality
+          alert("Tính năng rời nhóm sẽ được triển khai sau");
         }
+      }
 
+      // Confirm delete chat history
+      async function confirmDeleteChat(chatId) {
+        if (
+          confirm(
+            "Bạn có chắc chắn muốn xóa lịch sử cuộc trò chuyện này? Hành động này không thể hoàn tác!"
+          )
+        ) {
+          try {
+            // Lấy userId từ localStorage
+            const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+            const currentUserId = auth.user_id;
 
-        // Confirm delete chat history
-        async function confirmDeleteChat(chatId) {
-            if (confirm('Bạn có chắc chắn muốn xóa lịch sử cuộc trò chuyện này? Hành động này không thể hoàn tác!')) {
-                try {
-                    // Lấy userId từ localStorage
-                    const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                    const currentUserId = auth.user_id;
-
-                    if (!currentUserId) {
-                        alert('Vui lòng đăng nhập để thực hiện thao tác này');
-                        return;
-                    }
-
-                    const response = await fetch(`/api/messages/chat/${chatId}/history?userId=${currentUserId}`, {
-                        method: 'DELETE',
-                        credentials: 'include'
-                    });
-
-                    if (response.ok) {
-                        alert('Đã xóa lịch sử cuộc trò chuyện thành công!');
-                        // Reload messages to show empty chat
-                        await loadMessagesFromAPI(chatId, currentUserId);
-                    } else {
-                        const error = await response.json();
-                        alert(error.error || 'Không thể xóa lịch sử cuộc trò chuyện');
-                    }
-                } catch (error) {
-                    console.error('Error deleting chat history:', error);
-                    alert('Đã xảy ra lỗi khi xóa lịch sử cuộc trò chuyện');
-                }
+            if (!currentUserId) {
+              alert("Vui lòng đăng nhập để thực hiện thao tác này");
+              return;
             }
+
+            const response = await fetch(
+              `/api/messages/chat/${chatId}/history?userId=${currentUserId}`,
+              {
+                method: "DELETE",
+                credentials: "include",
+              }
+            );
+
+            if (response.ok) {
+              alert("Đã xóa lịch sử cuộc trò chuyện thành công!");
+              // Reload messages to show empty chat
+              await loadMessagesFromAPI(chatId, currentUserId);
+            } else {
+              const error = await response.json();
+              alert(error.error || "Không thể xóa lịch sử cuộc trò chuyện");
+            }
+          } catch (error) {
+            console.error("Error deleting chat history:", error);
+            alert("Đã xảy ra lỗi khi xóa lịch sử cuộc trò chuyện");
+          }
         }
+      }
 
-        // Search functionality
-        document.getElementById('chatSearchInput').addEventListener('input', function (e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const chatItems = document.querySelectorAll('.chat-item');
+      // Confirm leave group
+      async function confirmLeaveGroup(chatId) {
+        if (
+          confirm(
+            "Bạn có chắc chắn muốn rời khỏi nhóm này? Bạn sẽ không thể xem tin nhắn hoặc tham gia cuộc trò chuyện nữa!"
+          )
+        ) {
+          try {
+            // Lấy userId từ localStorage
+            const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+            const currentUserId = auth.user_id;
 
-            chatItems.forEach(item => {
-                const chatName = item.querySelector('.chat-name').textContent.toLowerCase();
-                const chatMessage = item.querySelector('.chat-last-message').textContent.toLowerCase();
+            if (!currentUserId) {
+              alert("Vui lòng đăng nhập để thực hiện thao tác này");
+              return;
+            }
 
-                if (chatName.includes(searchTerm) || chatMessage.includes(searchTerm)) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+            console.log("Leaving group:", { chatId, userId: currentUserId });
+
+            const response = await fetch(
+              `/api/chats/groups/${chatId}/leave?userId=${currentUserId}`,
+              {
+                method: "DELETE",
+                credentials: "include",
+              }
+            );
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log("Leave group result:", result);
+
+              // Show success message
+              alert("Bạn đã rời khỏi nhóm thành công!");
+
+              // Reload the entire page to refresh UI
+              window.location.reload();
+            } else {
+              const error = await response.json();
+              console.error("Error leaving group:", error);
+              alert(error.error || "Không thể rời khỏi nhóm");
+            }
+          } catch (error) {
+            console.error("Error leaving group:", error);
+            alert("Đã xảy ra lỗi khi rời khỏi nhóm");
+          }
+        }
+      }
+
+      // Search functionality
+      document
+        .getElementById("chatSearchInput")
+        .addEventListener("input", function (e) {
+          const searchTerm = e.target.value.toLowerCase();
+          const chatItems = document.querySelectorAll(".chat-item");
+
+          chatItems.forEach((item) => {
+            const chatName = item
+              .querySelector(".chat-name")
+              .textContent.toLowerCase();
+            const chatMessage = item
+              .querySelector(".chat-last-message")
+              .textContent.toLowerCase();
+
+            if (
+              chatName.includes(searchTerm) ||
+              chatMessage.includes(searchTerm)
+            ) {
+              item.style.display = "flex";
+            } else {
+              item.style.display = "none";
+            }
+          });
         });
 
-        // Utility function
-        function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
+      // Utility function
+      function escapeHtml(text) {
+        const map = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;",
+        };
+        return text.replace(/[&<>"']/g, (m) => map[m]);
+      }
+
+      // ============================================
+      // CREATE CHAT/GROUP MODAL
+      // ============================================
+
+      let selectedFriends = [];
+      let allFriends = [];
+      let currentChatType = null; // 'direct' or 'group'
+
+      // Open create chat modal
+      async function openCreateChatModal() {
+        const modal = document.getElementById("createGroupModal");
+        modal.classList.add("show");
+
+        // Reset to initial state
+        currentChatType = null;
+        document.getElementById("chatTypeSelection").style.display = "block";
+        document.getElementById("groupNameSection").style.display = "none";
+        document.getElementById("friendSelectionSection").style.display =
+          "none";
+        document.getElementById("groupNameInput").value = "";
+        selectedFriends = [];
+        updateSelectedCount();
+        updateCreateButton();
+      }
+
+      // Select chat type
+      async function selectChatType(type) {
+        currentChatType = type;
+
+        // Hide type selection
+        document.getElementById("chatTypeSelection").style.display = "none";
+
+        // Show friend selection
+        document.getElementById("friendSelectionSection").style.display =
+          "block";
+
+        if (type === "group") {
+          // Show group name input for group chat
+          document.getElementById("groupNameSection").style.display = "block";
+          document.getElementById("modalTitle").textContent = "Tạo nhóm mới";
+          document.getElementById("friendSelectionLabel").innerHTML =
+            'Chọn thành viên <span style="color: red;">*</span>';
+        } else {
+          // Hide group name for direct chat
+          document.getElementById("groupNameSection").style.display = "none";
+          document.getElementById("modalTitle").textContent = "Tạo chat 1-1";
+          document.getElementById("friendSelectionLabel").innerHTML =
+            'Chọn bạn bè <span style="color: red;">*</span>';
         }
 
-        // ============================================
-        // CREATE CHAT/GROUP MODAL
-        // ============================================
+        // Load friends list
+        await loadFriendsForGroupCreation();
+      }
 
-        let selectedFriends = [];
-        let allFriends = [];
-        let currentChatType = null; // 'direct' or 'group'
+      // Open create group modal (legacy function for compatibility)
+      async function openCreateGroupModal() {
+        await openCreateChatModal();
+      }
 
-        // Open create chat modal
-        async function openCreateChatModal() {
-            const modal = document.getElementById('createGroupModal');
-            modal.classList.add('show');
-            
-            // Reset to initial state
-            currentChatType = null;
-            document.getElementById('chatTypeSelection').style.display = 'block';
-            document.getElementById('groupNameSection').style.display = 'none';
-            document.getElementById('friendSelectionSection').style.display = 'none';
-            document.getElementById('groupNameInput').value = '';
-            selectedFriends = [];
-            updateSelectedCount();
-            updateCreateButton();
-        }
+      // Close create group modal
+      function closeCreateGroupModal() {
+        const modal = document.getElementById("createGroupModal");
+        modal.classList.remove("show");
+      }
 
-        // Select chat type
-        async function selectChatType(type) {
-            currentChatType = type;
-            
-            // Hide type selection
-            document.getElementById('chatTypeSelection').style.display = 'none';
-            
-            // Show friend selection
-            document.getElementById('friendSelectionSection').style.display = 'block';
-            
-            if (type === 'group') {
-                // Show group name input for group chat
-                document.getElementById('groupNameSection').style.display = 'block';
-                document.getElementById('modalTitle').textContent = 'Tạo nhóm mới';
-                document.getElementById('friendSelectionLabel').innerHTML = 'Chọn thành viên <span style="color: red;">*</span>';
-            } else {
-                // Hide group name for direct chat
-                document.getElementById('groupNameSection').style.display = 'none';
-                document.getElementById('modalTitle').textContent = 'Tạo chat 1-1';
-                document.getElementById('friendSelectionLabel').innerHTML = 'Chọn bạn bè <span style="color: red;">*</span>';
-            }
-            
-            // Load friends list
-            await loadFriendsForGroupCreation();
-        }
+      // Load friends for group creation
+      async function loadFriendsForGroupCreation() {
+        try {
+          const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+          const userId = auth.user_id;
 
-        // Open create group modal (legacy function for compatibility)
-        async function openCreateGroupModal() {
-            await openCreateChatModal();
-        }
+          if (!userId) {
+            console.error("User ID not found");
+            return;
+          }
 
-        // Close create group modal
-        function closeCreateGroupModal() {
-            const modal = document.getElementById('createGroupModal');
-            modal.classList.remove('show');
-        }
+          const response = await fetch(`/api/friends/${userId}/online-status`, {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          });
 
-        // Load friends for group creation
-        async function loadFriendsForGroupCreation() {
-            try {
-                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                const userId = auth.user_id;
+          if (!response.ok) {
+            throw new Error("Failed to load friends");
+          }
 
-                if (!userId) {
-                    console.error('User ID not found');
-                    return;
-                }
+          const data = await response.json();
+          allFriends = (data.friends || []).filter(
+            (f) => f.status === "accepted"
+          );
 
-                const response = await fetch(`/api/friends/${userId}/online-status`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to load friends');
-                }
-
-                const data = await response.json();
-                allFriends = (data.friends || []).filter(f => f.status === 'accepted');
-
-                displayFriendsForSelection(allFriends, userId);
-
-            } catch (error) {
-                console.error('Error loading friends:', error);
-                document.getElementById('friendSelectList').innerHTML = `
+          displayFriendsForSelection(allFriends, userId);
+        } catch (error) {
+          console.error("Error loading friends:", error);
+          document.getElementById("friendSelectList").innerHTML = `
                     <div class="text-center py-3">
                         <small class="text-danger">Không thể tải danh sách bạn bè</small>
                     </div>
                 `;
-            }
         }
+      }
 
-        // Display friends for selection
-        function displayFriendsForSelection(friends, currentUserId) {
-            const friendSelectList = document.getElementById('friendSelectList');
+      // Display friends for selection
+      function displayFriendsForSelection(friends, currentUserId) {
+        const friendSelectList = document.getElementById("friendSelectList");
 
-            if (friends.length === 0) {
-                friendSelectList.innerHTML = `
+        if (friends.length === 0) {
+          friendSelectList.innerHTML = `
                     <div class="text-center py-3">
                         <small class="text-muted">Bạn chưa có bạn bè nào</small>
                     </div>
                 `;
-                return;
-            }
+          return;
+        }
 
-            friendSelectList.innerHTML = '';
+        friendSelectList.innerHTML = "";
 
-            friends.forEach(friendData => {
-                const friendInfo = friendData.friend_info;
-                const friendId = (friendData.sender_id === currentUserId) 
-                    ? friendData.receiver_id 
-                    : friendData.sender_id;
+        friends.forEach((friendData) => {
+          const friendInfo = friendData.friend_info;
+          const friendId =
+            friendData.sender_id === currentUserId
+              ? friendData.receiver_id
+              : friendData.sender_id;
 
-                const item = document.createElement('div');
-                item.className = 'friend-select-item';
-                item.onclick = () => toggleFriendSelection(friendId);
+          const item = document.createElement("div");
+          item.className = "friend-select-item";
+          item.onclick = () => toggleFriendSelection(friendId);
 
-                item.innerHTML = `
+          item.innerHTML = `
                     <input type="checkbox" id="friend_${friendId}" onchange="toggleFriendSelection(${friendId})">
-                    <img src="${friendInfo.avatar_url || '/img/default-avatar.png'}" 
+                    <img src="${
+                      friendInfo.avatar_url || "/img/default-avatar.png"
+                    }" 
                          class="friend-select-avatar" 
                          alt="${friendInfo.full_name}">
                     <div class="friend-select-info">
-                        <div class="friend-select-name">${escapeHtml(friendInfo.full_name)}</div>
+                        <div class="friend-select-name">${escapeHtml(
+                          friendInfo.full_name
+                        )}</div>
                     </div>
                 `;
 
-                friendSelectList.appendChild(item);
+          friendSelectList.appendChild(item);
+        });
+      }
+
+      // Toggle friend selection
+      function toggleFriendSelection(friendId) {
+        const checkbox = document.getElementById(`friend_${friendId}`);
+
+        if (currentChatType === "direct") {
+          // For direct chat, only allow selecting 1 friend
+          if (selectedFriends.includes(friendId)) {
+            selectedFriends = [];
+            checkbox.checked = false;
+          } else {
+            // Uncheck all other checkboxes
+            selectedFriends.forEach((id) => {
+              const cb = document.getElementById(`friend_${id}`);
+              if (cb) cb.checked = false;
             });
+            selectedFriends = [friendId];
+            checkbox.checked = true;
+          }
+        } else {
+          // For group chat, allow multiple selections
+          if (selectedFriends.includes(friendId)) {
+            selectedFriends = selectedFriends.filter((id) => id !== friendId);
+            checkbox.checked = false;
+          } else {
+            selectedFriends.push(friendId);
+            checkbox.checked = true;
+          }
         }
 
-        // Toggle friend selection
-        function toggleFriendSelection(friendId) {
-            const checkbox = document.getElementById(`friend_${friendId}`);
-            
-            if (currentChatType === 'direct') {
-                // For direct chat, only allow selecting 1 friend
-                if (selectedFriends.includes(friendId)) {
-                    selectedFriends = [];
-                    checkbox.checked = false;
-                } else {
-                    // Uncheck all other checkboxes
-                    selectedFriends.forEach(id => {
-                        const cb = document.getElementById(`friend_${id}`);
-                        if (cb) cb.checked = false;
-                    });
-                    selectedFriends = [friendId];
-                    checkbox.checked = true;
-                }
-            } else {
-                // For group chat, allow multiple selections
-                if (selectedFriends.includes(friendId)) {
-                    selectedFriends = selectedFriends.filter(id => id !== friendId);
-                    checkbox.checked = false;
-                } else {
-                    selectedFriends.push(friendId);
-                    checkbox.checked = true;
-                }
-            }
+        updateSelectedCount();
+        updateCreateButton();
+      }
 
+      // Update selected count
+      function updateSelectedCount() {
+        const countElement = document.getElementById("selectedCount");
+        countElement.textContent = `Đã chọn: ${selectedFriends.length} người`;
+      }
+
+      // Update create button state
+      function updateCreateButton() {
+        const btnCreate = document.getElementById("btnCreateGroup");
+
+        if (currentChatType === "direct") {
+          // For direct chat, need exactly 1 friend
+          btnCreate.disabled = selectedFriends.length !== 1;
+        } else if (currentChatType === "group") {
+          // For group chat, need group name and at least 2 friends
+          const groupName = document
+            .getElementById("groupNameInput")
+            .value.trim();
+          btnCreate.disabled = !(groupName && selectedFriends.length >= 2);
+        } else {
+          btnCreate.disabled = true;
+        }
+      }
+
+      // Listen to group name input
+      document.addEventListener("DOMContentLoaded", function () {
+        const groupNameInput = document.getElementById("groupNameInput");
+        if (groupNameInput) {
+          groupNameInput.addEventListener("input", updateCreateButton);
+        }
+      });
+
+      // Create chat or group based on type
+      async function createChatOrGroup() {
+        if (currentChatType === "direct") {
+          await createDirectChat();
+        } else if (currentChatType === "group") {
+          await createGroup();
+        }
+      }
+
+      // Create direct chat (1-1)
+      async function createDirectChat() {
+        try {
+          if (selectedFriends.length !== 1) {
+            alert("Vui lòng chọn 1 bạn bè để tạo chat");
+            return;
+          }
+
+          // Get current user ID
+          const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+          const currentUserId = auth.user_id;
+
+          if (!currentUserId) {
+            alert("Vui lòng đăng nhập lại");
+            return;
+          }
+
+          const friendId = selectedFriends[0];
+
+          console.log("Creating direct chat:", { currentUserId, friendId });
+
+          // Disable button
+          const btnCreate = document.getElementById("btnCreateGroup");
+          btnCreate.disabled = true;
+          btnCreate.textContent = "Đang tạo...";
+
+          // Call API to create direct chat
+          const response = await fetch("/api/chats/find-or-create-direct", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              userId1: currentUserId,
+              userId2: friendId,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              errorData.error || errorData.message || "Không thể tạo chat"
+            );
+          }
+
+          const result = await response.json();
+          console.log("Direct chat created:", result);
+
+          // Chat created successfully
+          alert("Tạo chat thành công!");
+
+          // Close modal
+          closeCreateGroupModal();
+
+          // Reload chats to show new chat
+          await loadChats();
+
+          // Re-enable button
+          btnCreate.disabled = false;
+          btnCreate.textContent = "Tạo";
+        } catch (error) {
+          console.error("Error creating direct chat:", error);
+          alert("Lỗi: " + error.message);
+
+          // Re-enable button
+          const btnCreate = document.getElementById("btnCreateGroup");
+          btnCreate.disabled = false;
+          btnCreate.textContent = "Tạo";
+        }
+      }
+
+      // Create group
+      async function createGroup() {
+        try {
+          const groupName = document
+            .getElementById("groupNameInput")
+            .value.trim();
+
+          if (!groupName) {
+            alert("Vui lòng nhập tên nhóm");
+            return;
+          }
+
+          if (selectedFriends.length < 2) {
+            alert("Vui lòng chọn ít nhất 2 thành viên");
+            return;
+          }
+
+          // Get current user ID
+          const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+          const currentUserId = auth.user_id;
+
+          if (!currentUserId) {
+            alert("Vui lòng đăng nhập lại");
+            return;
+          }
+
+          // Include current user in the group
+          const memberIds = [currentUserId, ...selectedFriends];
+
+          console.log("Creating group:", { groupName, memberIds });
+
+          // Disable button
+          const btnCreate = document.getElementById("btnCreateGroup");
+          btnCreate.disabled = true;
+          btnCreate.textContent = "Đang tạo...";
+
+          // Call API to create group
+          const response = await fetch("/api/chats/find-or-create-group", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              memberIds: memberIds,
+              chatName: groupName,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              errorData.error || errorData.message || "Không thể tạo nhóm"
+            );
+          }
+
+          const result = await response.json();
+          console.log("Group created:", result);
+
+          // Check if group is newly created or already exists
+          if (
+            result.isNewlyCreated === false ||
+            (result.message && result.message.includes("found"))
+          ) {
+            // Group already exists - show alert and keep modal open
+            alert(
+              "Nhóm chat với các thành viên này đã tồn tại!\n\nVui lòng chọn thành viên khác hoặc đổi tên nhóm."
+            );
+
+            // Re-enable button
+            btnCreate.disabled = false;
+            btnCreate.textContent = "Tạo";
+
+            // Clear selections to let user choose again
+            selectedFriends = [];
             updateSelectedCount();
             updateCreateButton();
+
+            // Uncheck all checkboxes
+            document
+              .querySelectorAll('.friend-select-item input[type="checkbox"]')
+              .forEach((checkbox) => {
+                checkbox.checked = false;
+              });
+
+            // Don't close modal - let user try again
+            return;
+          }
+
+          // Group created successfully
+          alert("Tạo nhóm thành công!");
+
+          // Close modal
+          closeCreateGroupModal();
+
+          // Reload chats to show new group
+          await loadChats();
+        } catch (error) {
+          console.error("Error creating group:", error);
+          alert("Lỗi: " + error.message);
+
+          // Re-enable button
+          const btnCreate = document.getElementById("btnCreateGroup");
+          btnCreate.disabled = false;
+          btnCreate.textContent = "Tạo";
         }
-
-        // Update selected count
-        function updateSelectedCount() {
-            const countElement = document.getElementById('selectedCount');
-            countElement.textContent = `Đã chọn: ${selectedFriends.length} người`;
-        }
-
-        // Update create button state
-        function updateCreateButton() {
-            const btnCreate = document.getElementById('btnCreateGroup');
-            
-            if (currentChatType === 'direct') {
-                // For direct chat, need exactly 1 friend
-                btnCreate.disabled = selectedFriends.length !== 1;
-            } else if (currentChatType === 'group') {
-                // For group chat, need group name and at least 2 friends
-                const groupName = document.getElementById('groupNameInput').value.trim();
-                btnCreate.disabled = !(groupName && selectedFriends.length >= 2);
-            } else {
-                btnCreate.disabled = true;
-            }
-        }
-
-        // Listen to group name input
-        document.addEventListener('DOMContentLoaded', function() {
-            const groupNameInput = document.getElementById('groupNameInput');
-            if (groupNameInput) {
-                groupNameInput.addEventListener('input', updateCreateButton);
-            }
-        });
-
-        // Create chat or group based on type
-        async function createChatOrGroup() {
-            if (currentChatType === 'direct') {
-                await createDirectChat();
-            } else if (currentChatType === 'group') {
-                await createGroup();
-            }
-        }
-
-        // Create direct chat (1-1)
-        async function createDirectChat() {
-            try {
-                if (selectedFriends.length !== 1) {
-                    alert('Vui lòng chọn 1 bạn bè để tạo chat');
-                    return;
-                }
-
-                // Get current user ID
-                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                const currentUserId = auth.user_id;
-
-                if (!currentUserId) {
-                    alert('Vui lòng đăng nhập lại');
-                    return;
-                }
-
-                const friendId = selectedFriends[0];
-
-                console.log('Creating direct chat:', { currentUserId, friendId });
-
-                // Disable button
-                const btnCreate = document.getElementById('btnCreateGroup');
-                btnCreate.disabled = true;
-                btnCreate.textContent = 'Đang tạo...';
-
-                // Call API to create direct chat
-                const response = await fetch('/api/chats/find-or-create-direct', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        userId1: currentUserId,
-                        userId2: friendId
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || errorData.message || 'Không thể tạo chat');
-                }
-
-                const result = await response.json();
-                console.log('Direct chat created:', result);
-
-                // Chat created successfully
-                alert('Tạo chat thành công!');
-
-                // Close modal
-                closeCreateGroupModal();
-
-                // Reload chats to show new chat
-                await loadChats();
-
-                // Re-enable button
-                btnCreate.disabled = false;
-                btnCreate.textContent = 'Tạo';
-
-            } catch (error) {
-                console.error('Error creating direct chat:', error);
-                alert('Lỗi: ' + error.message);
-
-                // Re-enable button
-                const btnCreate = document.getElementById('btnCreateGroup');
-                btnCreate.disabled = false;
-                btnCreate.textContent = 'Tạo';
-            }
-        }
-
-        // Create group
-        async function createGroup() {
-            try {
-                const groupName = document.getElementById('groupNameInput').value.trim();
-                
-                if (!groupName) {
-                    alert('Vui lòng nhập tên nhóm');
-                    return;
-                }
-
-                if (selectedFriends.length < 2) {
-                    alert('Vui lòng chọn ít nhất 2 thành viên');
-                    return;
-                }
-
-                // Get current user ID
-                const auth = JSON.parse(localStorage.getItem('auth') || '{}');
-                const currentUserId = auth.user_id;
-
-                if (!currentUserId) {
-                    alert('Vui lòng đăng nhập lại');
-                    return;
-                }
-
-                // Include current user in the group
-                const memberIds = [currentUserId, ...selectedFriends];
-
-                console.log('Creating group:', { groupName, memberIds });
-
-                // Disable button
-                const btnCreate = document.getElementById('btnCreateGroup');
-                btnCreate.disabled = true;
-                btnCreate.textContent = 'Đang tạo...';
-
-                // Call API to create group
-                const response = await fetch('/api/chats/find-or-create-group', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        memberIds: memberIds,
-                        chatName: groupName
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || errorData.message || 'Không thể tạo nhóm');
-                }
-
-                const result = await response.json();
-                console.log('Group created:', result);
-
-                // Check if group is newly created or already exists
-                if (result.isNewlyCreated === false || (result.message && result.message.includes('found'))) {
-                    // Group already exists - show alert and keep modal open
-                    alert('Nhóm chat với các thành viên này đã tồn tại!\n\nVui lòng chọn thành viên khác hoặc đổi tên nhóm.');
-                    
-                    // Re-enable button
-                    btnCreate.disabled = false;
-                    btnCreate.textContent = 'Tạo';
-                    
-                    // Clear selections to let user choose again
-                    selectedFriends = [];
-                    updateSelectedCount();
-                    updateCreateButton();
-                    
-                    // Uncheck all checkboxes
-                    document.querySelectorAll('.friend-select-item input[type="checkbox"]').forEach(checkbox => {
-                        checkbox.checked = false;
-                    });
-                    
-                    // Don't close modal - let user try again
-                    return;
-                }
-
-                // Group created successfully
-                alert('Tạo nhóm thành công!');
-
-                // Close modal
-                closeCreateGroupModal();
-
-                // Reload chats to show new group
-                await loadChats();
-
-            } catch (error) {
-                console.error('Error creating group:', error);
-                alert('Lỗi: ' + error.message);
-                
-                // Re-enable button
-                const btnCreate = document.getElementById('btnCreateGroup');
-                btnCreate.disabled = false;
-                btnCreate.textContent = 'Tạo';
-            }
-        }
+      }
     </script>
 
     <!-- Create Group Modal -->
     <div class="create-group-modal" id="createGroupModal">
-        <div class="modal-content-group">
-            <div class="modal-header-group">
-                <h5 id="modalTitle">Tạo chat mới</h5>
-                <button class="modal-close" onclick="closeCreateGroupModal()">×</button>
-            </div>
-            <div class="modal-body-group">
-                <!-- Chat Type Selection -->
-                <div class="form-group-modal" id="chatTypeSelection">
-                    <label>Loại chat</label>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button class="btn-modal btn-modal-create" onclick="selectChatType('direct')" style="flex: 1;">Chat 1-1</button>
-                        <button class="btn-modal btn-modal-create" onclick="selectChatType('group')" style="flex: 1;">Tạo nhóm</button>
-                    </div>
-                </div>
-
-                <!-- Group Name (only for group chat) -->
-                <div class="form-group-modal" id="groupNameSection" style="display: none;">
-                    <label for="groupNameInput">Tên nhóm <span style="color: red;">*</span></label>
-                    <input type="text" id="groupNameInput" placeholder="Nhập tên nhóm..." maxlength="50">
-                </div>
-
-                <!-- Friend Selection -->
-                <div class="form-group-modal" id="friendSelectionSection" style="display: none;">
-                    <label id="friendSelectionLabel">Chọn bạn bè <span style="color: red;">*</span></label>
-                    <div class="selected-count" id="selectedCount">Đã chọn: 0 người</div>
-                    <div class="friend-select-list" id="friendSelectList">
-                        <div class="text-center py-3">
-                            <small class="text-muted">Đang tải danh sách bạn bè...</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer-group">
-                <button class="btn-modal btn-modal-cancel" onclick="closeCreateGroupModal()">Hủy</button>
-                <button class="btn-modal btn-modal-create" id="btnCreateGroup" onclick="createChatOrGroup()" disabled>Tạo</button>
-            </div>
+      <div class="modal-content-group">
+        <div class="modal-header-group">
+          <h5 id="modalTitle">Tạo chat mới</h5>
+          <button class="modal-close" onclick="closeCreateGroupModal()">
+            ×
+          </button>
         </div>
+        <div class="modal-body-group">
+          <!-- Chat Type Selection -->
+          <div class="form-group-modal" id="chatTypeSelection">
+            <label>Loại chat</label>
+            <div style="display: flex; gap: 10px; margin-top: 10px">
+              <button
+                class="btn-modal btn-modal-create"
+                onclick="selectChatType('direct')"
+                style="flex: 1"
+              >
+                Chat 1-1
+              </button>
+              <button
+                class="btn-modal btn-modal-create"
+                onclick="selectChatType('group')"
+                style="flex: 1"
+              >
+                Tạo nhóm
+              </button>
+            </div>
+          </div>
+
+          <!-- Group Name (only for group chat) -->
+          <div
+            class="form-group-modal"
+            id="groupNameSection"
+            style="display: none"
+          >
+            <label for="groupNameInput"
+              >Tên nhóm <span style="color: red">*</span></label
+            >
+            <input
+              type="text"
+              id="groupNameInput"
+              placeholder="Nhập tên nhóm..."
+              maxlength="50"
+            />
+          </div>
+
+          <!-- Friend Selection -->
+          <div
+            class="form-group-modal"
+            id="friendSelectionSection"
+            style="display: none"
+          >
+            <label id="friendSelectionLabel"
+              >Chọn bạn bè <span style="color: red">*</span></label
+            >
+            <div class="selected-count" id="selectedCount">
+              Đã chọn: 0 người
+            </div>
+            <div class="friend-select-list" id="friendSelectList">
+              <div class="text-center py-3">
+                <small class="text-muted">Đang tải danh sách bạn bè...</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer-group">
+          <button
+            class="btn-modal btn-modal-cancel"
+            onclick="closeCreateGroupModal()"
+          >
+            Hủy
+          </button>
+          <button
+            class="btn-modal btn-modal-create"
+            id="btnCreateGroup"
+            onclick="createChatOrGroup()"
+            disabled
+          >
+            Tạo
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
+  </body>
 </html>
