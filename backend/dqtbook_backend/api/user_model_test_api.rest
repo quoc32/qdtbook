@@ -75,8 +75,8 @@ Content-Type: application/json
 POST http://localhost:8080/api/users/send-otp/forgot-password?email=vuanhquoc0397144200@gmail.com
 
 ### 6. Change user Role to "special" (only for admin)
-POST http://localhost:8080/api/users/10/upgrade
-Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
+POST http://localhost:8080/api/users/2/upgrade
+Cookie: JSESSIONID=C00B60310A666148410AF8D32A299118
 Content-Type: application/json
 
 {
