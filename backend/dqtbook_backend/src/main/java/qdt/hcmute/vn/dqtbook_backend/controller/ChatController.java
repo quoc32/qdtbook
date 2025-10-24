@@ -186,4 +186,45 @@ public class ChatController {
         List<DirectChatListResponseDTO> directChats = chatService.getDirectChatsByUserId(userId);
         return ResponseEntity.ok(directChats);
     }
+
+    /**
+     * Leave a group chat
+     * 
+     * @param chatId Chat ID (path variable)
+     * @param userId User ID (request parameter)
+     * @return Success message or error
+     */
+    @DeleteMapping("/groups/{chatId}/leave")
+    public ResponseEntity<?> leaveGroupChat(
+            @PathVariable Integer chatId,
+            @RequestParam Integer userId) {
+        // Validate parameters
+        if (chatId == null || chatId <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid chat ID"));
+        }
+        
+        if (userId == null || userId <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid user ID"));
+        }
+
+        try {
+            boolean success = chatService.leaveGroupChat(chatId, userId);
+            
+            if (success) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "Successfully left the group chat",
+                    "chatId", chatId,
+                    "userId", userId
+                ));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Failed to leave group chat. You may not be a member of this group."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred: " + e.getMessage()));
+        }
+    }
 }

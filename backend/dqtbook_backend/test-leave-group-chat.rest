@@ -1,0 +1,54 @@
+### Test API: Rời khỏi nhóm chat
+
+### Test 1: Lấy danh sách nhóm chat của user (để lấy chatId)
+GET http://localhost:8080/api/chats/groups/user/10
+
+###
+
+### Test 2: Rời khỏi nhóm chat (thay chatId và userId phù hợp)
+# chatId: ID của nhóm chat muốn rời
+# userId: ID của user muốn rời nhóm
+DELETE http://localhost:8080/api/chats/groups/3/leave?userId=10
+
+###
+
+### Test 3: Kiểm tra lại danh sách nhóm sau khi rời (user 10)
+GET http://localhost:8080/api/chats/groups/user/10
+
+###
+
+### Test 4: Thử rời nhóm không tồn tại (chatId = 9999)
+DELETE http://localhost:8080/api/chats/groups/9999/leave?userId=10
+
+###
+
+### Test 5: Thử rời nhóm mà user không phải thành viên
+DELETE http://localhost:8080/api/chats/groups/7/leave?userId=999
+
+###
+
+### Test 6: Thử rời khỏi direct chat (không phải nhóm) - chatId = 1
+DELETE http://localhost:8080/api/chats/groups/1/leave?userId=10
+
+###
+
+### ===== TEST TRÊN GIAO DIỆN WEB =====
+# 1. Mở http://localhost:8080/views/messages
+# 2. Đăng nhập với user 10
+# 3. Click vào một nhóm chat
+# 4. Click vào icon info (ℹ️) ở góc trên bên phải
+# 5. Scroll xuống phần "Tùy chọn"
+# 6. Click vào "🚪 Rời khỏi nhóm"
+# 7. Xác nhận trong popup
+# 8. Kiểm tra: nhóm sẽ biến mất khỏi danh sách chat
+
+###
+
+### Hướng dẫn test API:
+# 1. Chạy Test 1 để xem danh sách nhóm của user 10
+# 2. Chọn một chatId từ kết quả Test 1
+# 3. Chạy Test 2 với chatId đã chọn
+# 4. Chạy Test 3 để xác nhận user đã rời nhóm
+# 5. Chạy Test 4, 5, 6 để test các trường hợp lỗi
+
+###
