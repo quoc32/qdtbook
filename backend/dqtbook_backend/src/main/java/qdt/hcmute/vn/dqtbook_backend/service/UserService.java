@@ -263,7 +263,22 @@ public class UserService {
     }
 
     @Transactional
-    public boolean deleteUser(Integer id) {
+    public boolean deleteUser(String email) {
+        // Check user thực hiện hành động có phải admin không
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        String sessionUserRole = (String) session.getAttribute("role");
+        if (sessionUserId == null || sessionUserRole == null || !sessionUserRole.equals("admin")) {
+            throw new IllegalArgumentException("Only admin can upgrade user roles");
+        }
+
+        User user_ = userRepository.findByEmail(email);
+        Optional<User> userOpt = Optional.ofNullable(user_);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        User user = userOpt.get();
+        Integer id = user.getId();
+
         if (!userRepository.existsById(id)) {
             return false;
         }

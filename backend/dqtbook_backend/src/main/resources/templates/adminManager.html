@@ -879,6 +879,92 @@
     </script>
     <!-- Ban/Unban user:END -->
 
+    <!-- Delete User:BEGIN -->
+    <main class="container py-4">
+      <h2 class="h5 mb-3">Xóa người dùng</h2>
+      <div class="row g-4">
+      <div class="col-md-6 col-lg-5">
+      <div class="card">
+      <div class="card-header">Xóa tài khoản theo email</div>
+      <div class="card-body">
+        <div class="alert alert-warning small mb-3">
+        Hành động này không thể hoàn tác. Tài khoản và dữ liệu liên quan có thể bị xóa vĩnh viễn.
+        </div>
+        <div class="mb-3">
+        <label for="deleteEmail" class="form-label">Email</label>
+        <input type="email" class="form-control" id="deleteEmail" value="example-user@gmail.com">
+        </div>
+        <button id="btnDelete" class="btn btn-danger w-100">Delete user</button>
+        <div id="statusDelete" class="small mt-3"></div>
+      </div>
+      </div>
+      </div>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+      function setStatus(el, msg, cls) {
+      el.textContent = msg || '';
+      el.className = 'small mt-3 ' + (cls || 'text-muted');
+      }
+      async function deleteUserByEmail(email) {
+      const res = await fetch('/api/users/delete', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+      });
+      const text = await res.text().catch(() => '');
+      let msg = text || (res.ok ? 'Đã xóa người dùng' : '');
+      try { const j = JSON.parse(text || '{}'); msg = j.message || j.detail || j.status || msg; } catch (_) {}
+      if (!res.ok) throw new Error(msg || ('HTTP ' + res.status));
+      return msg;
+      }
+
+      // Sử dụng modal xác nhận Bootstrap sẵn có
+      function showBootstrapConfirm(message){
+      return new Promise(resolve => {
+        const modalEl = document.getElementById('qdt_confirm_delete_modal');
+        const modalText = document.getElementById('qdt_confirm_delete_text');
+        const confirmBtn = document.getElementById('qdt_confirm_delete_btn');
+        if(!modalEl || !modalText || !confirmBtn){
+        const ok = window.confirm(message || 'Xác nhận?');
+        return resolve(ok);
+        }
+        modalText.textContent = message || 'Xác nhận?';
+        const bs = new bootstrap.Modal(modalEl);
+        const onConfirm = () => { cleanup(); resolve(true); };
+        const onHide = () => { cleanup(); resolve(false); };
+        function cleanup(){
+        try { confirmBtn.removeEventListener('click', onConfirm); } catch(_){}
+        try { modalEl.removeEventListener('hidden.bs.modal', onHide); } catch(_){}
+        try { bs.hide(); } catch(_){}
+        }
+        confirmBtn.addEventListener('click', onConfirm);
+        modalEl.addEventListener('hidden.bs.modal', onHide);
+        bs.show();
+      });
+      }
+
+      document.getElementById('btnDelete').addEventListener('click', async () => {
+      const email = document.getElementById('deleteEmail').value.trim();
+      const statusEl = document.getElementById('statusDelete');
+      if (!email) return setStatus(statusEl, 'Vui lòng nhập email', 'text-danger');
+      const ok = await showBootstrapConfirm('Xác nhận xóa người dùng: ' + email + '?\nHành động này không thể hoàn tác.');
+      if(!ok) return;
+      setStatus(statusEl, 'Đang xóa...', 'text-info');
+      try {
+      const msg = await deleteUserByEmail(email);
+      setStatus(statusEl, msg || ('Đã xóa ' + email), 'text-success');
+      } catch (e) {
+      setStatus(statusEl, e.message || 'Xóa thất bại', 'text-danger');
+      }
+      });
+      })();
+    </script>
+    <!-- Delete User:END -->
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
