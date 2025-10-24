@@ -26,6 +26,34 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
         String email = request.get("email");
         String password = request.get("password");
+        Integer rememberMe = request.containsKey("rememberMe") ? Integer.valueOf(request.get("rememberMe")) : 0;
+
+        // Check người dùng có bị ban hay không
+        if (userService.isUserBanned(email)) {
+            AuthResponseDTO authResponse = new AuthResponseDTO(
+                "Tài khoản của bạn đã bị cấm truy cập",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            );
+            return ResponseEntity.status(403).body(authResponse);
+        }
+
+        if (rememberMe != null && rememberMe == 1) {
+            // Cấu hình session timeout cho "Remember Me" (14 ngày)
+            httpRequest.getSession().setMaxInactiveInterval(14 * 24 * 60 * 60); // 14 days in seconds
+        } else {
+            // Cấu hình session timeout mặc định (30 phút)
+            httpRequest.getSession().setMaxInactiveInterval(3 * 60 * 60); // 3 hours in seconds
+        }
 
         return userService.login(email, password)
                 .map(user -> {

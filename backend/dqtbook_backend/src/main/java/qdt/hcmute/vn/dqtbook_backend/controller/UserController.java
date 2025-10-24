@@ -7,6 +7,7 @@ import qdt.hcmute.vn.dqtbook_backend.dto.UserCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.service.UserService;
+import java.io.IOException;
 
 import java.util.List;
 import java.util.Optional;
@@ -111,20 +112,27 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserUpdateRequestDTO dto) {
-        Optional<UserResponseDTO> user = userService.updateUser(id, dto);
-        if (user.isPresent()) {
-            return ResponseEntity.ok(user.get());
-        } else {
-            return ResponseEntity.badRequest().body("Error updating user");
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserUpdateRequestDTO dto) throws IOException {
+        System.out.println("QUOC:1");
+        try {
+            Optional<UserResponseDTO> user = userService.updateUser(id, dto);
+            System.out.println("QUOC:2");
+            if (user.isPresent()) {
+                return ResponseEntity.ok(user.get());
+            } else {
+                return ResponseEntity.badRequest().body("Error updating user");
+            }
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user: " + ex.getMessage());
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        boolean deleted = userService.deleteUser(id);
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteUser(@RequestBody Map<String, String> bodyl) {
+        String email = bodyl.get("email");
+        boolean deleted = userService.deleteUser(email);
         if (deleted) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok("User with email " + email + " has been deleted.");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
@@ -154,4 +162,19 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found or upgrade failed");
         }
     }
+
+    // >> Ban và unBan 1 user (chỉ dành cho admin)
+    @PostMapping("/ban")
+    public ResponseEntity<?> banUser(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        userService.banUser(email);
+        return ResponseEntity.ok("User with email " + email + " has been banned.");
+    }
+    @PostMapping("/unban")
+    public ResponseEntity<?> unbanUser(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        userService.unbanUser(email);
+        return ResponseEntity.ok("User with email " + email + " has been unbanned.");
+    }
+    // >> ==========================================================
 }

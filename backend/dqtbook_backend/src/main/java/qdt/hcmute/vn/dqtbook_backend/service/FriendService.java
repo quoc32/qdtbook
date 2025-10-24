@@ -64,11 +64,11 @@ public class FriendService {
      *                                  - hoặc user không tồn tại
      */
     public Optional<List<FriendResponseDTO>> getFriendsByUserId(Integer userId) {
-        // Session user check
-        Integer sessionUserId = (Integer) session.getAttribute("userId");
-        if (sessionUserId == null || !sessionUserId.equals(userId)) {
-            throw new IllegalArgumentException("sender_id does not match the logged-in user");
-        }
+        // Session user check // ! No need to check session user here
+        // Integer sessionUserId = (Integer) session.getAttribute("userId");
+        // if (sessionUserId == null || !sessionUserId.equals(userId)) {
+        //     throw new IllegalArgumentException("sender_id does not match the logged-in user");
+        // }
 
         // Check if user exists
         if (!userRepository.existsById(userId)) {

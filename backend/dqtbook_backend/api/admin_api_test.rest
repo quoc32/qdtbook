@@ -1,0 +1,35 @@
+### 1. Change user Role to "special" (only for admin)
+POST http://localhost:8080/api/users/10/upgrade
+Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
+Content-Type: application/json
+
+{
+  "toRole": "special"
+}
+
+### 2. Change user Role to "student" (only for admin)
+POST http://localhost:8080/api/users/6/upgrade
+Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
+Content-Type: application/json
+
+{
+  "toRole": "student"
+}
+
+### 3. Ban user (only for admin)
+POST http://localhost:8080/api/users/ban
+Cookie: JSESSIONID=2B93B8D10D9972BA992568A0E2163C4A
+Content-Type: application/json
+
+{
+  "email": "quoc12@gmail.com"
+}
+
+### 4. Unban user (only for admin)
+POST http://localhost:8080/api/users/unban
+Cookie: JSESSIONID=2B93B8D10D9972BA992568A0E2163C4A
+Content-Type: application/json
+
+{
+  "email": "quoc12@gmail.com"
+}
