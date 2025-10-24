@@ -14,7 +14,7 @@
     <!-- Nhúng fragment navbar -->
     <div th:replace="fragments/navbar :: navbar"></div>
 
-    <!-- Main content:BEGIN -->
+    <!-- ChangeRole:BEGIN -->
     <main class="container py-4">
       <h1 class="h4 mb-4">Administrator Manager</h1>
       <div class="row g-4">
@@ -47,35 +47,7 @@
         </div>
       </div>
     </main>
-
-    <main class="container py-4">
-      <h2 class="h5 mb-3">Quản lý báo cáo</h2>
-      <div class="card mb-4">
-        <div class="card-header">Danh sách báo cáo</div>
-        <div class="card-body">
-          <div id="reportsStatus" class="small mb-2 text-muted">Đang tải...</div>
-          <div class="table-responsive">
-            <table class="table table-sm" id="reportsTable">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Reporter</th>
-                  <th>Reason</th>
-                  <th>Type</th>
-                  <th>Target ID</th>
-                  <th>Created At</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- rows injected here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </main>
-
+    <!-- >> Script xử lý đổi vai trò user -->
     <script>
       (function () {
         async function findUserByEmail(email) {
@@ -191,10 +163,36 @@
         });
       })();
     </script>
-    <!-- Main content:END -->
+    <!-- ChangeRole:END -->
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Report:BEGIN -->
+    <main class="container py-4">
+      <h2 class="h5 mb-3">Quản lý báo cáo</h2>
+      <div class="card mb-4">
+        <div class="card-header">Danh sách báo cáo</div>
+        <div class="card-body">
+          <div id="reportsStatus" class="small mb-2 text-muted">Đang tải...</div>
+          <div class="table-responsive">
+            <table class="table table-sm" id="reportsTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Reporter</th>
+                  <th>Reason</th>
+                  <th>Type</th>
+                  <th>Target ID</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- rows injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
     <!-- Confirm delete modal -->
     <div class="modal fade" id="qdt_confirm_delete_modal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -213,31 +211,30 @@
         </div>
       </div>
     </div>
-
-      <!-- Admin report view modal -->
-      <div class="modal fade" id="qdt_admin_report_view_modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Xem nội dung báo cáo</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Admin report view modal -->
+    <div class="modal fade" id="qdt_admin_report_view_modal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Xem nội dung báo cáo</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="qdt_admin_report_view_content">
+              <div class="text-center text-muted py-3">Chưa có nội dung</div>
             </div>
-            <div class="modal-body">
-              <div class="qdt_admin_report_view_content">
-                <div class="text-center text-muted py-3">Chưa có nội dung</div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-              <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_comment_btn" style="display:none">Xóa comment</button>
-              <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_post_btn" style="display:none">Xóa bài đăng</button>
-              <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_product_btn" style="display:none">Xóa sản phẩm</button>
-              <button type="button" class="btn btn-danger" id="qdt_admin_report_delete_btn">Xóa báo cáo</button>
-            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_comment_btn" style="display:none">Xóa comment</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_post_btn" style="display:none">Xóa bài đăng</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="qdt_admin_delete_product_btn" style="display:none">Xóa sản phẩm</button>
+            <button type="button" class="btn btn-danger" id="qdt_admin_report_delete_btn">Xóa báo cáo</button>
           </div>
         </div>
       </div>
-
+    </div>
+      <!-- >> Script xử lý report -->
     <script>
       (function(){
         const statusEl = document.getElementById('reportsStatus');
@@ -797,5 +794,178 @@
         loadReports();
       })();
     </script>
+    <!-- Report:BEGIN -->
+
+    <!-- Ban/Unban user:BEGIN -->
+    <main class="container py-4">
+      <h2 class="h5 mb-3">Khóa/Mở khóa người dùng</h2>
+      <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card">
+        <div class="card-header">Khóa tài khoản</div>
+        <div class="card-body">
+          <div class="mb-3">
+          <label for="banEmail" class="form-label">Email</label>
+          <input type="email" class="form-control" id="banEmail" value="example-user@gmail.com">
+          </div>
+          <button id="btnBan" class="btn btn-danger w-100">Ban user</button>
+          <div id="statusBan" class="small mt-3"></div>
+        </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card">
+        <div class="card-header">Mở khóa tài khoản</div>
+        <div class="card-body">
+          <div class="mb-3">
+          <label for="unbanEmail" class="form-label">Email</label>
+          <input type="email" class="form-control" id="unbanEmail" value="example-user@gmail.com">
+          </div>
+          <button id="btnUnban" class="btn btn-success w-100">Unban user</button>
+          <div id="statusUnban" class="small mt-3"></div>
+        </div>
+        </div>
+      </div>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+      async function postJson(url, payload) {
+        const res = await fetch(url, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+        const text = await res.text().catch(() => '');
+        let msg = text || (res.ok ? 'Thành công' : 'Thất bại');
+        try { const j = JSON.parse(text); msg = j.message || j.detail || msg; } catch (_) {}
+        if (!res.ok) throw new Error(msg || ('HTTP ' + res.status));
+        return msg;
+      }
+      function setStatus(el, msg, cls) {
+        el.textContent = msg || '';
+        el.className = 'small mt-3 ' + (cls || 'text-muted');
+      }
+
+      document.getElementById('btnBan').addEventListener('click', async () => {
+        const email = document.getElementById('banEmail').value.trim();
+        const statusEl = document.getElementById('statusBan');
+        if (!email) return setStatus(statusEl, 'Vui lòng nhập email', 'text-danger');
+        setStatus(statusEl, 'Đang gửi yêu cầu...', 'text-info');
+        try {
+        const msg = await postJson('/api/users/ban', { email });
+        setStatus(statusEl, msg || ('Đã khóa ' + email), 'text-success');
+        } catch (e) {
+        setStatus(statusEl, e.message || 'Khóa thất bại', 'text-danger');
+        }
+      });
+
+      document.getElementById('btnUnban').addEventListener('click', async () => {
+        const email = document.getElementById('unbanEmail').value.trim();
+        const statusEl = document.getElementById('statusUnban');
+        if (!email) return setStatus(statusEl, 'Vui lòng nhập email', 'text-danger');
+        setStatus(statusEl, 'Đang gửi yêu cầu...', 'text-info');
+        try {
+        const msg = await postJson('/api/users/unban', { email });
+        setStatus(statusEl, msg || ('Đã mở khóa ' + email), 'text-success');
+        } catch (e) {
+        setStatus(statusEl, e.message || 'Mở khóa thất bại', 'text-danger');
+        }
+      });
+      })();
+    </script>
+    <!-- Ban/Unban user:END -->
+
+    <!-- Delete User:BEGIN -->
+    <main class="container py-4">
+      <h2 class="h5 mb-3">Xóa người dùng</h2>
+      <div class="row g-4">
+      <div class="col-md-6 col-lg-5">
+      <div class="card">
+      <div class="card-header">Xóa tài khoản theo email</div>
+      <div class="card-body">
+        <div class="alert alert-warning small mb-3">
+        Hành động này không thể hoàn tác. Tài khoản và dữ liệu liên quan có thể bị xóa vĩnh viễn.
+        </div>
+        <div class="mb-3">
+        <label for="deleteEmail" class="form-label">Email</label>
+        <input type="email" class="form-control" id="deleteEmail" value="example-user@gmail.com">
+        </div>
+        <button id="btnDelete" class="btn btn-danger w-100">Delete user</button>
+        <div id="statusDelete" class="small mt-3"></div>
+      </div>
+      </div>
+      </div>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+      function setStatus(el, msg, cls) {
+      el.textContent = msg || '';
+      el.className = 'small mt-3 ' + (cls || 'text-muted');
+      }
+      async function deleteUserByEmail(email) {
+      const res = await fetch('/api/users/delete', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+      });
+      const text = await res.text().catch(() => '');
+      let msg = text || (res.ok ? 'Đã xóa người dùng' : '');
+      try { const j = JSON.parse(text || '{}'); msg = j.message || j.detail || j.status || msg; } catch (_) {}
+      if (!res.ok) throw new Error(msg || ('HTTP ' + res.status));
+      return msg;
+      }
+
+      // Sử dụng modal xác nhận Bootstrap sẵn có
+      function showBootstrapConfirm(message){
+      return new Promise(resolve => {
+        const modalEl = document.getElementById('qdt_confirm_delete_modal');
+        const modalText = document.getElementById('qdt_confirm_delete_text');
+        const confirmBtn = document.getElementById('qdt_confirm_delete_btn');
+        if(!modalEl || !modalText || !confirmBtn){
+        const ok = window.confirm(message || 'Xác nhận?');
+        return resolve(ok);
+        }
+        modalText.textContent = message || 'Xác nhận?';
+        const bs = new bootstrap.Modal(modalEl);
+        const onConfirm = () => { cleanup(); resolve(true); };
+        const onHide = () => { cleanup(); resolve(false); };
+        function cleanup(){
+        try { confirmBtn.removeEventListener('click', onConfirm); } catch(_){}
+        try { modalEl.removeEventListener('hidden.bs.modal', onHide); } catch(_){}
+        try { bs.hide(); } catch(_){}
+        }
+        confirmBtn.addEventListener('click', onConfirm);
+        modalEl.addEventListener('hidden.bs.modal', onHide);
+        bs.show();
+      });
+      }
+
+      document.getElementById('btnDelete').addEventListener('click', async () => {
+      const email = document.getElementById('deleteEmail').value.trim();
+      const statusEl = document.getElementById('statusDelete');
+      if (!email) return setStatus(statusEl, 'Vui lòng nhập email', 'text-danger');
+      const ok = await showBootstrapConfirm('Xác nhận xóa người dùng: ' + email + '?\nHành động này không thể hoàn tác.');
+      if(!ok) return;
+      setStatus(statusEl, 'Đang xóa...', 'text-info');
+      try {
+      const msg = await deleteUserByEmail(email);
+      setStatus(statusEl, msg || ('Đã xóa ' + email), 'text-success');
+      } catch (e) {
+      setStatus(statusEl, e.message || 'Xóa thất bại', 'text-danger');
+      }
+      });
+      })();
+    </script>
+    <!-- Delete User:END -->
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

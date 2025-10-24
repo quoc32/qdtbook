@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.io.IOException;
 
 @Service
 public class UserService {
@@ -32,6 +33,9 @@ public class UserService {
 
     @Autowired
     private OtpService otpService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     public UserService(UserRepository userRepository,
             DepartmentRepository departmentRepository,
@@ -68,6 +72,11 @@ public class UserService {
         // Kiểm tra email có tồn tại chưa
         if (userRepository.findByEmail(email) != null) {
             throw new IllegalArgumentException("Email already exists");
+        }
+
+        // Kiểm tra email có thuộc domain của trường không (@student.hcmute.edu.vn hoặc @hcmute.edu.vn)
+        if (!email.endsWith("@student.hcmute.edu.vn") && !email.endsWith("@hcmute.edu.vn")) {
+            throw new IllegalArgumentException("Email must belong to hcmute.edu.vn domain");
         }
 
         // Sinh OTP và gửi mail
@@ -120,6 +129,12 @@ public class UserService {
 
     @Transactional
     public boolean sendOtpForForgotPassword(String email) {
+        // Kiểm tra email có tồn tại không
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new IllegalArgumentException("Email does not exist");
+        }
+
         // Sinh OTP và gửi mail
         String otp = otpService.generateOtp(email);
         emailService.sendSimpleEmail(
@@ -149,7 +164,7 @@ public class UserService {
     }
 
     @Transactional
-    public Optional<UserResponseDTO> updateUser(Integer id, UserUpdateRequestDTO dto) {
+    public Optional<UserResponseDTO> updateUser(Integer id, UserUpdateRequestDTO dto) throws IOException {
         Optional<User> userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) {
             throw new IllegalArgumentException("User with id " + id + " does not exist");
@@ -162,13 +177,14 @@ public class UserService {
 
         User user = userOpt.get();
 
+        System.out.println("QUOC:3");
         // Check if email is being changed and if new email already exists
         if (dto.getEmail() != null && !dto.getEmail().equals(user.getEmail())) {
             if (userRepository.findByEmail(dto.getEmail()) != null) {
                 return Optional.empty();
             }
         }
-
+        System.out.println("QUOC:4");
         // Update fields if provided
         if (dto.getFullName() != null)
             user.setFullName(dto.getFullName());
@@ -184,10 +200,35 @@ public class UserService {
             user.setGender(dto.getGender());
         if (dto.getDateOfBirth() != null)
             user.setDateOfBirth(dto.getDateOfBirth());
-        if (dto.getAvatarUrl() != null)
+        if (dto.getAvatarUrl() != null) {
+            // Delete old avatar file if exists
+            if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+                String[] parts = user.getAvatarUrl().split("/");
+                String oldFileName = parts[parts.length - 1];
+                try {
+                    System.out.println("QUOC:5");
+                    fileStorageService.deleteFile(oldFileName);
+                    System.out.println("QUOC:6");
+                } catch (IOException e) {
+                    // Log error but continue
+                }
+            }
             user.setAvatarUrl(dto.getAvatarUrl());
-        if (dto.getCoverPhotoUrl() != null)
+        }
+        if (dto.getCoverPhotoUrl() != null){
+            // Delete old cover photo file if exists
+            if (user.getCoverPhotoUrl() != null && !user.getCoverPhotoUrl().isEmpty()) {
+                String[] parts = user.getCoverPhotoUrl().split("/");
+                String oldFileName = parts[parts.length - 1];
+                try {
+                    fileStorageService.deleteFile(oldFileName);
+                } catch (IOException e) {
+                    // Log error but continue
+                    System.err.println("Failed to delete old cover photo file: " + e.getMessage());
+                }
+            }
             user.setCoverPhotoUrl(dto.getCoverPhotoUrl());
+        }
         if (dto.getBio() != null)
             user.setBio(dto.getBio());
         if (dto.getSchoolId() != null)
@@ -216,20 +257,34 @@ public class UserService {
             user.setLinkedinUrl(dto.getLinkedinUrl());
         if (dto.getTwitterUrl() != null)
             user.setTwitterUrl(dto.getTwitterUrl());
-
         // Update department if provided
         if (dto.getDepartmentId() != null) {
             Optional<Department> department = departmentRepository.findById(dto.getDepartmentId());
             department.ifPresent(user::setDepartment);
         }
-
         user.setUpdatedAt(Instant.now());
         User savedUser = userRepository.save(user);
+
         return Optional.of(convertToResponseDTO(savedUser));
     }
 
     @Transactional
-    public boolean deleteUser(Integer id) {
+    public boolean deleteUser(String email) {
+        // Check user thực hiện hành động có phải admin không
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        String sessionUserRole = (String) session.getAttribute("role");
+        if (sessionUserId == null || sessionUserRole == null || !sessionUserRole.equals("admin")) {
+            throw new IllegalArgumentException("Only admin can upgrade user roles");
+        }
+
+        User user_ = userRepository.findByEmail(email);
+        Optional<User> userOpt = Optional.ofNullable(user_);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        User user = userOpt.get();
+        Integer id = user.getId();
+
         if (!userRepository.existsById(id)) {
             return false;
         }
@@ -410,6 +465,63 @@ public class UserService {
         
         System.out.println("✅ Creating new OAuth user: " + email);
         return userRepository.save(newUser);
+    }
+
+    /**
+     * Cấm (ban) người dùng theo ID.
+     * Nếu người dùng tồn tại, đặt trạng thái bị cấm và cập nhật thời gian chỉnh sửa, sau đó lưu thay đổi.
+     * Nếu không tìm thấy người dùng, phương thức không thực hiện thay đổi nào.
+     *
+     * @param email email của người dùng cần cấm
+     */
+    public void banUser(String email) {
+        // Check user thực hiện hành động có phải admin không
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        String sessionUserRole = (String) session.getAttribute("role");
+        if (sessionUserId == null || sessionUserRole == null || !sessionUserRole.equals("admin")) {
+            throw new IllegalArgumentException("Only admin can upgrade user roles");
+        }
+
+        User user_ = userRepository.findByEmail(email);
+        Optional<User> userOpt = Optional.ofNullable(user_);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setBanned(true);
+            user.setUpdatedAt(Instant.now());
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * Gỡ cấm người dùng theo ID.
+     * Nếu tìm thấy, đặt banned = false và cập nhật updatedAt; nếu không, bỏ qua.
+     * @param email email người dùng cần gỡ cấm
+     */
+    public void unbanUser(String email) {
+        // Check user thực hiện hành động có phải admin không
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        String sessionUserRole = (String) session.getAttribute("role");
+        if (sessionUserId == null || sessionUserRole == null || !sessionUserRole.equals("admin")) {
+            throw new IllegalArgumentException("Only admin can upgrade user roles");
+        }
+
+        User user_ = userRepository.findByEmail(email);
+        Optional<User> userOpt = Optional.ofNullable(user_);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setBanned(false);
+            user.setUpdatedAt(Instant.now());
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * Kiểm tra xem người dùng có bị cấm không dựa trên email.
+     * @param email Email của người dùng cần kiểm tra 
+     */
+    public boolean isUserBanned(String email) {
+        User user = userRepository.findByEmail(email);
+        return user != null && Boolean.TRUE.equals(user.isBanned());
     }
 
 }

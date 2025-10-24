@@ -84,5 +84,16 @@ public class MediaController {
                 .body(resource);
     }
 
+
+    @GetMapping("/related/user/{userId}")
+    public ResponseEntity<List<?>> getRelatedFiles(@PathVariable String userId) throws IOException {
+        List<String> resources = fileStorageService.getFilesByUserId(userId);
+        for (int i = 0; i < resources.size(); i++) {
+            resources.set(i, "/api/media/files/" + resources.get(i));
+        }
+
+        return ResponseEntity.ok(resources);
+    }
+
 }
 

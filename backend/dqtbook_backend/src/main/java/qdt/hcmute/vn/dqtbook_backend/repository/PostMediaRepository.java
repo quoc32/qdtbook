@@ -12,6 +12,8 @@ public interface PostMediaRepository extends JpaRepository<PostMedia, Integer> {
 	@Transactional
 	@Query("delete from PostMedia pm where pm.post.id = :postId")
 	void deleteByPostId(@Param("postId") Integer postId);
+
+	java.util.List<PostMedia> findByPostId(Integer postId);
 }
 
 

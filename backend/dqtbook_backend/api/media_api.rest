@@ -18,3 +18,7 @@ Content-Type: video/mp4
 ### Get media
 GET http://localhost:8080/api/media/files/3_d7248d87-7545-4336-95cc-232921f21e47_19.JPG
 Cookie: JSESSIONID=F28B1681642FF1388B96B96EC941499E
+
+### Load related media by userId
+GET http://localhost:8080/api/media/related/user/1
+Cookie: JSESSIONID=C0EDFB7FB42E4707EBBD3DBAE399D292

@@ -126,7 +126,13 @@ Content-Type: application/json
 }
 
 ### 12. Delete existing user
-DELETE http://localhost:8080/users/2
+DELETE http://localhost:8080/api/users/delete
+Content-Type: application/json
+Cookie: JSESSIONID=CA48271409CC5E39CB48998526512E68
+
+{
+  "email": "vuanhquoc0397144200@gmail.com"
+}
 
 ### 13. Delete non-existing user (should fail)
 DELETE http://localhost:8080/users/999
