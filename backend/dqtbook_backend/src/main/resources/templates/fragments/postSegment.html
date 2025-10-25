@@ -138,6 +138,7 @@
                   if(!postId){ alert('Không xác định được bài viết để xóa.'); return; }
 
                   if(shareId){
+                    console.log('[delete-share] clicked', { postId, shareId });
                     // Close the options modal first, then open the confirm modal after it's fully hidden
                     try{
                       const currentModal = btn.closest('.pc-more-modal');
@@ -176,6 +177,7 @@
                     console.error('openConfirmDeleteShare not available; aborting delete-share action');
                     return;
                   } else {
+                    console.log('[delete-post] clicked', { postId });
                     // Close the options modal first, then open the confirm modal after it's fully hidden
                     try{
                       const currentModal = btn.closest('.pc-more-modal');
@@ -794,6 +796,7 @@
                                 if(currentType){
                                     const currentId=(article.getAttribute('data-my-reaction-id')||'');
                                     if(currentId){
+                                        console.log('Removing reaction:', currentId);
                                         fetch('/api/posts/'+encodeURIComponent(article.dataset.postId)+'/reactions/'+encodeURIComponent(currentId),{
                                             method:'DELETE',credentials:'include'
                                         }).then(res=>{
@@ -946,6 +949,7 @@
                         }
 
                         // Cập nhật phần hiển thị tổng hợp reactions
+                        console.log('Updating reactions');
                         const infoWrap = article.querySelector('#post-info-reactions-and-comments');
                         if(infoWrap){
                             const likeCountEl = infoWrap.querySelector('.like-count');
@@ -2306,7 +2310,14 @@
           node.id = 'post-'+postId;
           const nameEl = node.querySelector('.pc-name'); if(nameEl) nameEl.textContent = name;
           const avEl = node.querySelector('.pc-avatar'); if(avEl) avEl.src = avatar;
-          const timeEl = node.querySelector('.post-time'); if(timeEl){ timeEl.textContent = formatRelativeTime(created); const iso = (updated || created) ? new Date(updated || created).toISOString() : ''; if(iso) timeEl.setAttribute('datetime', iso); }
+          const timeEl = node.querySelector('.post-time');
+          if(timeEl){
+            const showTs = updated || created;
+            const edited = (updated && created && (new Date(updated).getTime() > new Date(created).getTime()));
+            timeEl.textContent = (typeof formatRelativeTime==='function' ? formatRelativeTime(showTs) : (showTs ? new Date(showTs).toLocaleString() : '')) + (edited ? ' • Đã chỉnh sửa' : '');
+            const iso = showTs ? new Date(showTs).toISOString() : '';
+            if(iso) timeEl.setAttribute('datetime', iso);
+          }
           const contentEl = node.querySelector('.post-content'); if(contentEl){ contentEl.textContent = content; if(!content) contentEl.style.display='none'; else contentEl.style.display='block'; }
 
           // mark if this post has feed-level share
@@ -2457,9 +2468,29 @@
           node.id = 'post-'+postId;
           node.querySelector('.pc-name').textContent = name;
           node.querySelector('.pc-avatar').src = avatar;
-          (function(){ const timeEl = node.querySelector('.post-time'); timeEl.textContent = formatRelativeTime(created); const iso = (updated || created) ? new Date(updated || created).toISOString() : ''; if(iso) timeEl.setAttribute('datetime', iso); })();
+          (function(){
+            const timeEl = node.querySelector('.post-time'); if(!timeEl) return;
+            const showTs = updated || created;
+            const edited = (updated && created && (new Date(updated).getTime() > new Date(created).getTime()));
+            timeEl.textContent = (typeof formatRelativeTime==='function' ? formatRelativeTime(showTs) : (showTs ? new Date(showTs).toLocaleString() : '')) + (edited ? ' • Đã chỉnh sửa' : '');
+            const iso = showTs ? new Date(showTs).toISOString() : '';
+            if(iso) timeEl.setAttribute('datetime', iso);
+          })();
           node.querySelector('.post-content').textContent = content;
           if(!content) node.querySelector('.post-content').style.display='none';
+
+          // visibility: set dataset + visible label from post data
+          try{
+            const visRaw = (p.visibility || p.visibility_level || p.visibilityType || '').toString().toLowerCase();
+            if(visRaw){
+              node.dataset.visibility = visRaw;
+              const visElTop = node.querySelector('.pc-visibility');
+              if(visElTop){
+                const map = { public:'Công khai', friends:'Bạn bè', friend:'Bạn bè', private:'Chỉ mình tôi' };
+                visElTop.textContent = map[visRaw] || visElTop.textContent;
+              }
+            }
+          }catch(_){ }
           // media handling (normalize various shapes like Post.medias)
           const mediaWrap = node.querySelector('.post-media'); mediaWrap.innerHTML='';
           const mediaArr = extractMediaFromPostLike(p);
@@ -2517,7 +2548,7 @@
           // update visibility label in header if present
           try{
             const visElTop = node.querySelector('.pc-visibility');
-            if(visElTop){ const map = { public:'Công khai', friends:'Bạn bè', friend:'Bạn bè', private:'Cá nhân' }; visElTop.textContent = map[shareVisibility] || (shareVisibility || visElTop.textContent); }
+            if(visElTop){ const map = { public:'Công khai', friends:'Bạn bè', friend:'Bạn bè', private:'Chỉ mình tôi' }; visElTop.textContent = map[shareVisibility] || (shareVisibility || visElTop.textContent); }
           }catch(_){ }
           (function(){ const timeEl = node.querySelector('.post-time'); timeEl.textContent = formatRelativeTime(created); const iso = created ? new Date(created).toISOString() : ''; if(iso) timeEl.setAttribute('datetime', iso); })();
 
@@ -2836,7 +2867,7 @@ arr.forEach(s=>{
 
           // Open the confirm modal for deleting a share
           window.openConfirmDeleteShare = function(articleEl, postId, shareId){
-            // console.log('[delete-share] openConfirmDeleteShare()', { postId, shareId, articleEl });
+            console.log('[delete-share] openConfirmDeleteShare()', { postId, shareId, articleEl });
             try{
               if(!modalEl){ console.error('qdt_confirm_delete_share_modal not found'); return; }
               if(typeof bootstrap === 'undefined'){ console.error('Bootstrap is not available'); return; }
@@ -2932,7 +2963,7 @@ arr.forEach(s=>{
 
           // Open the confirm modal for deleting a full post
           window.openConfirmDeletePost = function(articleEl, postId){
-            // console.log('[delete-post] openConfirmDeletePost()', { postId, articleEl });
+            console.log('[delete-post] openConfirmDeletePost()', { postId, articleEl });
             try{
               if(!modalEl){ console.error('qdt_confirm_delete_post_modal not found'); return; }
               if(typeof bootstrap === 'undefined'){ console.error('Bootstrap is not available'); return; }
@@ -3092,8 +3123,8 @@ arr.forEach(s=>{
     window.runEditShareDiagnostics = function(){
       try{
         const modalEl = document.getElementById('qdt_edit_share_modal');
-        // console.log('qdt_edit_share_modal element:', modalEl);
-        // console.log('bootstrap available:', typeof bootstrap !== 'undefined');
+        console.log('qdt_edit_share_modal element:', modalEl);
+        console.log('bootstrap available:', typeof bootstrap !== 'undefined');
         if(modalEl){ console.log('modal in body?', document.body.contains(modalEl)); }
       }catch(e){ console.error(e); }
     };

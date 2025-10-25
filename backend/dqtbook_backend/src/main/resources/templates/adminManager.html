@@ -116,11 +116,11 @@
         }
 
         async function upgradeRole(userId, role) {
-          const res = await fetch(`/api/users/${userId}/role`, {
-            method: 'PUT',
+          const res = await fetch(`/api/users/${userId}/upgrade`, {
+            method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role })
+            body: JSON.stringify({ toRole: role })
           });
           if (!res.ok) throw new Error('Failed to upgrade role');
           return await res.json();
@@ -964,6 +964,294 @@
       })();
     </script>
     <!-- Delete User:END -->
+
+     <!-- User Management by Role:BEGIN -->
+    <main class="container py-4">
+      <h2 class="h5 mb-3">Quản lý người dùng theo vai trò</h2>
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>Lọc và xem danh sách user</span>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm" id="roleFilter" style="width: auto;">
+                <option value="">Chọn vai trò</option>
+                <option value="student">Student</option>
+                <option value="special">Special</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button class="btn btn-primary btn-sm" id="btnLoadUsers" disabled>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+                Tải danh sách
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="userListStatus" class="small mb-3 text-muted"></div>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover" id="usersTable">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Email</th>
+                  <th>Họ tên</th>
+                  <th>Vai trò</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- User rows sẽ được thêm vào đây -->
+              </tbody>
+            </table>
+          </div>
+          <div class="text-center py-4" id="noUsersMessage" style="display: none;">
+            <div class="text-muted">
+              <i class="fas fa-users fa-2x mb-2 opacity-50"></i>
+              <p>Chọn vai trò và nhấn "Tải danh sách" để xem người dùng</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      (function() {
+        const roleFilter = document.getElementById('roleFilter');
+        const btnLoadUsers = document.getElementById('btnLoadUsers');
+        const usersTable = document.getElementById('usersTable');
+        const usersTableBody = usersTable.querySelector('tbody');
+        const statusEl = document.getElementById('userListStatus');
+        const noUsersMessage = document.getElementById('noUsersMessage');
+        const spinner = btnLoadUsers.querySelector('.spinner-border');
+
+        // Loading state management
+        let isLoading = false;
+        let currentRequest = null;
+
+        // Debounce function để tránh click nhiều lần
+        function debounce(func, wait) {
+          let timeout;
+          return function executedFunction(...args) {
+            const later = () => {
+              clearTimeout(timeout);
+              func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+          };
+          }
+
+        // Escape HTML để tránh XSS
+        function escapeHtml(text) {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        }
+
+        // Format date cho display
+        function formatDate(dateString) {
+          if (!dateString) return '-';
+          try {
+            return new Date(dateString).toLocaleString('vi-VN');
+          } catch (e) {
+            return dateString;
+          }
+        }
+
+        // Cập nhật trạng thái button
+        function updateButtonState() {
+          const selectedRole = roleFilter.value.trim();
+          btnLoadUsers.disabled = !selectedRole || isLoading;
+        }
+
+        // Hiển thị trạng thái
+        function setStatus(message, type = 'muted') {
+          statusEl.textContent = message;
+          statusEl.className = `small mb-3 text-${type}`;
+        }
+
+        // Hiển thị loading
+        function showLoading() {
+          isLoading = true;
+          spinner.style.display = 'inline-block';
+          btnLoadUsers.disabled = true;
+          roleFilter.disabled = true;
+          setStatus('Đang tải danh sách người dùng...', 'info');
+        }
+
+        // Ẩn loading
+        function hideLoading() {
+          isLoading = false;
+          spinner.style.display = 'none';
+          btnLoadUsers.disabled = false;
+          roleFilter.disabled = false;
+          updateButtonState();
+        }
+
+        // Cancel current request if any
+        function cancelCurrentRequest() {
+          if (currentRequest) {
+            currentRequest.abort();
+            currentRequest = null;
+          }
+        }
+
+        // Load danh sách user theo role
+        async function loadUsersByRole(role) {
+          // Cancel any existing request
+          cancelCurrentRequest();
+
+          showLoading();
+
+          try {
+            // Create new AbortController for this request
+            const controller = new AbortController();
+            currentRequest = controller;
+
+            const response = await fetch(`/api/users/by-role?role=${encodeURIComponent(role)}`, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              signal: controller.signal
+            });
+
+            // Check if request was cancelled
+            if (controller.signal.aborted) {
+              return;
+            }
+
+            currentRequest = null;
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            displayUsers(data.data || [], role);
+
+            if (data.data && data.data.length > 0) {
+              setStatus(`Tìm thấy ${data.data.length} ${getRoleName(role)}`, 'success');
+              } else {
+              setStatus(data.message || `Không tìm thấy ${getRoleName(role)} nào`, 'warning');
+            }
+
+          } catch (error) {
+            if (error.name === 'AbortError') {
+              // Request was cancelled, don't show error
+              return;
+            }
+            console.error('Error loading users:', error);
+            setStatus(error.message || 'Không thể tải danh sách người dùng', 'danger');
+            showNoUsersMessage();
+          } finally {
+            hideLoading();
+            currentRequest = null;
+          }
+        }
+
+        // Lấy tên role cho display
+        function getRoleName(role) {
+          const roleNames = {
+            'student': 'sinh viên',
+            'special': 'người dùng đặc biệt',
+            'admin': 'quản trị viên'
+          };
+          return roleNames[role] || role;
+        }
+
+        // Hiển thị danh sách user
+        function displayUsers(users, role) {
+          usersTableBody.innerHTML = '';
+          noUsersMessage.style.display = 'none';
+
+          if (!users || users.length === 0) {
+            showNoUsersMessage();
+            return;
+          }
+
+          users.forEach(user => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+              <td>${escapeHtml(String(user.user_id || user.id || ''))}</td>
+              <td>
+                <div>${escapeHtml(user.email || '')}</div>
+                <small class="text-muted">${user.provider ? `(${escapeHtml(user.provider)})` : ''}</small>
+              </td>
+              <td>${escapeHtml(user.full_name || user.fullName || '')}</td>
+              <td>
+                <span class="badge bg-secondary">${escapeHtml(getRoleName(user.role))}</span>
+              </td>
+            `;
+
+            usersTableBody.appendChild(row);
+          });
+        }
+
+        // Hiển thị message khi không có user
+        function showNoUsersMessage() {
+          usersTableBody.innerHTML = '';
+          noUsersMessage.style.display = 'block';
+        }
+
+        // Debounced click handler
+        const debouncedLoadUsers = debounce(function() {
+          const selectedRole = roleFilter.value.trim();
+          if (selectedRole && !isLoading) {
+            loadUsersByRole(selectedRole);
+          }
+        }, 300);
+
+        // Event listeners (với cleanup để tránh duplicate)
+        let isEventListenersAttached = false;
+
+        function attachEventListeners() {
+          if (isEventListenersAttached) return;
+
+          roleFilter.addEventListener('change', function() {
+            updateButtonState();
+            // Clear current data when role changes
+            if (!this.value) {
+              showNoUsersMessage();
+              setStatus('', 'muted');
+            }
+          });
+
+          btnLoadUsers.addEventListener('click', debouncedLoadUsers);
+
+          isEventListenersAttached = true;
+        }
+
+        // Cleanup function
+        function cleanup() {
+          cancelCurrentRequest();
+          isEventListenersAttached = false;
+        }
+
+        // Attach event listeners
+        attachEventListeners();
+
+        // Cleanup when page unloads
+        window.addEventListener('beforeunload', cleanup);
+
+        // Global cleanup function để có thể gọi từ bên ngoài
+        window.cleanupUserManagement = cleanup;
+
+        // Global functions (loại bỏ các function không cần thiết)
+        window.viewUserProfile = function(userId) {
+          if (userId) {
+            window.open(`/views/user/${userId}`, '_blank');
+          }
+        };
+
+        // Khởi tạo
+        updateButtonState();
+        showNoUsersMessage();
+      })();
+    </script>
+    <!-- User Management by Role:END -->
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

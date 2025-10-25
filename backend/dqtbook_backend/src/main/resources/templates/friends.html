@@ -24,8 +24,7 @@
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       max-width:180px;display:inline-block;
     }
-  </style>
-  <style>
+
   /* ====== Enhanced Theme ====== */
   :root {
     --c-bg: #f5f7fb;
@@ -1049,14 +1048,15 @@
               : `<div class="avatar">${escapeHtml(initials)}</div>`;
             li.innerHTML = `
               <div class="d-flex align-items-center gap-3">
-              ${avatarHtml}
-              <div>
-                <div class="fw-semibold">${escapeHtml(fullName)}</div>
-                <div class="small text-muted truncate">${escapeHtml(email)}</div>
-              </div>
+          ${avatarHtml}
+          <div>
+            <div class="fw-semibold">${escapeHtml(fullName)}</div>
+            <div class="small text-muted truncate">${escapeHtml(email)}</div>
+          </div>
               </div>
               <div class="d-flex gap-2">
-              <button class="btn btn-sm btn-outline-primary add-suggest-btn">Send friend request</button>
+          <a class="btn btn-sm btn-outline-secondary" href="/views/user/${escapeHtml(s.id)}">Xem Profile</a>
+          <button class="btn btn-sm btn-outline-primary add-suggest-btn">Send friend request</button>
               </div>
             `;
             frag.appendChild(li);

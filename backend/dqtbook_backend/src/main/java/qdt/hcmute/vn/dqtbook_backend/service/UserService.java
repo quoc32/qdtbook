@@ -524,4 +524,16 @@ public class UserService {
         return user != null && Boolean.TRUE.equals(user.isBanned());
     }
 
+    /**
+     * Lấy danh sách người dùng theo role
+     * @param role Role cần lọc (student, special, admin)
+     * @return Danh sách UserResponseDTO
+     */
+    public List<UserResponseDTO> getUsersByRole(String role) {
+        return userRepository.findAll().stream()
+                .filter(user -> role.equalsIgnoreCase(user.getRole()))
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
 }
