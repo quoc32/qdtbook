@@ -494,6 +494,19 @@ public class PostService {
             return Optional.of(toPostCreateResponseDTO(savedPost, savedPostMedias));
         }
 
+        // Tạo Notification cho tất cả User nếu là bài Post đặc biệt (important)
+        if ("important".equalsIgnoreCase(savedPost.getPostType())) {
+            List<Integer> allUserIds = userRepository.findAllUserIds();
+            for (Integer uid : allUserIds) {
+                // Bỏ qua thông báo cho chính tác giả
+                if (uid.equals(ReqDTO.getAuthorId())) continue;
+                String notificationContent = "Người dùng " + userOpt.get().getFullName() + " vừa đăng một bài viết quan trọng.";
+                String type = "important_post";
+                notificationRepository.createNotification(uid, notificationContent, type, savedPost.getId());
+            }
+            return Optional.of(toPostCreateResponseDTO(savedPost, savedPostMedias));
+        }
+
         // Nếu không
         List<Integer> friendIds_all = friendRepository.findFriendIdsByUserId(ReqDTO.getAuthorId());
         List<Integer> friendIds = new ArrayList<>();
@@ -591,5 +604,15 @@ public class PostService {
 
     public void deletePost(Integer id) {
         postRepository.deleteById(id);
+    }
+
+    public Optional<Long> countPostsByUserId(Integer userId) {
+        // Check if user exists
+        if (!userRepository.existsById(userId)) {
+            return Optional.empty();
+        }
+
+        Long count = postRepository.countByAuthorId(userId);
+        return Optional.of(count);
     }
 }

@@ -274,6 +274,71 @@
                     <span id="user-location">Location</span>
                   </li>
                 </ul>
+
+                <!-- >> Script cập nhật Post và Friends khi load -->
+                <script>
+                  (function () {
+                  const $ = (id) => document.getElementById(id);
+                  const auth = (() => { try { return JSON.parse(localStorage.getItem('auth') || '{}') } catch (_) { return {} } })();
+
+                  // Prefer the page's viewing user id if present, else fall back to auth
+                  const pageUid = document.getElementById('friends-section')?.dataset.userId;
+                  const userId = viewingUserId || auth?.id || auth?.user_id || 1; // fallback id
+
+                  // Show location from auth if available
+                  (function showLocation() {
+                    const wrap = $('user-location-wrap');
+                    const el = $('user-location');
+                    if (!wrap || !el) return;
+                    const loc =
+                    auth?.location ||
+                    [auth?.city, auth?.country].filter(Boolean).join(', ');
+                    if (loc && String(loc).trim()) {
+                    el.textContent = loc;
+                    wrap.classList.remove('d-none');
+                    }
+                  })();
+
+                  const opts = {
+                    credentials: 'include',
+                    headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                    }
+                  };
+
+                  function safeNum(v, def = 0) {
+                    const n = Number(v);
+                    return Number.isFinite(n) ? n : def;
+                  }
+
+                  async function fetchCounts() {
+                    try {
+                    const [postResp, friendResp] = await Promise.all([
+                      fetch(`/api/posts/user/${encodeURIComponent(userId)}/count`, opts),
+                      fetch(`/api/friends/user/${encodeURIComponent(userId)}/count`, opts)
+                    ]);
+
+                    if (postResp.ok) {
+                      const postData = await postResp.json().catch(() => ({}));
+                      const postCount = safeNum(postData.postCount ?? postData.count, 0);
+                      $('user-post-count') && ($('user-post-count').textContent = postCount);
+                    }
+
+                    if (friendResp.ok) {
+                      const friendData = await friendResp.json().catch(() => ({}));
+                      const friendCount = safeNum(friendData.friendCount ?? friendData.count, 0);
+                      $('user-friend-count') && ($('user-friend-count').textContent = friendCount);
+                    }
+                    } catch (err) {
+                    console.error('Error fetching counts:', err);
+                    }
+                  }
+
+                  fetchCounts();
+                  })();
+                </script>
+
               </div>
 
               <div class="mt-3 mt-md-0 d-flex gap-2 flex-wrap profile-actions">
@@ -968,7 +1033,7 @@
           </div>
         </div>
 
-        <div id="friends-grid-container" style="height: 560px; overflow-y: auto; overflow-x: hidden;"></div>
+        <div id="friends-grid-container" style="height: 560px; overflow-y: auto; overflow-x: hidden;">
           <div id="friends-grid" class="row g-3"></div>
           <div id="friends-empty" class="text-center text-muted py-4 d-none">Không tìm thấy bạn bè phù hợp.</div>
         </div>
@@ -1312,6 +1377,7 @@
         document.getElementById('friends-sort').value = 'name-asc';
           })();
         </script>
+
       </section>
       <!-- Friends:END -->
 

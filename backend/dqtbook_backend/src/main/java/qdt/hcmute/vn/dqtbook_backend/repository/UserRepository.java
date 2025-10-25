@@ -13,6 +13,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
   List<User> findTop5ByEmailContainingIgnoreCase(String keyword);
 
+  @Query("SELECT u.id FROM User u")
+  List<Integer> findAllUserIds();
+
   // OAuth2 methods
   User findByOauthProviderAndOauthId(String oauthProvider, String oauthId);
 
