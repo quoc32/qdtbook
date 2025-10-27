@@ -3,8 +3,8 @@ GET http://localhost:8080/api/posts
 Cookie: JSESSIONID=E0FEAD37E511E92C2ECE48245887EBB6
 
 ### Danh sách bài đăng phù hợp cho 1 user (self + friends + public)
-GET http://localhost:8080/api/posts/suitable/1
-Cookie: JSESSIONID=1BA2705386A00D5335815F3306F30EF1
+GET http://localhost:8080/api/posts/suitable/3
+Cookie: JSESSIONID=DC5A8A24ECB8D950968DF8AE657AA3A1
 
 ### Lấy bài đăng theo id
 GET http://localhost:8080/api/posts/5

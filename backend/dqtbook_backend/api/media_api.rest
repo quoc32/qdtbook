@@ -15,6 +15,18 @@ Content-Type: video/mp4
 < ./FLAPPY_vd.mp4
 --WebAppBoundary--
 
+### Upload file PDF
+POST http://localhost:8080/api/media/upload
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Cookie: JSESSIONID=BA1125364F5DF89559461BFA229C623D
+
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="Thong_bao_demo_1.pdf"
+Content-Type: application/pdf
+
+< ./Thong_bao_demo_1.pdf
+--WebAppBoundary--
+
 ### Get media
 GET http://localhost:8080/api/media/files/3_d7248d87-7545-4336-95cc-232921f21e47_19.JPG
 Cookie: JSESSIONID=F28B1681642FF1388B96B96EC941499E
