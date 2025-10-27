@@ -1,5 +1,6 @@
 package qdt.hcmute.vn.dqtbook_backend.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +13,8 @@ import qdt.hcmute.vn.dqtbook_backend.model.Post;
 
 import java.util.Optional;
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/posts")
@@ -159,4 +161,17 @@ public class PostController {
         }
     }
 
+    @GetMapping("user/{userId}/count")
+    public ResponseEntity<?> countPosts(@PathVariable Integer userId) {
+        Optional<Long> count = postService.countPostsByUserId(userId);
+        if (count.isPresent()) {
+            return ResponseEntity.ok(Map.of(
+                    "userId", userId,
+                    "postCount", count.get()
+            ));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+    
 }

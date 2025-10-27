@@ -165,4 +165,16 @@ public class FriendController {
         }
     }
 
+    @GetMapping("user/{userId}/count")
+    public ResponseEntity<?> countFriends(@PathVariable Integer userId) {
+        Optional<Long> count = friendService.countFriends(userId);
+        if (count.isPresent()) {
+            return ResponseEntity.ok(Map.of(
+                    "userId", userId,
+                    "friendCount", count.get()
+            ));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
 }

@@ -478,4 +478,14 @@ public class FriendService {
 
         return Optional.of(result);
     }
+
+    public Optional<Long> countFriends(Integer userId) {
+        // Check if user exists
+        if (!userRepository.existsById(userId)) {
+            return Optional.empty();
+        }
+
+        Long count = friendRepository.countAcceptedFriends(userId);
+        return Optional.of(count);
+    }
 }

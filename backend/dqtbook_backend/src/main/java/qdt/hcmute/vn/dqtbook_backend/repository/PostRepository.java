@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
   List<Post> findByAuthorId(Integer authorId);
+
+  Long countByAuthorId(Integer authorId);
 }

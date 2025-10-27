@@ -75,8 +75,8 @@ Content-Type: application/json
 POST http://localhost:8080/api/users/send-otp/forgot-password?email=vuanhquoc0397144200@gmail.com
 
 ### 6. Change user Role to "special" (only for admin)
-POST http://localhost:8080/api/users/10/upgrade
-Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
+POST http://localhost:8080/api/users/2/upgrade
+Cookie: JSESSIONID=802331379BFD2C811EE891322CBEA6F8
 Content-Type: application/json
 
 {
@@ -84,13 +84,8 @@ Content-Type: application/json
 }
 
 ### 7. Change user Role to "student" (only for admin)
-POST http://localhost:8080/api/users/1/upgrade
-Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
-Content-Type: application/json
 
-{
-  "toRole": "student"
-}
+
 
 
 ### 8. Update user (valid data)
@@ -168,38 +163,14 @@ Content-Type: application/json
   "password_hash": "password123"
 }
 
-### ===========================================
-### SUCCESS SCENARIOS
-### ===========================================
+### 17. Get user friends count by user ID
+GET http://localhost:8080/api/friends/user/2/count
+Cookie: JSESSIONID=DCFB8BC721FEFE74EBA1213229778000
 
-### 17. Complete user creation and update flow
-POST http://localhost:8080/users
-Content-Type: application/json
+### 18. Get user posts count by user ID
+GET http://localhost:8080/api/posts/user/2/count
+Cookie: JSESSIONID=DCFB8BC721FEFE74EBA1213229778000
 
-{
-  "full_name": "Test User",
-  "email": "test@example.com",
-  "password_hash": "test123",
-  "first_name": "Test",
-  "last_name": "User",
-  "gender": "female",
-  "date_of_birth": "1995-12-25",
-  "role": "lecturer",
-  "bio": "Test user for API testing"
-}
-
-### 18. Update the test user
-PUT http://localhost:8080/users/3
-Content-Type: application/json
-
-{
-  "bio": "Updated test user bio",
-  "phone": "+84-123456789",
-  "education": "PhD in Computer Science"
-}
-
-### 19. Get the updated test user
-GET http://localhost:8080/users/3
-
-### 20. Clean up - delete test user
-DELETE http://localhost:8080/users/3
+### 19. Lấy số lượng user theo role
+GET http://localhost:8080/api/users/by-role?role=special
+Cookie: JSESSIONID=62F833565CEC5D9771A81190BC39F96F

@@ -1,9 +1,13 @@
 package qdt.hcmute.vn.dqtbook_backend.service;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.servlet.http.HttpSession;
 import qdt.hcmute.vn.dqtbook_backend.dto.*;
 import qdt.hcmute.vn.dqtbook_backend.exception.ResourceNotFoundException;
 import qdt.hcmute.vn.dqtbook_backend.model.Product;
@@ -22,6 +26,9 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMediaRepository productMediaRepository;
     private final UserRepository userRepository;
+
+    @Autowired
+    private HttpSession session;
 
     @Transactional
     public ProductResponseDTO create(Integer sessionUserId, ProductCreateRequestDTO dto) {
@@ -90,7 +97,9 @@ public class ProductService {
     public void delete(Integer sessionUserId, Integer productId) {
         Product p = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found: " + productId));
-        if (!p.getSeller().getId().equals(sessionUserId)) {
+        
+        String role = (String) session.getAttribute("role");
+        if (!p.getSeller().getId().equals(sessionUserId) && !"admin".equals(role)) {
             throw new RuntimeException("Forbidden: not product owner");
         }
         productRepository.delete(p);
