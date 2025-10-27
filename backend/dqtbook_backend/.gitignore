@@ -36,3 +36,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Video
+/src/main/resources/static/video/bg_video_1.mp4
+/src/main/resources/static/video/bg_video_2.mp4
