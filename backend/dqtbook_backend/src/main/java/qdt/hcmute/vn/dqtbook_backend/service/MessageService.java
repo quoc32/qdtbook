@@ -1,5 +1,6 @@
 package qdt.hcmute.vn.dqtbook_backend.service;
 
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import qdt.hcmute.vn.dqtbook_backend.dto.MessageRequestDTO;
@@ -11,11 +12,13 @@ import qdt.hcmute.vn.dqtbook_backend.model.*;
 import qdt.hcmute.vn.dqtbook_backend.model.MessageReadStatusId;
 import qdt.hcmute.vn.dqtbook_backend.repository.*;
 
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 public class MessageService {
@@ -24,6 +27,7 @@ public class MessageService {
     private final UserRepository userRepository;
     private final ChatMemberRepository chatMemberRepository;
     private final MessageReadStatusRepository messageReadStatusRepository;
+
 
     public MessageService(MessageRepository messageRepository, ChatRepository chatRepository,
             UserRepository userRepository, ChatMemberRepository chatMemberRepository,
@@ -35,9 +39,10 @@ public class MessageService {
         this.messageReadStatusRepository = messageReadStatusRepository;
     }
 
+
     /**
      * Get messages for a specific chat
-     * 
+     *
      * @param chatId The chat's ID
      * @param userId The requesting user's ID
      * @return List of message response DTOs
@@ -49,22 +54,26 @@ public class MessageService {
             return Collections.emptyList();
         }
 
+
         // Check if the user is a member of the chat
         if (!chatMemberRepository.existsByChatIdAndUserId(chatId, userId)) {
             return Collections.emptyList(); // User is not a member of the chat
         }
 
+
         // Get messages for the chat
         List<Message> messages = messageRepository.findByChatId(chatId);
+
 
         return messages.stream()
                 .map(this::convertToMessageResponseDTO)
                 .collect(Collectors.toList());
     }
 
+
     /**
      * Get a specific message by ID
-     * 
+     *
      * @param messageId The message's ID
      * @param userId    The requesting user's ID
      * @return Message response DTO if found
@@ -76,17 +85,20 @@ public class MessageService {
         }
         Message message = messageOpt.get();
 
+
         // Check if the user is a member of the chat
         if (!chatMemberRepository.existsByChatIdAndUserId(message.getChat().getId(), userId)) {
             return Optional.empty(); // User is not a member of the chat
         }
 
+
         return Optional.of(convertToMessageResponseDTO(message));
     }
 
+
     /**
      * Send a new message
-     * 
+     *
      * @param request The message request DTO
      * @return The created message response DTO if successful
      */
@@ -99,6 +111,7 @@ public class MessageService {
         }
         Chat chat = chatOpt.get();
 
+
         // Validate sender exists
         Optional<User> senderOpt = userRepository.findById(request.getSenderId());
         if (senderOpt.isEmpty()) {
@@ -106,10 +119,12 @@ public class MessageService {
         }
         User sender = senderOpt.get();
 
+
         // Check if the sender is a member of the chat
         if (!chatMemberRepository.existsByChatIdAndUserId(chat.getId(), sender.getId())) {
             return Optional.empty(); // Sender is not a member of the chat
         }
+
 
         // Create and save the message
         Message message = new Message();
@@ -119,7 +134,9 @@ public class MessageService {
         message.setMediaUrl(request.getMediaUrl());
         message.setCreatedAt(Instant.now());
 
+
         Message savedMessage = messageRepository.save(message);
+
 
         // Mark the message as read by the sender
         MessageReadStatus readStatus = new MessageReadStatus();
@@ -131,14 +148,17 @@ public class MessageService {
         readStatus.setUser(sender);
         readStatus.setReadAt(Instant.now());
 
+
         messageReadStatusRepository.save(readStatus);
+
 
         return Optional.of(convertToMessageResponseDTO(savedMessage));
     }
 
+
     /**
      * Delete a message
-     * 
+     *
      * @param messageId The message's ID
      * @param userId    The ID of the user deleting the message
      * @return true if successful, false otherwise
@@ -152,6 +172,7 @@ public class MessageService {
         }
         Message message = messageOpt.get();
 
+
         // Check if the user is authorized to delete the message
         // (either the sender or an admin of the chat)
         if (!userId.equals(message.getSender().getId())) {
@@ -162,19 +183,23 @@ public class MessageService {
             }
         }
 
+
         // Delete all read statuses for the message
         List<MessageReadStatus> readStatuses = messageReadStatusRepository.findByMessageId(messageId);
         messageReadStatusRepository.deleteAll(readStatuses);
 
+
         // Delete the message
         messageRepository.delete(message);
+
 
         return true;
     }
 
+
     /**
      * Mark a message as read by a user
-     * 
+     *
      * @param messageId The message's ID
      * @param userId    The user's ID
      * @return true if successful, false otherwise
@@ -188,16 +213,19 @@ public class MessageService {
         }
         Message message = messageOpt.get();
 
+
         // Check if the user is a member of the chat
         if (!chatMemberRepository.existsByChatIdAndUserId(message.getChat().getId(), userId)) {
             return false; // User is not a member of the chat
         }
+
 
         // Check if the message is already read by the user
         MessageReadStatus existingReadStatus = messageReadStatusRepository.findByMessageIdAndUserId(messageId, userId);
         if (existingReadStatus != null) {
             return true; // Message is already marked as read
         }
+
 
         // Create a new read status
         MessageReadStatus readStatus = new MessageReadStatus();
@@ -207,22 +235,27 @@ public class MessageService {
         readStatus.setId(readStatusId);
         readStatus.setMessage(message);
 
+
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             return false;
         }
         readStatus.setUser(userOpt.get());
 
+
         readStatus.setReadAt(Instant.now());
 
+
         messageReadStatusRepository.save(readStatus);
+
 
         return true;
     }
 
+
     /**
      * Mark all messages in a chat as read by a user
-     * 
+     *
      * @param chatId The chat's ID
      * @param userId The user's ID
      * @return true if successful, false otherwise
@@ -235,10 +268,12 @@ public class MessageService {
             return false;
         }
 
+
         // Check if the user is a member of the chat
         if (!chatMemberRepository.existsByChatIdAndUserId(chatId, userId)) {
             return false; // User is not a member of the chat
         }
+
 
         // Get all unread messages in the chat
         List<Message> messages = messageRepository.findByChatId(chatId);
@@ -248,7 +283,9 @@ public class MessageService {
         }
         User user = userOpt.get();
 
+
         Instant now = Instant.now();
+
 
         for (Message message : messages) {
             // Check if the message is already read by the user
@@ -257,6 +294,7 @@ public class MessageService {
             if (existingReadStatus != null) {
                 continue; // Message is already marked as read
             }
+
 
             // Create a new read status
             MessageReadStatus readStatus = new MessageReadStatus();
@@ -268,15 +306,18 @@ public class MessageService {
             readStatus.setUser(user);
             readStatus.setReadAt(now);
 
+
             messageReadStatusRepository.save(readStatus);
         }
+
 
         return true;
     }
 
+
     /**
      * Xóa toàn bộ lịch sử tin nhắn của một đoạn chat
-     * 
+     *
      * @param chatId ID của đoạn chat
      * @param userId ID của người dùng thực hiện xóa
      * @return true nếu thành công, false nếu thất bại
@@ -289,13 +330,16 @@ public class MessageService {
             return false;
         }
 
+
         // Kiểm tra người dùng có phải là thành viên của chat không
         if (!chatMemberRepository.existsByChatIdAndUserId(chatId, userId)) {
             return false; // Người dùng không phải là thành viên của chat
         }
 
+
         // Lấy tất cả tin nhắn trong chat
         List<Message> messages = messageRepository.findByChatId(chatId);
+
 
         // Xóa tất cả trạng thái đã đọc của các tin nhắn
         for (Message message : messages) {
@@ -303,15 +347,18 @@ public class MessageService {
             messageReadStatusRepository.deleteAll(readStatuses);
         }
 
+
         // Xóa tất cả tin nhắn
         messageRepository.deleteAll(messages);
+
 
         return true;
     }
 
+
     /**
      * Convert a Message entity to a MessageResponseDTO
-     * 
+     *
      * @param message The Message entity
      * @return The MessageResponseDTO
      */
@@ -326,18 +373,21 @@ public class MessageService {
         dto.setMediaUrl(message.getMediaUrl());
         dto.setCreatedAt(message.getCreatedAt());
 
+
         // Get read statuses for this message
         List<MessageReadStatus> readStatuses = messageReadStatusRepository.findByMessageId(message.getId());
         dto.setReadBy(readStatuses.stream()
                 .map(this::convertToMessageReadDTO)
                 .collect(Collectors.toList()));
 
+
         return dto;
     }
 
+
     /**
      * Convert a MessageReadStatus entity to a MessageReadDTO
-     * 
+     *
      * @param readStatus The MessageReadStatus entity
      * @return The MessageReadDTO
      */
@@ -349,9 +399,10 @@ public class MessageService {
         return dto;
     }
 
+
     /**
      * Save a message from WebSocket and prepare response
-     * 
+     *
      * @param chatMessageDTO The WebSocket chat message DTO
      * @return ChatMessageResponseDTO if successful, null otherwise
      */
@@ -364,6 +415,7 @@ public class MessageService {
         }
         Chat chat = chatOpt.get();
 
+
         // Validate sender exists
         Optional<User> senderOpt = userRepository.findById(chatMessageDTO.getSenderId().intValue());
         if (senderOpt.isEmpty()) {
@@ -371,20 +423,24 @@ public class MessageService {
         }
         User sender = senderOpt.get();
 
+
         // Check if the sender is a member of the chat
         if (!chatMemberRepository.existsByChatIdAndUserId(chat.getId(), sender.getId())) {
             return null; // Sender is not a member of the chat
         }
+
 
         // Create and save the message
         Message message = new Message();
         message.setChat(chat);
         message.setSender(sender);
         message.setContent(chatMessageDTO.getContent());
-        message.setMediaUrl(null); // WebSocket messages currently don't support media
+        message.setMediaUrl(chatMessageDTO.getMediaUrl()); // Support media URL from WebSocket
         message.setCreatedAt(Instant.now());
 
+
         Message savedMessage = messageRepository.save(message);
+
 
         // Mark the message as read by the sender
         MessageReadStatus readStatus = new MessageReadStatus();
@@ -396,15 +452,18 @@ public class MessageService {
         readStatus.setUser(sender);
         readStatus.setReadAt(Instant.now());
 
+
         messageReadStatusRepository.save(readStatus);
+
 
         // Convert to WebSocket response DTO
         return convertToWebSocketMessageDTO(savedMessage);
     }
 
+
     /**
      * Mark message as read through WebSocket
-     * 
+     *
      * @param readStatusDTO The read status update DTO
      * @return true if successful, false otherwise
      */
@@ -413,15 +472,15 @@ public class MessageService {
         return markMessageAsRead(readStatusDTO.getMessageId(), readStatusDTO.getUserId().intValue());
     }
 
+
     /**
      * Convert a Message entity to a WebSocket ChatMessageResponseDTO
-     * 
+     *
      * @param message The Message entity
      * @return The ChatMessageResponseDTO
      */
     private ChatMessageResponseDTO convertToWebSocketMessageDTO(Message message) {
         LocalDateTime timestamp = LocalDateTime.ofInstant(message.getCreatedAt(), ZoneId.systemDefault());
-
         return new ChatMessageResponseDTO(
                 message.getId(),
                 message.getContent(),
@@ -430,6 +489,7 @@ public class MessageService {
                 message.getSender().getFullName(),
                 message.getSender().getAvatarUrl(),
                 message.getMediaUrl() != null ? "MEDIA" : "TEXT",
+                message.getMediaUrl(),
                 timestamp);
     }
 }
