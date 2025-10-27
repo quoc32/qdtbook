@@ -16,6 +16,7 @@ import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.enums.ProfileVisibility;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.repository.FriendRepository;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -118,11 +119,6 @@ public class UserService {
         return rs;
     }
 
-    public Optional<UserResponseDTO> getUserByEmail(String email) {
-        User user = userRepository.findByEmail(email);
-        return Optional.ofNullable(user).map(this::convertToResponseDTO);
-    }
-
     public List<UserResponseDTO> searchUsers(String keyword) {
         List<UserResponseDTO> rs = userRepository.searchByFullNameOrEmail(keyword, PageRequest.of(0, 5)).stream()
                 .map(this::convertToResponseDTO)
@@ -137,6 +133,11 @@ public class UserService {
         }
 
         return rs;
+    }
+
+    public Optional<UserResponseDTO> getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        return Optional.ofNullable(user).map(this::convertToResponseDTO);
     }
 
     @Transactional

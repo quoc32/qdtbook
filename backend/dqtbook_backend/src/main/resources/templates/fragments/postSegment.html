@@ -1211,9 +1211,9 @@
                     if(!btn) return;
                     if(btn.dataset._shareHandler === '1'){
                       // already attached
-                    } else {
-                        btn.dataset._shareHandler = '1';
-                        btn.addEventListener('click', async function(){
+                  } else {
+                      btn.dataset._shareHandler = '1';
+                      btn.addEventListener('click', async function(){
                         try{
                           if(btn.dataset.sending==='1') return; // prevent double submit
                           btn.dataset.sending='1';
@@ -1251,7 +1251,7 @@
 
                           }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
                           finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
-                          
+                      
                           }catch(e){ console.error(e);
                     }
                       });
@@ -1299,6 +1299,7 @@
                   }catch(e){};
 
                 })();
+
                 </script>
 
 

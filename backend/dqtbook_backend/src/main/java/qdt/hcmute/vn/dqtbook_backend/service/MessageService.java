@@ -37,7 +37,7 @@ public class MessageService {
 
     /**
      * Get messages for a specific chat
-     * 
+     *
      * @param chatId The chat's ID
      * @param userId The requesting user's ID
      * @return List of message response DTOs
@@ -64,7 +64,7 @@ public class MessageService {
 
     /**
      * Get a specific message by ID
-     * 
+     *
      * @param messageId The message's ID
      * @param userId    The requesting user's ID
      * @return Message response DTO if found
@@ -84,9 +84,10 @@ public class MessageService {
         return Optional.of(convertToMessageResponseDTO(message));
     }
 
+
     /**
      * Send a new message
-     * 
+     *
      * @param request The message request DTO
      * @return The created message response DTO if successful
      */
@@ -138,7 +139,7 @@ public class MessageService {
 
     /**
      * Delete a message
-     * 
+     *
      * @param messageId The message's ID
      * @param userId    The ID of the user deleting the message
      * @return true if successful, false otherwise
@@ -169,12 +170,14 @@ public class MessageService {
         // Delete the message
         messageRepository.delete(message);
 
+
         return true;
     }
 
+
     /**
      * Mark a message as read by a user
-     * 
+     *
      * @param messageId The message's ID
      * @param userId    The user's ID
      * @return true if successful, false otherwise
@@ -206,7 +209,6 @@ public class MessageService {
         readStatusId.setUserId(userId);
         readStatus.setId(readStatusId);
         readStatus.setMessage(message);
-
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             return false;
@@ -222,7 +224,7 @@ public class MessageService {
 
     /**
      * Mark all messages in a chat as read by a user
-     * 
+     *
      * @param chatId The chat's ID
      * @param userId The user's ID
      * @return true if successful, false otherwise
@@ -271,12 +273,13 @@ public class MessageService {
             messageReadStatusRepository.save(readStatus);
         }
 
+
         return true;
     }
 
     /**
      * Xóa toàn bộ lịch sử tin nhắn của một đoạn chat
-     * 
+     *
      * @param chatId ID của đoạn chat
      * @param userId ID của người dùng thực hiện xóa
      * @return true nếu thành công, false nếu thất bại
@@ -311,7 +314,7 @@ public class MessageService {
 
     /**
      * Convert a Message entity to a MessageResponseDTO
-     * 
+     *
      * @param message The Message entity
      * @return The MessageResponseDTO
      */
@@ -325,7 +328,6 @@ public class MessageService {
         dto.setContent(message.getContent());
         dto.setMediaUrl(message.getMediaUrl());
         dto.setCreatedAt(message.getCreatedAt());
-
         // Get read statuses for this message
         List<MessageReadStatus> readStatuses = messageReadStatusRepository.findByMessageId(message.getId());
         dto.setReadBy(readStatuses.stream()
@@ -335,9 +337,10 @@ public class MessageService {
         return dto;
     }
 
+
     /**
      * Convert a MessageReadStatus entity to a MessageReadDTO
-     * 
+     *
      * @param readStatus The MessageReadStatus entity
      * @return The MessageReadDTO
      */
@@ -349,9 +352,10 @@ public class MessageService {
         return dto;
     }
 
+
     /**
      * Save a message from WebSocket and prepare response
-     * 
+     *
      * @param chatMessageDTO The WebSocket chat message DTO
      * @return ChatMessageResponseDTO if successful, null otherwise
      */
@@ -381,7 +385,8 @@ public class MessageService {
         message.setChat(chat);
         message.setSender(sender);
         message.setContent(chatMessageDTO.getContent());
-        message.setMediaUrl(null); // WebSocket messages currently don't support media
+
+        message.setMediaUrl(chatMessageDTO.getMediaUrl()); // Support media URL from WebSocket
         message.setCreatedAt(Instant.now());
 
         Message savedMessage = messageRepository.save(message);
@@ -404,7 +409,7 @@ public class MessageService {
 
     /**
      * Mark message as read through WebSocket
-     * 
+     *
      * @param readStatusDTO The read status update DTO
      * @return true if successful, false otherwise
      */
@@ -415,7 +420,7 @@ public class MessageService {
 
     /**
      * Convert a Message entity to a WebSocket ChatMessageResponseDTO
-     * 
+     *
      * @param message The Message entity
      * @return The ChatMessageResponseDTO
      */
@@ -430,6 +435,7 @@ public class MessageService {
                 message.getSender().getFullName(),
                 message.getSender().getAvatarUrl(),
                 message.getMediaUrl() != null ? "MEDIA" : "TEXT",
+                message.getMediaUrl(),
                 timestamp);
     }
 }

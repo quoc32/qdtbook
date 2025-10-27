@@ -8,6 +8,7 @@ import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.service.UserService;
 import qdt.hcmute.vn.dqtbook_backend.enums.ProfileVisibility;
+
 import java.io.IOException;
 
 import java.util.List;
@@ -215,7 +216,7 @@ public class UserController {
             "data", users
         ));
     }
-
+    
     @PostMapping("/{id}/toggle-visibility")
     public ResponseEntity<?> toggleProfileVisibility(@PathVariable Integer id, 
                                                     @RequestBody Map<String, String> body) {

@@ -1,5 +1,6 @@
 package qdt.hcmute.vn.dqtbook_backend.dto.websocket;
 
+
 /**
  * DTO cho tin nhắn WebSocket được gửi từ client tới server
  */
@@ -8,9 +9,12 @@ public class ChatMessageDTO {
     private Integer chatId;
     private Integer senderId;
     private String messageType; // TEXT, IMAGE, FILE, etc.
+    private String mediaUrl; // URL của ảnh/file đính kèm
+
 
     public ChatMessageDTO() {
     }
+
 
     public ChatMessageDTO(String content, Integer chatId, Integer senderId, String messageType) {
         this.content = content;
@@ -18,6 +22,15 @@ public class ChatMessageDTO {
         this.senderId = senderId;
         this.messageType = messageType;
     }
+
+    public ChatMessageDTO(String content, Integer chatId, Integer senderId, String messageType, String mediaUrl) {
+        this.content = content;
+        this.chatId = chatId;
+        this.senderId = senderId;
+        this.messageType = messageType;
+        this.mediaUrl = mediaUrl;
+    }
+
 
     public String getContent() {
         return content;
@@ -49,5 +62,15 @@ public class ChatMessageDTO {
 
     public void setMessageType(String messageType) {
         this.messageType = messageType;
+    }
+
+   
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
     }
 }

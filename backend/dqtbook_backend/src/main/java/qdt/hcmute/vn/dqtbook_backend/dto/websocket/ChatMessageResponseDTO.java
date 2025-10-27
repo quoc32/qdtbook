@@ -13,13 +13,17 @@ public class ChatMessageResponseDTO {
     private String senderName;
     private String senderAvatar;
     private String messageType;
+
+    private String mediaUrl;
     private LocalDateTime timestamp;
+
 
     public ChatMessageResponseDTO() {
     }
 
+
     public ChatMessageResponseDTO(Long id, String content, Integer chatId, Integer senderId,
-            String senderName, String senderAvatar, String messageType,
+            String senderName, String senderAvatar, String messageType, String mediaUrl,
             LocalDateTime timestamp) {
         this.id = id;
         this.content = content;
@@ -28,6 +32,7 @@ public class ChatMessageResponseDTO {
         this.senderName = senderName;
         this.senderAvatar = senderAvatar;
         this.messageType = messageType;
+        this.mediaUrl = mediaUrl;
         this.timestamp = timestamp;
     }
 
@@ -85,6 +90,15 @@ public class ChatMessageResponseDTO {
 
     public void setMessageType(String messageType) {
         this.messageType = messageType;
+    }
+
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
     }
 
     public LocalDateTime getTimestamp() {
