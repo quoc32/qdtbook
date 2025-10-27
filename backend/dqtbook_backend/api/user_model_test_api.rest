@@ -84,7 +84,7 @@ Content-Type: application/json
 }
 
 ### 7. Change user Role to "student" (only for admin)
-POST http://localhost:8080/api/users/6/upgrade
+POST http://localhost:8080/api/users/1/upgrade
 Cookie: JSESSIONID=5F65529494A13D0D0C046D1F53A4F6DB
 Content-Type: application/json
 

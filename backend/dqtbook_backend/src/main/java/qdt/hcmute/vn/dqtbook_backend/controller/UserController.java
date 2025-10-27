@@ -177,4 +177,43 @@ public class UserController {
         return ResponseEntity.ok("User with email " + email + " has been unbanned.");
     }
     // >> ==========================================================
+
+    /**
+     * Lấy danh sách user theo role
+     * @param role Role cần lọc (student, special, admin)
+     * @return Danh sách UserResponseDTO
+     */
+    @GetMapping("/by-role")
+    public ResponseEntity<?> getUsersByRole(@RequestParam("role") String role) {
+        // Validate role
+        if (role == null || role.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "message", "Role không được để trống"
+            ));
+        }
+        
+        // Validate role values
+        String normalizedRole = role.trim().toLowerCase();
+        if (!normalizedRole.equals("student") && 
+            !normalizedRole.equals("special") && 
+            !normalizedRole.equals("admin")) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "message", "Role không hợp lệ. Chỉ chấp nhận: student, special, admin"
+            ));
+        }
+        
+        List<UserResponseDTO> users = userService.getUsersByRole(normalizedRole);
+        
+        if (users.isEmpty()) {
+            return ResponseEntity.ok(Map.of(
+                "message", "Không tìm thấy user nào với role: " + normalizedRole,
+                "data", users
+            ));
+        }
+        
+        return ResponseEntity.ok(Map.of(
+            "message", "Tìm thấy " + users.size() + " user với role: " + normalizedRole,
+            "data", users
+        ));
+    }
 }
