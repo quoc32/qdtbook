@@ -1,6 +1,7 @@
 package qdt.hcmute.vn.dqtbook_backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +13,9 @@ import qdt.hcmute.vn.dqtbook_backend.repository.UserRepository;
 import qdt.hcmute.vn.dqtbook_backend.repository.DepartmentRepository;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
+import qdt.hcmute.vn.dqtbook_backend.enums.ProfileVisibility;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
+import qdt.hcmute.vn.dqtbook_backend.repository.FriendRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -27,15 +30,14 @@ public class UserService {
 
     @Autowired
     private HttpSession session;
-
     @Autowired
     private EmailService emailService;
-
     @Autowired
     private OtpService otpService;
-
     @Autowired
     private FileStorageService fileStorageService;
+    @Autowired
+    private FriendRepository friendRepository;
 
     public UserService(UserRepository userRepository,
             DepartmentRepository departmentRepository,
@@ -52,8 +54,68 @@ public class UserService {
     }
 
     public Optional<UserResponseDTO> getUserById(Integer id) {
-        return userRepository.findById(id)
+        
+
+        Optional<UserResponseDTO> rs = userRepository.findById(id)
                 .map(this::convertToResponseDTO);
+
+        // Nếu người dùng đang đăng nhập là chính họ thì trả về đầy đủ thông tin
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        if (sessionUserId != null && sessionUserId.equals(id)) {
+            return rs;
+        }
+        System.out.println(rs.get().getProfileVisibility().toString());
+        // Ẩn các trường profile nếu visibility là PRIVATE
+        if (rs.isPresent()) {
+            UserResponseDTO dto = rs.get();
+            // if (dto.getProfileVisibility() == null || dto.getProfileVisibility().equals("PRIVATE")) {
+            if (dto.getProfileVisibility().equals("PRIVATE")) {
+                dto.setFirstName(null);
+                dto.setLastName(null);
+                dto.setGender(null);
+                dto.setEmail(null);
+                dto.setDateOfBirth(null);
+                dto.setPhone(null);
+                dto.setWebsite(null);
+                dto.setCountry(null);
+                dto.setCity(null);
+                dto.setEducation(null);
+                dto.setWorkplace(null);
+                dto.setFacebookUrl(null);
+                dto.setInstagramUrl(null);
+                dto.setLinkedinUrl(null);
+                dto.setTwitterUrl(null);
+                return Optional.of(dto);
+            }
+        }
+
+
+        // Ẩn các trường profile nếu visibility là FRIENDS và không phải bạn bè
+        if (rs.isPresent()) {
+            UserResponseDTO dto = rs.get();
+            if (dto.getProfileVisibility() != null && dto.getProfileVisibility().equals("FRIENDS")) {
+                if (sessionUserId == null || !friendRepository.existsAcceptedFriendship(sessionUserId, id)) {
+                    dto.setFirstName(null);
+                    dto.setLastName(null);
+                    dto.setGender(null);
+                    dto.setEmail(null);
+                    dto.setDateOfBirth(null);
+                    dto.setPhone(null);
+                    dto.setWebsite(null);
+                    dto.setCountry(null);
+                    dto.setCity(null);
+                    dto.setEducation(null);
+                    dto.setWorkplace(null);
+                    dto.setFacebookUrl(null);
+                    dto.setInstagramUrl(null);
+                    dto.setLinkedinUrl(null);
+                    dto.setTwitterUrl(null);
+                }
+            }
+            return Optional.of(dto);
+        }
+
+        return rs;
     }
 
     public Optional<UserResponseDTO> getUserByEmail(String email) {
@@ -62,9 +124,19 @@ public class UserService {
     }
 
     public List<UserResponseDTO> searchUsers(String keyword) {
-        return userRepository.searchByFullNameOrEmail(keyword).stream()
+        List<UserResponseDTO> rs = userRepository.searchByFullNameOrEmail(keyword, PageRequest.of(0, 5)).stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
+
+        // Loại bỏ người dùng hiện tại khỏi kết quả tìm kiếm
+        Integer sessionUserId = (Integer) session.getAttribute("userId");
+        if (sessionUserId != null) {
+            rs = rs.stream()
+                    .filter(dto -> !dto.getId().equals(sessionUserId))
+                    .collect(Collectors.toList());
+        }
+
+        return rs;
     }
 
     @Transactional
@@ -321,6 +393,7 @@ public class UserService {
         dto.setLastSeenAt(user.getLastSeenAt());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setProfileVisibility(user.getProfileVisibility().name());
         return dto;
     }
 
@@ -534,6 +607,24 @@ public class UserService {
                 .filter(user -> role.equalsIgnoreCase(user.getRole()))
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    public Void updateProfileVisibility(Integer userId, ProfileVisibility visibility) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("User with id " + userId + " does not exist");
+        }
+
+        // Session check
+        if (userId != (Integer) session.getAttribute("userId")) {
+            throw new IllegalArgumentException("userId does not match the logged-in user");
+        }
+
+        User user = userOpt.get();
+        user.setProfileVisibility(visibility);
+        user.setUpdatedAt(Instant.now());
+        userRepository.save(user);
+        return null;
     }
 
 }

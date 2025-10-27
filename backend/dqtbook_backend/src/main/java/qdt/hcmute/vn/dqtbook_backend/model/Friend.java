@@ -3,6 +3,8 @@ package qdt.hcmute.vn.dqtbook_backend.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import qdt.hcmute.vn.dqtbook_backend.enums.FriendStatus;
+
 import java.time.Instant;
 
 @Getter

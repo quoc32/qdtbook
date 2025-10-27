@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
+import qdt.hcmute.vn.dqtbook_backend.enums.ProfileVisibility;
+
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
@@ -109,6 +111,11 @@ public class User {
     @Column(name = "is_banned", nullable = false)
     @ColumnDefault("0")
     private boolean banned;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "profile_visibility", nullable = false)
+    @ColumnDefault("'PUBLIC'")
+    private ProfileVisibility profileVisibility = ProfileVisibility.PUBLIC;
 
     // OAuth2 fields
     @Column(name = "oauth_provider", length = 50)

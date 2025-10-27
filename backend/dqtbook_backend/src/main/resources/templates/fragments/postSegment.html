@@ -1211,9 +1211,9 @@
                     if(!btn) return;
                     if(btn.dataset._shareHandler === '1'){
                       // already attached
-                  } else {
-                      btn.dataset._shareHandler = '1';
-                      btn.addEventListener('click', async function(){
+                    } else {
+                        btn.dataset._shareHandler = '1';
+                        btn.addEventListener('click', async function(){
                         try{
                           if(btn.dataset.sending==='1') return; // prevent double submit
                           btn.dataset.sending='1';
@@ -1252,53 +1252,53 @@
                           }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
                           finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
                           
-                          });
-                  }
-                    });
-                      if(btn){
-                        if(btn.dataset._shareHandler === '1'){
-                          // already attached
-                        } else {
-                          btn.dataset._shareHandler = '1';
-                          btn.addEventListener('click', async function(){
-                            try{
-                              if(btn.dataset.sending === '1') return;
-                              btn.dataset.sending = '1';
-                              btn.disabled = true;
-                              var postId = article.dataset.postId; if(!postId) return;
-                              var text = (ta && ta.value||'').trim();
-                              var visEl = shareModal.querySelector('.share-visibility');
-                              var visibility = (visEl && visEl.value) || 'public';
-                              var body = { shared_text: text, visibility: visibility };
-                              var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
-                                method: 'POST', credentials: 'include',
-                                headers: {'Content-Type':'application/json'},
-                                body: JSON.stringify(body)
-                              });
-                              if(res.ok){
-                                try{ bootstrap.Modal.getInstance(shareModal).hide(); }catch(_){ }
-                                try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
-                                try{ if(ta) ta.value = ''; }catch(e){}
-                                try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
-                                try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
-                                try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
-                              } else {
-                                var json = {};
-                                try{ json = await res.json(); }catch(e){}
-                                alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
-                              }
-                            }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
-                            finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
-                          });
-                        }
+                          }catch(e){ console.error(e);
+                    }
+                      });
+                        if(btn){
+                          if(btn.dataset._shareHandler === '1'){
+                            // already attached
+                          } else {
+                            btn.dataset._shareHandler = '1';
+                            btn.addEventListener('click', async function(){
+                              try{
+                                if(btn.dataset.sending === '1') return;
+                                btn.dataset.sending = '1';
+                                btn.disabled = true;
+                                var postId = article.dataset.postId; if(!postId) return;
+                                var text = (ta && ta.value||'').trim();
+                                var visEl = shareModal.querySelector('.share-visibility');
+                                var visibility = (visEl && visEl.value) || 'public';
+                                var body = { shared_text: text, visibility: visibility };
+                                var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
+                                  method: 'POST', credentials: 'include',
+                                  headers: {'Content-Type':'application/json'},
+                                  body: JSON.stringify(body)
+                                });
+                                if(res.ok){
+                                  try{ bootstrap.Modal.getInstance(shareModal).hide(); }catch(_){ }
+                                  try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
+                                  try{ if(ta) ta.value = ''; }catch(e){}
+                                  try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
+                                  try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
+                                  try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
+                                } else {
+                                  var json = {};
+                                  try{ json = await res.json(); }catch(e){}
+                                  alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
+                                }
+                              }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
+                              finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
+                            });
+                          }
                       }
 
                     // auto-load shares on article render
                     try{ article._loadShares(); }catch(e){}
 
-                  }catch(e){}
+                  }catch(e){};
+
                 })();
-                
                 </script>
 
 

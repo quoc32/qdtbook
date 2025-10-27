@@ -7,6 +7,7 @@ import qdt.hcmute.vn.dqtbook_backend.dto.UserCreateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserUpdateRequestDTO;
 import qdt.hcmute.vn.dqtbook_backend.dto.UserResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.service.UserService;
+import qdt.hcmute.vn.dqtbook_backend.enums.ProfileVisibility;
 import java.io.IOException;
 
 import java.util.List;
@@ -113,10 +114,8 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserUpdateRequestDTO dto) throws IOException {
-        System.out.println("QUOC:1");
         try {
             Optional<UserResponseDTO> user = userService.updateUser(id, dto);
-            System.out.println("QUOC:2");
             if (user.isPresent()) {
                 return ResponseEntity.ok(user.get());
             } else {
@@ -215,5 +214,21 @@ public class UserController {
             "message", "Tìm thấy " + users.size() + " user với role: " + normalizedRole,
             "data", users
         ));
+    }
+
+    @PostMapping("/{id}/toggle-visibility")
+    public ResponseEntity<?> toggleProfileVisibility(@PathVariable Integer id, 
+                                                    @RequestBody Map<String, String> body) {
+        ProfileVisibility visibility = ProfileVisibility.valueOf(body.get("visibility"));
+        userService.updateProfileVisibility(id, visibility);
+        String status;
+        if (visibility == ProfileVisibility.PUBLIC) {
+            status = "PUBLIC";
+        } else if (visibility == ProfileVisibility.FRIENDS) {
+            status = "FRIENDS";
+        } else {
+            status = "PRIVATE";
+        }
+        return ResponseEntity.ok("User profile is now " + status);
     }
 }

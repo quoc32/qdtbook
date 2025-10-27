@@ -1,4 +1,4 @@
-package qdt.hcmute.vn.dqtbook_backend.model;
+package qdt.hcmute.vn.dqtbook_backend.enums;
 
 public enum FriendStatus {
     pending,

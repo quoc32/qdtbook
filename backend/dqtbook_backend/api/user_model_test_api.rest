@@ -10,8 +10,18 @@ GET http://localhost:8080/users/api
 Cookie: JSESSIONID=EBCBC3B0D42823C290EDA3DA7C3623BF
 
 ### 2. Get user by ID (existing user)
-GET http://localhost:8080/api/users/2
-Cookie: JSESSIONID=7088A549CE58E97EEFA24D41FD22F5CF
+GET http://localhost:8080/api/users/3
+Cookie: JSESSIONID=26192EC44646CBC2E015938AF8C68352
+
+### 2.1. Change profile visibility of a user 
+POST http://localhost:8080/api/users/3/toggle-visibility
+Cookie: JSESSIONID=25ADA5AA4D8AFA2B2BDE7918238CB5FE
+Content-Type: application/json
+
+{
+  "visibility": "FRIENDS"
+}
+// PRIVATE, PUBLIC, FRIENDS
 
 ### 3. Get user by ID (non-existing user)
 GET http://localhost:8080/users/999
@@ -179,3 +189,7 @@ Cookie: JSESSIONID=DCFB8BC721FEFE74EBA1213229778000
 ### 19. Lấy số lượng user theo role
 GET http://localhost:8080/api/users/by-role?role=special
 Cookie: JSESSIONID=62F833565CEC5D9771A81190BC39F96F
+
+### 20. Search users by email
+GET http://localhost:8080/api/users/search?keyword=v
+Cookie: JSESSIONID=BA9D3F8C0A84645B11B64ED3218D08F5
