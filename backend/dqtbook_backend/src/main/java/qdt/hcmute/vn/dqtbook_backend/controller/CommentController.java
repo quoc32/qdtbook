@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
+import qdt.hcmute.vn.dqtbook_backend.model.User;
 import qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse;
 import qdt.hcmute.vn.dqtbook_backend.dto.PostCommentResponseDTO;
 import qdt.hcmute.vn.dqtbook_backend.model.Comment;
@@ -27,10 +28,15 @@ public class CommentController {
     private HttpSession session;
 
     public Boolean checkPermission(Integer actionUserId) {
-        if (actionUserId != (Integer)session.getAttribute("userId")) {
+        Object sid = session.getAttribute("userId");
+        if (sid == null) return false;
+        try {
+            Integer sessionUserId = (Integer) sid;
+            if (actionUserId == null) return false;
+            return actionUserId.equals(sessionUserId);
+        } catch (ClassCastException cce) {
             return false;
         }
-        return true;
     }
 
     @GetMapping
@@ -40,9 +46,29 @@ public class CommentController {
 
     @PostMapping
     public ResponseEntity<?> create(@PathVariable Integer postId, @RequestBody Comment comment) {
-        if (!checkPermission(comment.getAuthor().getId())) {
-            throw new IllegalArgumentException("You do not have permission to perform this action");
+        // ensure session user exists
+        Object sid = session.getAttribute("userId");
+        if (sid == null) {
+            return ResponseEntity.status(401).body(new ErrorResponse(401, "Login required"));
         }
+        Integer sessionUserId;
+        try {
+            sessionUserId = (Integer) sid;
+        } catch (ClassCastException cce) {
+            return ResponseEntity.status(403).body(new ErrorResponse(403, "Invalid session user"));
+        }
+
+        // If author is not provided in body, use session user
+        if (comment.getAuthor() == null || comment.getAuthor().getId() == null) {
+            User u = new User();
+            u.setId(sessionUserId);
+            comment.setAuthor(u);
+        }
+
+        if (!checkPermission(comment.getAuthor().getId())) {
+            return ResponseEntity.status(403).body(new ErrorResponse(403, "You do not have permission to perform this action"));
+        }
+
         Optional<Comment> createdOpt = commentService.createComment(postId, comment);
         if (createdOpt.isPresent()) {
             return ResponseEntity.status(201).body(

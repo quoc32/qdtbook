@@ -128,14 +128,14 @@ Content-Type: application/json
   "content": "Rất hay luôn! 1"
 }
 
-### Tạo reply (comment lồng nhau)
+### Tạo reply (comment lồng nhau) — dùng session (JSESSIONID)
 POST http://localhost:8080/api/posts/1/comments
 Content-Type: application/json
+Cookie: JSESSIONID=C092056861FB208FF743144AA2C2C711
 
 {
-  "user": { "id": 2 },
   "content": "Cảm ơn bạn, mình trả lời ở đây",
-  "parent_comment_id": 3
+  "parent_comment_id": 1
 }
 
 ### Cập nhật comment

@@ -118,7 +118,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> list(String status, Integer sellerId, String q, Double minPrice, Double maxPrice) {
+    public List<ProductResponseDTO> list(String status, Integer sellerId, String q, Double minPrice, Double maxPrice, String province, String district) {
         // Khởi tạo spec với predicate luôn đúng để tránh null khi .and()
         Specification<Product> spec = (root, query, cb) -> cb.conjunction();
         if (status != null) {
@@ -139,6 +139,15 @@ public class ProductService {
         }
         if (maxPrice != null) {
             spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+        }
+        // Filter by province/district if provided. We store address as a composed string (detail, district, province)
+        if (province != null && !province.isBlank()) {
+            String p = "%" + province.trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(cb.coalesce(root.get("address"), "")), p));
+        }
+        if (district != null && !district.isBlank()) {
+            String d = "%" + district.trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(cb.coalesce(root.get("address"), "")), d));
         }
         List<Product> data = productRepository.findAll(spec);
         return data.stream().map(this::toDTOWithMedia).toList();

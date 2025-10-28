@@ -44,16 +44,18 @@ public class ProductController {
             @RequestParam(value = "seller_id", required = false) Integer sellerId,
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "min_price", required = false) Double minPrice,
-            @RequestParam(value = "max_price", required = false) Double maxPrice
+            @RequestParam(value = "max_price", required = false) Double maxPrice,
+            @RequestParam(value = "province", required = false) String province,
+            @RequestParam(value = "district", required = false) String district
     ) {
-        return ResponseEntity.ok(productService.list(status, sellerId, q, minPrice, maxPrice));
+        return ResponseEntity.ok(productService.list(status, sellerId, q, minPrice, maxPrice, province, district));
     }
 
 
     // Danh sách sản phẩm của chính mình (tiện cho frontend gọi /seller/me)
     @GetMapping("/seller/me")
     public ResponseEntity<java.util.List<ProductResponseDTO>> listByMe() {
-        return ResponseEntity.ok(productService.list(null, currentUserId(), null, null, null));
+        return ResponseEntity.ok(productService.list(null, currentUserId(), null, null, null, null, null));
     }
 
     // Danh sách sản phẩm public (tất cả người bán) - mặc định chỉ lấy status=available
@@ -63,10 +65,12 @@ public class ProductController {
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "min_price", required = false) Double minPrice,
             @RequestParam(value = "max_price", required = false) Double maxPrice
+            , @RequestParam(value = "province", required = false) String province
+            , @RequestParam(value = "district", required = false) String district
     ) {
         String effectiveStatus = (status == null || status.isBlank()) ? "available" : status;
-        System.out.println("[Market] listPublic status=" + effectiveStatus + ", q=" + q + ", min=" + minPrice + ", max=" + maxPrice);
-        var result = productService.list(effectiveStatus, null, q, minPrice, maxPrice);
+        System.out.println("[Market] listPublic status=" + effectiveStatus + ", q=" + q + ", min=" + minPrice + ", max=" + maxPrice + ", province=" + province + ", district=" + district);
+        var result = productService.list(effectiveStatus, null, q, minPrice, maxPrice, province, district);
         System.out.println("[Market] listPublic result size=" + (result != null ? result.size() : -1));
         return ResponseEntity.ok(result);
     }

@@ -62,9 +62,17 @@
                 <option value="hidden">Ẩn</option>
               </select>
             </div>
+            <div class="col-sm-4">
+              <label class="form-label small mb-1">Tỉnh/Thành phố</label>
+              <select id="mk_province" class="form-select"></select>
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small mb-1">Quận/Huyện</label>
+              <select id="mk_district" class="form-select"></select>
+            </div>
             <div class="col-sm-8">
-              <label class="form-label small mb-1">Địa chỉ</label>
-              <input id="mk_address" class="form-control" placeholder="Quận/Huyện, Tỉnh/Thành...">
+              <label class="form-label small mb-1">Địa chỉ cụ thể</label>
+              <input id="mk_address" class="form-control" placeholder="Số nhà, đường...">
             </div>
             <div class="col-12">
               <label class="form-label small mb-1">Mô tả</label>
@@ -112,6 +120,16 @@
               <button id="mk_search_btn" class="btn btn-sm btn-primary">Tìm</button>
             </div>
           </div>
+          <!-- Address filters (province/district) for search -->
+          <div class="row g-2 mb-2" id="mk_search_address_row" style="display:none;">
+            <div class="col-md-4 col-12">
+              <select id="mk_search_province" class="form-select form-select-sm"><option value="">Chọn Tỉnh/Thành phố</option></select>
+            </div>
+            <div class="col-md-4 col-12">
+              <select id="mk_search_district" class="form-select form-select-sm" disabled><option value="">Chọn Quận/Huyện</option></select>
+            </div>
+            <div class="col-md-4 col-12"></div>
+          </div>
           <div id="marketProductList"></div>
         </div>
       </div>
@@ -149,45 +167,57 @@
         }
       }
 
-      async function submitProduct(){
-        const nameEl = document.getElementById('mk_name');
-        const priceEl = document.getElementById('mk_price');
-        const qtyEl = document.getElementById('mk_qty');
-        const addrEl = document.getElementById('mk_address');
-        const descEl = document.getElementById('mk_desc');
+  async function submitProduct(){
+    const nameEl = document.getElementById('mk_name');
+    const priceEl = document.getElementById('mk_price');
+    const qtyEl = document.getElementById('mk_qty');
+    const provEl = document.getElementById('mk_province');
+    const distEl = document.getElementById('mk_district');
+    const addrEl = document.getElementById('mk_address');
+    const descEl = document.getElementById('mk_desc');
   const filesEl = document.getElementById('mk_files');
   const statusEl = document.getElementById('mk_status');
 
-        const productName = nameEl.value.trim();
-        const price = parseFloat(priceEl.value || '0');
-        const quantity = parseInt(qtyEl.value || '1');
-        const address = addrEl.value.trim();
-        const description = descEl.value.trim();
+    const productName = nameEl.value.trim();
+    const price = parseFloat(priceEl.value || '0');
+    const quantity = parseInt(qtyEl.value || '1');
+  // preserve the raw option values (codes) but send human-readable names as well
+  const provinceCode = provEl?.value || '';
+  const districtCode = distEl?.value || '';
+  const addressDetail = addrEl?.value?.trim() || '';
+  // option text usually holds the human-readable name (placeholder is index 0)
+  const provinceName = (provEl && provEl.selectedIndex > 0) ? provEl.options[provEl.selectedIndex].textContent.trim() : '';
+  const districtName = (distEl && distEl.selectedIndex > 0) ? distEl.options[distEl.selectedIndex].textContent.trim() : '';
+    const description = descEl.value.trim();
 
-        if(!productName){ alert('Nhập tên sản phẩm'); nameEl.focus(); return; }
+  // compose final address using names (detail, district name, province name)
+  const address = [addressDetail, districtName, provinceName].filter(Boolean).join(', ');
 
-        let mediaUrls = uploadedUrls;
-        if(filesEl.files && filesEl.files.length){
-          try{ mediaUrls = await uploadFiles(filesEl.files); }
-          catch(e){ console.error(e); alert('Tải ảnh thất bại'); return; }
-        }
+    if(!productName){ alert('Nhập tên sản phẩm'); nameEl.focus(); return; }
+
+    let mediaUrls = uploadedUrls;
+    if(filesEl.files && filesEl.files.length){
+      try{ mediaUrls = await uploadFiles(filesEl.files); }
+      catch(e){ console.error(e); alert('Tải ảnh thất bại'); return; }
+    }
 
   const status = statusEl?.value || 'available';
-  const payload = { productName, price, quantity, address, description, status, mediaUrls };
-        const url = editingId ? `/market/products/${editingId}` : '/market/products';
-        const method = editingId ? 'PUT' : 'POST';
-        const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify(payload) });
-        if(!res.ok){ const t = await res.text(); alert('Tạo sản phẩm thất bại: ' + t); return; }
+  // Send both codes and human-readable names. Backend can choose which to persist.
+  const payload = { productName, price, quantity, address, addressDetail, provinceCode, districtCode, province: provinceName, district: districtName, description, status, mediaUrls };
+    const url = editingId ? `/market/products/${editingId}` : '/market/products';
+    const method = editingId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify(payload) });
+    if(!res.ok){ const t = await res.text(); alert('Tạo sản phẩm thất bại: ' + t); return; }
 
-        // Reset form
-  nameEl.value=''; priceEl.value=''; qtyEl.value='1'; addrEl.value=''; descEl.value=''; filesEl.value=''; statusEl.value='available';
-        uploadedUrls = [];
-        document.getElementById('mk_thumbs').innerHTML = '';
-        if(editingId){ editingId = null; setEditMode(false); }
-        // Sau thao tác, nếu đang ở tab "Đang bán" thì reload danh sách đó, ngược lại load public
-        const btnSelling = document.getElementById('mk_filter_selling');
-        if(btnSelling?.classList.contains('btn-primary')) loadSelling(); else loadPublic();
-      }
+    // Reset form
+  nameEl.value=''; priceEl.value=''; qtyEl.value='1'; if(provEl) provEl.value=''; if(distEl){ distEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>'; distEl.disabled = true; } if(addrEl) addrEl.value=''; descEl.value=''; filesEl.value=''; statusEl.value='available';
+    uploadedUrls = [];
+    document.getElementById('mk_thumbs').innerHTML = '';
+    if(editingId){ editingId = null; setEditMode(false); }
+    // Sau thao tác, nếu đang ở tab "Đang bán" thì reload danh sách đó, ngược lại load public
+    const btnSelling = document.getElementById('mk_filter_selling');
+    if(btnSelling?.classList.contains('btn-primary')) loadSelling(); else loadPublic();
+  }
 
       async function loadPublic(){
         const container = document.getElementById('marketProductList');
@@ -208,6 +238,17 @@
           if(!Number.isNaN(maxv)) params.set('max_price', String(maxv));
           const stv = stEl?.value;
           if(stv) params.set('status', stv);
+          // address filters
+          const provFilter = document.getElementById('mk_search_province');
+          const distFilter = document.getElementById('mk_search_district');
+          if(provFilter && provFilter.selectedIndex > 0){
+            const provName = provFilter.options[provFilter.selectedIndex].textContent.trim();
+            if(provName) params.set('province', provName);
+          }
+          if(distFilter && distFilter.selectedIndex > 0){
+            const distName = distFilter.options[distFilter.selectedIndex].textContent.trim();
+            if(distName) params.set('district', distName);
+          }
           const url = params.toString() ? `/market/products/public?${params.toString()}` : '/market/products/public';
           const res = await fetch(url, { credentials:'include' });
           if(!res.ok){
@@ -316,6 +357,8 @@
         function setSearchVisible(visible){
           if(!searchBar) return;
           searchBar.style.display = visible ? '' : 'none';
+          const addrRow = document.getElementById('mk_search_address_row');
+          if(addrRow) addrRow.style.display = visible ? '' : 'none';
         }
 
         btnAll?.addEventListener('click', ()=>{ setActive(btnAll); title.textContent='Tất cả sản phẩm'; setComposerVisible(false); setSearchVisible(true); loadPublic(); });
@@ -325,10 +368,14 @@
           const minEl = document.getElementById('mk_search_min');
           const maxEl = document.getElementById('mk_search_max');
           const stEl = document.getElementById('mk_search_status');
+          const provEl = document.getElementById('mk_search_province');
+          const distEl = document.getElementById('mk_search_district');
           if(qEl) qEl.value = '';
           if(minEl) minEl.value = '';
           if(maxEl) maxEl.value = '';
           if(stEl) stEl.value = '';// default: Còn hàng (mặc định)
+          if(provEl) provEl.value = '';
+          if(distEl){ distEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>'; distEl.disabled = true; }
         }
 
         reloadBtn?.addEventListener('click', ()=>{
@@ -465,10 +512,6 @@
               const auth = JSON.parse(localStorage.getItem('auth') || '{}');
               const currentUserId = auth.user_id;
               
-              console.log('Current User ID:', currentUserId);
-              console.log('Seller ID:', p.sellerId);
-              console.log('Product data:', p);
-              
               if (!currentUserId) {
                 alert('Vui lòng đăng nhập để nhắn tin');
                 window.location.href = '/views/login';
@@ -501,11 +544,11 @@
                 })
               });
               
-              console.log('Create chat response status:', response.status);
+              // debug log removed
               
               if (response.ok) {
                 const chatData = await response.json();
-                console.log('Chat created/found:', chatData);
+                // debug log removed
                 // Chuyển đến trang messages với chatId để tự động mở chat
                 window.location.href = `/views/messages?chatId=${chatData.chatId}&sellerId=${p.sellerId}`;
               } else {
@@ -594,6 +637,101 @@
 
       return { load: loadPublic, _deleteProduct, _startEdit, _openDetail };
     })();
+  })();
+  </script>
+
+  <!-- dvhcvn.json loader: populate #mk_province and #mk_district -->
+  <script>
+  (function(){
+    const LOCAL_JSON = '/dvhcvn.json'; // served by backend controller or static
+  const provSel = document.getElementById('mk_province');
+  const distSel = document.getElementById('mk_district');
+  const searchProvSel = document.getElementById('mk_search_province');
+  const searchDistSel = document.getElementById('mk_search_district');
+
+    function setOptions(selectEl, items, placeholder){
+      if(!selectEl) return;
+      selectEl.innerHTML = '';
+      const ph = document.createElement('option');
+      ph.value = '';
+      ph.textContent = placeholder || 'Chọn';
+      selectEl.appendChild(ph);
+      if(Array.isArray(items) && items.length){
+        items.forEach(it=>{
+          const o = document.createElement('option');
+          o.value = it.value;
+          o.textContent = it.label;
+          selectEl.appendChild(o);
+        });
+        selectEl.disabled = false;
+      } else {
+        selectEl.disabled = true;
+      }
+    }
+
+    async function loadDvhcvn(){
+      if(!provSel || !distSel) return;
+  // initial placeholders
+  if(provSel) provSel.innerHTML = '<option>Đang tải...</option>';
+  if(distSel){ distSel.innerHTML = '<option>Chọn Quận/Huyện</option>'; distSel.disabled = true; }
+  if(searchProvSel) searchProvSel.innerHTML = '<option>Đang tải...</option>';
+  if(searchDistSel){ searchDistSel.innerHTML = '<option>Chọn Quận/Huyện</option>'; searchDistSel.disabled = true; }
+      try{
+        const res = await fetch(LOCAL_JSON, { cache: 'no-store' });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const json = await res.json();
+        let provinces = [];
+        if(Array.isArray(json)) provinces = json;
+        else if(Array.isArray(json.data)) provinces = json.data;
+        else if(Array.isArray(json.provinces)) provinces = json.provinces;
+        else provinces = [];
+
+        const provItems = provinces.map(p => ({ value: String(p.level1_id || p.code || p.id || p.name || ''), label: p.name || String(p.level1_id || p.code || p.id || p.name || ''), raw: p }));
+  setOptions(provSel, provItems, 'Chọn Tỉnh/Thành phố');
+  if(searchProvSel) setOptions(searchProvSel, provItems, 'Chọn Tỉnh/Thành phố');
+  // attach raw data for lookup
+  provSel._dvhcvn_provinces = provinces;
+  if(searchProvSel) searchProvSel._dvhcvn_provinces = provinces;
+  // debug log removed
+
+        // wire change handler for composer selects
+        provSel.addEventListener('change', function(e){
+          const key = e.target.value;
+          const list = e.target._dvhcvn_provinces || [];
+          const found = list.find(p => String(p.level1_id) === String(key) || String(p.code) === String(key) || String(p.id) === String(key) || String(p.name) === String(key));
+          let districts = [];
+          if(found){
+            districts = found.level2s || found.districts || found.children || [];
+          }
+          const distItems = (districts||[]).map(d => ({ value: String(d.level2_id || d.code || d.id || d.name || ''), label: d.name || String(d.level2_id || d.code || d.id || d.name || '') }));
+          setOptions(distSel, distItems, 'Chọn Quận/Huyện');
+        });
+
+        // wire change handler for search selects
+        if(searchProvSel){
+          searchProvSel.addEventListener('change', function(e){
+            const key = e.target.value;
+            const list = e.target._dvhcvn_provinces || [];
+            const found = list.find(p => String(p.level1_id) === String(key) || String(p.code) === String(key) || String(p.id) === String(key) || String(p.name) === String(key));
+            let districts = [];
+            if(found){
+              districts = found.level2s || found.districts || found.children || [];
+            }
+            const distItems = (districts||[]).map(d => ({ value: String(d.level2_id || d.code || d.id || d.name || ''), label: d.name || String(d.level2_id || d.code || d.id || d.name || '') }));
+            setOptions(searchDistSel, distItems, 'Chọn Quận/Huyện');
+          });
+        }
+
+      }catch(err){
+        console.error('Failed to load dvhcvn.json:', err);
+        if(provSel){ provSel.innerHTML = '<option>Không tải được dữ liệu</option>'; provSel.disabled = true; }
+        if(distSel){ distSel.innerHTML = '<option>Không tải được dữ liệu</option>'; distSel.disabled = true; }
+      }
+    }
+
+    // Run after DOM ready; keep small timeout to ensure elements exist in some rendering setups
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ()=> setTimeout(loadDvhcvn, 30));
+    else setTimeout(loadDvhcvn, 30);
   })();
   </script>
 
