@@ -29,6 +29,9 @@ public class Report {
     @Column(name = "reported_product_id")
     private Integer reportedProductId;
 
+    @Column(name = "reported_share_id")
+    private Integer reportedShareId;
+
     @Lob
     @Column(name = "reason", nullable = false)
     private String reason;

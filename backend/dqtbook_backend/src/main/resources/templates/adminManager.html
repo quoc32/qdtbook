@@ -90,7 +90,7 @@
           setContent(
             '<div class="text-center text-muted py-2">Đang tải bình luận...</div>'
           );
-          if (reportedPostId) {
+            if (reportedCommentId) {
             // fetch the post and the comments list, then find the comment by id (avoid non-existing single-comment GET)
             const [resPost, resComments] = await Promise.all([
               fetch("/api/posts/" + encodeURIComponent(reportedPostId), {
@@ -420,6 +420,14 @@
             </button>
             <button
               type="button"
+              class="btn btn-sm btn-outline-danger"
+              id="qdt_admin_delete_share_btn"
+              style="display: none"
+            >
+              Xóa share
+            </button>
+            <button
+              type="button"
               class="btn btn-danger"
               id="qdt_admin_report_delete_btn"
             >
@@ -529,6 +537,12 @@
               r.reportedProduct ||
               r.reportedProduct_id ||
               null;
+            let reportedShareId =
+              r.reported_share_id ||
+              r.reportedShareId ||
+              r.reportedShare ||
+              r.reported_share ||
+              null;
             let reportedCommentId =
               r.reported_comment_id ||
               r.reportedCommentId ||
@@ -544,7 +558,7 @@
             // Fallback: scan keys for anything that looks like a post/comment/product id
             if (!reportedPostId || !reportedCommentId || !reportedProductId) {
               try {
-                Object.keys(r || {}).forEach((k) => {
+                  Object.keys(r || {}).forEach((k) => {
                   const v = r[k];
                   if (
                     reportedPostId == null &&
@@ -567,12 +581,21 @@
                       (typeof v === "string" && /^\d+$/.test(v)))
                   )
                     reportedProductId = reportedProductId || String(v);
+                  if (
+                    reportedShareId == null &&
+                    /share/i.test(k) &&
+                    (typeof v === "number" ||
+                      (typeof v === "string" && /^\d+$/.test(v)))
+                  )
+                    reportedShareId = reportedShareId || String(v);
                 });
               } catch (e) {}
             }
             const type =
               r.status ||
-              (reportedProductId
+              (reportedShareId
+                ? "share"
+                : reportedProductId
                 ? "product"
                 : reportedCommentId
                 ? "comment"
@@ -580,7 +603,7 @@
                 ? "post"
                 : "unknown");
             const targetId =
-              reportedProductId || reportedCommentId || reportedPostId || "";
+              reportedShareId || reportedProductId || reportedCommentId || reportedPostId || "";
             tr.innerHTML = `
               <td>${escapeHtml(r.id)}</td>
               <td>${escapeHtml(reporter)}</td>
@@ -1211,6 +1234,184 @@
                       }
                     }
                   }
+                } else if (reportedShareId) {
+                  setContent(
+                    '<div class="text-center text-muted py-2">Đang tải share...</div>'
+                  );
+                  const sid = reportedShareId || r.reported_share_id;
+                  let shareRes = null;
+                  try {
+                    if (reportedPostId) {
+                      // Try fetch share via post-bound endpoint
+                      shareRes = await fetch(
+                        "/api/posts/" +
+                          encodeURIComponent(reportedPostId) +
+                          "/shares/" +
+                          encodeURIComponent(sid),
+                        { credentials: "include" }
+                      );
+                    }
+                    if (!shareRes || !shareRes.ok) {
+                      // Fallback: fetch by shareId only
+                      shareRes = await fetch(
+                        "/api/shares/" + encodeURIComponent(sid),
+                        { credentials: "include" }
+                      );
+                    }
+                    if (!shareRes.ok) {
+                      setContent(
+                        '<div class="text-danger">Không tải được share (HTTP ' +
+                          shareRes.status +
+                          ")</div>"
+                      );
+                    } else {
+                      const share = await shareRes.json();
+                      // Extract sharer info
+                      let sharerHtml = "";
+                      try {
+                        const u = share.user || share.author || {};
+                        const uid = u.id || u.userId || u.user_id;
+                        const uname =
+                          u.fullName || u.full_name || u.username || u.name;
+                        if (uid) {
+                          sharerHtml = `<a href="/views/user/${encodeURIComponent(
+                            uid
+                          )}" class="link-like">${escapeHtml(
+                            uname || "#" + uid
+                          )}</a>`;
+                        } else if (uname) {
+                          sharerHtml = escapeHtml(uname);
+                        }
+                      } catch (_) {}
+                      const sharedText = escapeHtml(
+                        share.sharedText || share.text || ""
+                      );
+                      // Try to show a compact original post preview. If the share payload
+                      // doesn't include full post media, fetch the original post via API.
+                      let postHtml = "";
+                      try {
+                        let post = share.post || share.originalPost || null;
+                        let originalPostId = null;
+                        try {
+                          originalPostId =
+                            share.postId ||
+                            share.post_id ||
+                            (share.post && (share.post.id || share.post.post_id)) ||
+                            (typeof reportedPostId !== "undefined" && reportedPostId) ||
+                            r.reported_post_id ||
+                            null;
+                        } catch (_) {}
+
+                        // If no embedded post or missing media info, fetch the original post
+                        const hasEmbeddedMedia = (() => {
+                          try {
+                            return (
+                              post &&
+                              ((Array.isArray(post.media) && post.media.length) ||
+                                (Array.isArray(post.mediaUrls) && post.mediaUrls.length))
+                            );
+                          } catch (_) {
+                            return false;
+                          }
+                        })();
+
+                        if ((!post || !hasEmbeddedMedia) && originalPostId) {
+                          try {
+                            const pres = await fetch(
+                              "/api/posts/" + encodeURIComponent(originalPostId),
+                              { credentials: "include" }
+                            );
+                            if (pres.ok) {
+                              post = await pres.json();
+                            }
+                          } catch (_) {}
+                        }
+
+                        if (post && (post.id || post.post_id || post.title || post.content)) {
+                          // prepare author HTML for the original post
+                          let authorHtml = "";
+                          try {
+                            const a = post.author || {};
+                            const aid = a.id || a.userId || a.user_id;
+                            const aname =
+                              a.fullName || a.full_name || a.username || a.name;
+                            if (aid) {
+                              authorHtml = `<a href="/views/user/${encodeURIComponent(
+                                aid
+                              )}" class="link-like">${escapeHtml(
+                                aname || "#" + aid
+                              )}</a>`;
+                            } else if (aname) {
+                              authorHtml = escapeHtml(aname);
+                            }
+                          } catch (_) {}
+
+                          // find a representative image for the post
+                          let postImg = "/img/marketplace.png";
+                          try {
+                            if (
+                              Array.isArray(post.media) &&
+                              post.media.length &&
+                              (post.media[0].mediaUrl || post.media[0].media_url || post.media[0].url)
+                            ) {
+                              postImg =
+                                post.media[0].mediaUrl || post.media[0].media_url || post.media[0].url;
+                            } else if (
+                              Array.isArray(post.mediaUrls) &&
+                              post.mediaUrls.length
+                            ) {
+                              postImg = post.mediaUrls[0];
+                            } else if (
+                              Array.isArray(post.images) && post.images.length
+                            ) {
+                              postImg = post.images[0];
+                            } else if (post.imageUrl || post.image_url) {
+                              postImg = post.imageUrl || post.image_url;
+                            }
+                          } catch (_) {}
+
+                          const showContentMain =
+                            normalizeText(post.content) !== normalizeText(post.title);
+                          postHtml = `
+                            <div class="d-flex gap-3">
+                              <img src="${escapeHtml(
+                                postImg
+                              )}" style="width:180px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                              <div class="flex-fill">
+                                <div class="small text-muted fw-bold">Bài viết gốc</div>
+                                <div class="small text-muted mb-1">${authorHtml}</div>
+                                ${
+                                  showContentMain
+                                    ? `<div style=\"white-space:pre-wrap;border-left:3px solid #eee;padding-left:10px;\">${escapeHtml(
+                                        post.content || ""
+                                      )}</div>`
+                                    : ""
+                                }
+                              </div>
+                            </div>`;
+                        }
+                      } catch (_) {}
+
+                      const html = `
+                        <div class="mb-2">
+                          <div class="small text-muted">Share bởi:</div>
+                          <div>${sharerHtml || "-"}</div>
+                        </div>
+                        ${
+                          sharedText
+                            ? `<div class=\"mb-3\" style=\"white-space:pre-wrap;background:#f8f9fa;border-radius:8px;padding:.6rem;border:1px solid #eee;\">${sharedText}</div>`
+                            : ""
+                        }
+                        ${postHtml}
+                      `;
+                      setContent(html);
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    setContent(
+                      '<div class="text-danger">Lỗi khi tải share</div>'
+                    );
+                  }
                 } else if (reportedPostId) {
                   setContent(
                     '<div class="text-center text-muted py-2">Đang tải bài viết...</div>'
@@ -1302,6 +1503,9 @@
                 );
                 const delProductBtn = document.getElementById(
                   "qdt_admin_delete_product_btn"
+                );
+                const delShareBtn = document.getElementById(
+                  "qdt_admin_delete_share_btn"
                 );
 
                 // helper to show the existing Bootstrap confirm modal and await user's choice
@@ -1432,6 +1636,7 @@
                 delCommentBtn.style.display = "none";
                 delPostBtn.style.display = "none";
                 delProductBtn.style.display = "none";
+                delShareBtn.style.display = "none";
 
                 // If report targets a comment/post/product, show corresponding delete button(s)
                 if (reportedCommentId) {
@@ -1443,11 +1648,15 @@
                 if (reportedProductId) {
                   delProductBtn.style.display = "";
                 }
+                if (reportedShareId) {
+                  delShareBtn.style.display = "";
+                }
 
                 // remove old listeners to avoid duplication
                 delCommentBtn.replaceWith(delCommentBtn.cloneNode(true));
                 delPostBtn.replaceWith(delPostBtn.cloneNode(true));
                 delProductBtn.replaceWith(delProductBtn.cloneNode(true));
+                delShareBtn.replaceWith(delShareBtn.cloneNode(true));
                 // re-query buttons
                 const delCommentBtn2 = document.getElementById(
                   "qdt_admin_delete_comment_btn"
@@ -1457,6 +1666,9 @@
                 );
                 const delProductBtn2 = document.getElementById(
                   "qdt_admin_delete_product_btn"
+                );
+                const delShareBtn2 = document.getElementById(
+                  "qdt_admin_delete_share_btn"
                 );
 
                 if (reportedCommentId) {
@@ -1511,6 +1723,31 @@
                     await confirmAndDeleteResource(
                       "Sản phẩm",
                       "/market/products/" + encodeURIComponent(pid)
+                    );
+                  });
+                }
+                if (reportedShareId) {
+                  delShareBtn2.addEventListener("click", async () => {
+                    const sid = reportedShareId || r.reported_share_id;
+                    // Determine postId: prefer reportedPostId, otherwise try to find one inside report
+                    let pid = reportedPostId || r.reported_post_id;
+                    if (!pid) {
+                      try {
+                        const guessed = findId(r, /post/i);
+                        if (guessed) pid = guessed;
+                      } catch (e) {}
+                    }
+                    if (pid) {
+                      const ok = await confirmAndDeleteResource(
+                        "Share",
+                        "/api/posts/" + encodeURIComponent(pid) + "/shares/" + encodeURIComponent(sid)
+                      );
+                      if (ok) return;
+                    }
+                    // Fallback: delete by shareId only (server will enforce owner/admin)
+                    await confirmAndDeleteResource(
+                      "Share",
+                      "/api/shares/" + encodeURIComponent(sid)
                     );
                   });
                 }

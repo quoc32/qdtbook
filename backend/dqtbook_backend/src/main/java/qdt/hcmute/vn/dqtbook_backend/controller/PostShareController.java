@@ -96,3 +96,46 @@ public class PostShareController {
         }
     }
 }
+
+// Flat share endpoints (by shareId only) for admin/fallback use. Kept in the same source file per consolidation preference.
+@RestController
+@RequestMapping("/api/shares")
+class PostShareFlatController {
+    private final PostShareService postShareService;
+
+    public PostShareFlatController(PostShareService postShareService) {
+        this.postShareService = postShareService;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOneFlat(@PathVariable Integer id) {
+        try {
+            // Return the share by id (includes post and user if mapped)
+            var repoShare = postShareService.getShareById(id);
+            return ResponseEntity.ok(repoShare);
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            return ResponseEntity.status(rse.getStatusCode()).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(rse.getStatusCode().value(), rse.getReason()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(500, "Internal server error"));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteFlat(@PathVariable Integer id, jakarta.servlet.http.HttpSession session) {
+        try {
+            Object sessionUserId = session.getAttribute("userId");
+            if (sessionUserId == null) {
+                return ResponseEntity.status(401).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(401, "Chưa đăng nhập"));
+            }
+            Integer currentUserId = (Integer) sessionUserId;
+            Object roleObj = session.getAttribute("role");
+            String role = roleObj != null ? String.valueOf(roleObj) : null;
+            postShareService.deleteShareByIdAsUser(id, currentUserId, role);
+            return ResponseEntity.noContent().build();
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            return ResponseEntity.status(rse.getStatusCode()).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(rse.getStatusCode().value(), rse.getReason()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(new qdt.hcmute.vn.dqtbook_backend.dto.ErrorResponse(500, "Internal server error"));
+        }
+    }
+}

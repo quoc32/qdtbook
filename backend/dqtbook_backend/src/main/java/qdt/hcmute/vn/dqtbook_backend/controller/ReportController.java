@@ -40,6 +40,7 @@ public class ReportController {
         body.put("reported_post_id", r.getReportedPostId());
         body.put("reported_comment_id", r.getReportedCommentId());
         body.put("reported_product_id", r.getReportedProductId());
+        body.put("reported_share_id", r.getReportedShareId());
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
@@ -62,6 +63,7 @@ public class ReportController {
         body.put("reported_post_id", r.getReportedPostId());
         body.put("reported_comment_id", r.getReportedCommentId());
         body.put("reported_product_id", r.getReportedProductId());
+        body.put("reported_share_id", r.getReportedShareId());
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
@@ -84,6 +86,30 @@ public class ReportController {
         body.put("reported_post_id", r.getReportedPostId());
         body.put("reported_comment_id", r.getReportedCommentId());
         body.put("reported_product_id", r.getReportedProductId());
+        body.put("reported_share_id", r.getReportedShareId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    }
+
+    @PostMapping("/shares/{shareId}")
+    public ResponseEntity<?> reportShare(@PathVariable Integer shareId,
+                                         @RequestBody(required = false) ReportRequestDTO dto,
+                                         HttpSession session) {
+        if (dto == null || dto.getReason() == null || dto.getReason().trim().isEmpty()) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("message", "Reason is required");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+        }
+        Report r = reportService.createReportFor("SHARE", shareId, dto, session);
+        Map<String, Object> body = new HashMap<>();
+        body.put("report_id", r.getId());
+        body.put("reporter_id", r.getReporter() != null ? r.getReporter().getId() : null);
+        body.put("reason", r.getReason());
+        body.put("status", r.getStatus());
+        body.put("created_at", r.getCreatedAt());
+        body.put("reported_post_id", r.getReportedPostId());
+        body.put("reported_comment_id", r.getReportedCommentId());
+        body.put("reported_product_id", r.getReportedProductId());
+        body.put("reported_share_id", r.getReportedShareId());
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 

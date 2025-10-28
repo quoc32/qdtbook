@@ -195,6 +195,33 @@ public class PostShareService {
         return existing;
     }
 
+    // Get share by id only (used by admin/fallback or when postId is unknown in the client)
+    public PostShare getShareById(Integer id) {
+        Optional<PostShare> opt = postShareRepository.findById(id);
+        if (opt.isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Share not found");
+        }
+        return opt.get();
+    }
+
+    // Delete share by id only (owner or admin). Does not require postId.
+    public void deleteShareByIdAsUser(Integer id, Integer currentUserId, String role) {
+        if (currentUserId == null) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Chưa đăng nhập");
+        }
+        Optional<PostShare> opt = postShareRepository.findById(id);
+        if (opt.isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Share not found");
+        }
+        PostShare existing = opt.get();
+        Integer ownerId = existing.getUser() != null ? existing.getUser().getId() : null;
+        boolean isAdmin = role != null && "ADMIN".equalsIgnoreCase(role);
+        if (ownerId == null || (!ownerId.equals(currentUserId) && !isAdmin)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Không có quyền xóa share này");
+        }
+        postShareRepository.deleteById(id);
+    }
+
     @Transactional
     public PostShare updateShareAsUser(Integer postId, Integer shareId, Integer currentUserId, PostShareRequest payload) {
         if (currentUserId == null) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "Chưa đăng nhập");

@@ -147,14 +147,48 @@ public class CommentService {
         if (existing.getPost() == null || existing.getPost().getId() == null || !existing.getPost().getId().equals(postId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found for this post");
         }
-        // Permission check: only the author of the comment can delete it
+        // Permission check: allow deletion if session user is
+        // - the author of the comment, OR
+        // - the author of the post containing the comment, OR
+        // - an admin (role = "ADMIN")
         try {
             Object sid = session.getAttribute("userId");
             if (sid == null) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Login required");
             }
             Integer sessionUserId = (Integer) sid;
-            if (existing.getAuthor() == null || existing.getAuthor().getId() == null || !existing.getAuthor().getId().equals(sessionUserId)) {
+
+            boolean allowed = false;
+
+            // comment author
+            if (existing.getAuthor() != null && existing.getAuthor().getId() != null
+                    && existing.getAuthor().getId().equals(sessionUserId)) {
+                allowed = true;
+            }
+
+            // post author
+            if (!allowed && existing.getPost() != null && existing.getPost().getAuthor() != null
+                    && existing.getPost().getAuthor().getId() != null
+                    && existing.getPost().getAuthor().getId().equals(sessionUserId)) {
+                allowed = true;
+            }
+
+            // admin role
+            if (!allowed) {
+                try {
+                    var userOpt = userRepository.findById(sessionUserId);
+                    if (userOpt.isPresent()) {
+                        var u = userOpt.get();
+                        if (u.getRole() != null && ("ADMIN".equalsIgnoreCase(u.getRole()) || "ROLE_ADMIN".equalsIgnoreCase(u.getRole()))) {
+                            allowed = true;
+                        }
+                    }
+                } catch (Exception ignore) {
+                    // ignore lookup errors and continue to deny if not matched
+                }
+            }
+
+            if (!allowed) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this comment");
             }
         } catch (ClassCastException cce) {

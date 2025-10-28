@@ -9,6 +9,7 @@ public interface ReportRepository extends JpaRepository<Report, Integer> {
 	Optional<Report> findByReporterIdAndReportedPostId(Integer reporterId, Integer reportedPostId);
 	Optional<Report> findByReporterIdAndReportedCommentId(Integer reporterId, Integer reportedCommentId);
 	Optional<Report> findByReporterIdAndReportedProductId(Integer reporterId, Integer reportedProductId);
+	Optional<Report> findByReporterIdAndReportedShareId(Integer reporterId, Integer reportedShareId);
 }
 
 

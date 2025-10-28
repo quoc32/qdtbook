@@ -282,15 +282,25 @@
                   try{ const currentModal = btn.closest('.pc-more-modal'); if(currentModal){ bootstrap.Modal.getOrCreateInstance(currentModal).hide(); } }catch(_){ }
                   var modal = document.getElementById('qdt_report_modal');
                   if(modal){
-                    modal.dataset.targetType = 'post';
-                    modal.dataset.targetId = String(postId);
+                    // if this article is a share, report the share; otherwise report the post
+                    if(article && article.dataset && article.dataset.shareId){
+                      modal.dataset.targetType = 'share';
+                      modal.dataset.targetId = String(article.dataset.shareId);
+                    } else {
+                      modal.dataset.targetType = 'post';
+                      modal.dataset.targetId = String(postId);
+                    }
                     var ta = modal.querySelector('textarea.report-reason'); if(ta) ta.value = '';
                     bootstrap.Modal.getOrCreateInstance(modal).show();
                   } else {
                     var reason = prompt('Lý do báo cáo (tùy chọn):');
                     reason = (reason || '').trim();
                     if(!reason){ try{ showToast('Vui lòng nhập lý do báo cáo.', 'danger'); }catch(e){} return; }
-                    fetch('/api/reports/posts/'+encodeURIComponent(postId), { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ reason: reason }) })
+                    // choose API path depending on whether this is a share
+                    var url = (article && article.dataset && article.dataset.shareId)
+                              ? '/api/reports/shares/' + encodeURIComponent(article.dataset.shareId)
+                              : '/api/reports/posts/' + encodeURIComponent(postId);
+                    fetch(url, { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ reason: reason }) })
                       .then(r=>{
                         if(r.ok || r.status === 201){ try{ showToast('Cảm ơn, báo cáo đã được gửi.', 'success'); }catch(e){} }
                         else { r.json().then(j=> showToast('Báo cáo thất bại: ' + (j.message || r.statusText), 'danger')).catch(()=> showToast('Báo cáo thất bại', 'danger')); }
@@ -2538,6 +2548,7 @@
             if(t === 'comment') url = '/api/reports/comments/'+encodeURIComponent(id);
             else if(t === 'post') url = '/api/reports/posts/'+encodeURIComponent(id);
             else if(t === 'product') url = '/api/reports/market/'+encodeURIComponent(id);
+            else if(t === 'share') url = '/api/reports/shares/'+encodeURIComponent(id);
             if(!url) { showToast('Không xác định loại báo cáo', 'danger'); return; }
             var bs = bootstrap.Modal.getInstance(modal);
             // send

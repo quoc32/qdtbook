@@ -55,6 +55,8 @@ public class ReportService {
             existing = reportRepository.findByReporterIdAndReportedCommentId(reporter.getId(), contentId);
         } else if ("PRODUCT".equalsIgnoreCase(contentType)) {
             existing = reportRepository.findByReporterIdAndReportedProductId(reporter.getId(), contentId);
+        } else if ("SHARE".equalsIgnoreCase(contentType)) {
+            existing = reportRepository.findByReporterIdAndReportedShareId(reporter.getId(), contentId);
         }
 
         if (existing.isPresent()) {
@@ -67,6 +69,8 @@ public class ReportService {
                 r.setStatus("POST");
             } else if ("PRODUCT".equalsIgnoreCase(contentType)) {
                 r.setStatus("PRODUCT");
+            } else if ("SHARE".equalsIgnoreCase(contentType)) {
+                r.setStatus("SHARE");
             }
             r.setCreatedAt(Instant.now());
             return reportRepository.save(r);
@@ -81,6 +85,8 @@ public class ReportService {
             report.setReportedCommentId(contentId);
         } else if ("PRODUCT".equalsIgnoreCase(contentType)) {
             report.setReportedProductId(contentId);
+        } else if ("SHARE".equalsIgnoreCase(contentType)) {
+            report.setReportedShareId(contentId);
         }
         report.setReason(dto != null ? dto.getReason() : null);
         // set status based on content type as requested: COMMENT, POST, PRODUCT
@@ -90,6 +96,8 @@ public class ReportService {
             report.setStatus("POST");
         } else if ("PRODUCT".equalsIgnoreCase(contentType)) {
             report.setStatus("PRODUCT");
+        } else if ("SHARE".equalsIgnoreCase(contentType)) {
+            report.setStatus("SHARE");
         } else {
             report.setStatus("NEW");
         }
