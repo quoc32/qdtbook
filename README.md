@@ -6,16 +6,24 @@ Dự án được thực hiện nhằm mục đích học tập, tìm hiểu v�
 ## Công nghệ sử dụng
 ### Backend:
 Java 17
+
 Spring Boot (Web, Security, Data JPA, Validation)
+
 Hibernate / JPA
+
 Cơ sở dữ liệu MySQL
+
 Lombok
+
 WebSocket
+
 ### Frontend:
 Thymeleaf
+
 Bootstrap
 ### Công cụ phát triển:
 Maven
+
 IntelliJ IDEA / VS Code
 ## Cấu trúc thư mục chính (src)
 <img width="353" height="422" alt="image" src="https://github.com/user-attachments/assets/d13e7ba7-2ed1-433d-957a-63d4c980e6e8" />
