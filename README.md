@@ -44,9 +44,19 @@ GOOGLE_CLIENT_SECRET=<gg client token>
 ### 3. Chạy ứng dụng
 mvn spring-boot:run
 
+## Tính năng chính
 
+<i class="bi bi-shield-fill-check"></i> Đăng ký / Đăng nhập / Xác thực OTP / JSESSIONID
 
+<i class="bi bi-globe-europe-africa"></i> Thêm, xóa, gửi lời mời bạn bè
 
+📝 Đăng bài viết, chỉnh sửa, xóa
+
+❤️ Thích / Bình luận bài viết
+
+💬 Chat real-time bằng WebSocket
+
+🔒 Phân quyền người dùng (User, Admin)
 
 
 
