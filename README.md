@@ -37,27 +37,44 @@ MAIL_USERNAME=<email Đăng ký dịch vụ smtp>
 
 MAIL_PASSWORD=<app_word>
 
-GOOGLE_CLIENT_ID=<gg client id>
+GOOGLE_CLIENT_ID=<gg_client_id>
 
-GOOGLE_CLIENT_SECRET=<gg client token>
+GOOGLE_CLIENT_SECRET=<gg_client_token>
 
 ### 3. Chạy ứng dụng
 mvn spring-boot:run
 
 ## Tính năng chính
 
-<i class="bi bi-shield-fill-check"></i> Đăng ký / Đăng nhập / Xác thực OTP / JSESSIONID
+✅ Đăng ký / Đăng nhập / Xác thực OTP / JSESSIONID
 
-<i class="bi bi-globe-europe-africa"></i> Thêm, xóa, gửi lời mời bạn bè
+🧑‍🤝‍🧑 Thêm, xóa, gửi lời mời bạn bè
 
-📝 Đăng bài viết, chỉnh sửa, xóa
+📝 Đăng bài viết, bài thông báo đặc biệt, chỉnh sửa, xóa,
 
 ❤️ Thích / Bình luận bài viết
 
 💬 Chat real-time bằng WebSocket
 
-🔒 Phân quyền người dùng (User, Admin)
+🔒 Phân quyền người dùng (Admin, Special, Student)
 
+## Kiến thức học được
 
+Xây dựng RESTful API với Spring Boot
 
- 
+Xác thực & phân quyền bằng Session
+
+Tương tác cơ sở dữ liệu với JPA / Hibernate
+
+Realtime communication (WebSocket)
+
+Tổ chức kiến trúc 3 tầng: Controller – Service – Repository
+
+ ## Tác giả
+
+ | Họ Tên | Tài khoản Github | MSSV |
+|-------|-------|-------|
+| Vũ Anh Quốc | https://github.com/quoc32 | 23110296 |
+| Trương Quang Điệp | https://github.com/TruongQuangDiep | 23110205 |
+| Võ Văn Tú | https://github.com/anhtudayne | 23110359 |
+
