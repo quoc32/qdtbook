@@ -18,6 +18,8 @@ Bootstrap
 Maven
 IntelliJ IDEA / VS Code
 ## Cấu trúc thư mục chính (src)
+<img width="353" height="422" alt="image" src="https://github.com/user-attachments/assets/d13e7ba7-2ed1-433d-957a-63d4c980e6e8" />
+
 src/
  ├─ main/
  │   ├─ java/qdt/hcmute/vn/qdtbook_backend
