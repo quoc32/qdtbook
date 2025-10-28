@@ -636,6 +636,92 @@
       <!-- About:BEGIN -->
       <section class="col-12 col-lg-11 mb-4 d-none" id="about-section">
 
+        <!-- >> Tùy chọn phạm vi hiển thị của profile about -->
+        <!-- Visibility control:BEGIN -->
+        <div class="right-card p-3 mb-3" id="visibility-card">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <strong>Phạm vi hiển thị hồ sơ</strong>
+              <div class="text-muted small">Chọn ai có thể xem trang này</div>
+            </div>
+            <span class="badge bg-primary" id="visibility-badge">PUBLIC</span>
+          </div>
+
+          <div class="mt-2 d-flex align-items-center gap-2">
+            <select id="visibility-select" class="form-select form-select-sm" style="max-width: 220px;">
+              <option value="PUBLIC">Công khai</option>
+              <option value="FRIENDS">Bạn bè</option>
+              <option value="PRIVATE">Riêng tư</option>
+            </select>
+            <span id="visibility-spinner" class="spinner-border spinner-border-sm text-primary d-none" role="status" aria-hidden="true"></span>
+            <span id="visibility-msg" class="text-success small d-none">Đã cập nhật</span>
+            <span id="visibility-err" class="text-danger small d-none"></span>
+          </div>
+        </div>
+        <!-- >> Script sử lý cho chức năng thay đổi phạm vi hiển thị thông tin cá nhân -->
+        <script>
+        (function(){
+          const card  = document.getElementById('visibility-card');
+          if (!card) return;
+
+          const sel   = card.querySelector('#visibility-select');
+          const badge = card.querySelector('#visibility-badge');
+          const spin  = card.querySelector('#visibility-spinner');
+          const ok    = card.querySelector('#visibility-msg');
+          const err   = card.querySelector('#visibility-err');
+
+          function getAuth(){ try { return JSON.parse(localStorage.getItem('auth')||'{}')||{} } catch(_) { return {} } }
+          function setAuth(a){ try { localStorage.setItem('auth', JSON.stringify(a||{})) } catch(_) {} }
+
+          const auth   = getAuth();
+          const userId = auth?.id || auth?.user_id || document.getElementById('friends-section')?.dataset.userId || 1;
+          const allowed = ['PUBLIC','FRIENDS','PRIVATE'];
+
+          const current = (auth.visibility || auth.profile_visibility || 'PUBLIC').toUpperCase();
+          const initVal = allowed.includes(current) ? current : 'PUBLIC';
+          sel.value = initVal;
+          badge.textContent = initVal;
+
+          async function updateVisibility(val){
+            err.classList.add('d-none');
+            ok.classList.add('d-none');
+            sel.disabled = true;
+            spin.classList.remove('d-none');
+            try{
+              const res = await fetch(`/api/users/${encodeURIComponent(userId)}/toggle-visibility`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ visibility: val })
+              });
+              if(!res.ok) throw new Error('Không thể cập nhật.');
+
+              badge.textContent = val;
+              const a = getAuth();
+              a.visibility = val;
+              a.profile_visibility = val;
+              setAuth(a);
+
+              ok.classList.remove('d-none');
+              setTimeout(()=> ok.classList.add('d-none'), 1200);
+            }catch(e){
+              err.textContent = e?.message || 'Lỗi không xác định';
+              err.classList.remove('d-none');
+              sel.value = badge.textContent || 'PUBLIC';
+            }finally{
+              sel.disabled = false;
+              spin.classList.add('d-none');
+            }
+          }
+
+          sel.addEventListener('change', ()=>{
+            const val = (sel.value || 'PUBLIC').toUpperCase();
+            if (!allowed.includes(val)) return;
+            updateVisibility(val);
+          });
+        })();
+        </script>
+        <!-- Visibility control:END -->
         <div class="right-card about-card">
 
           <!-- Navbar của About -->

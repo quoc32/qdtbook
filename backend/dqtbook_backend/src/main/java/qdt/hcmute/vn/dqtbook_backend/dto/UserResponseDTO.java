@@ -80,4 +80,7 @@ public class UserResponseDTO {
     
     @JsonProperty("updated_at")
     private Instant updatedAt;
+
+    @JsonProperty("profile_visibility")
+    private String profileVisibility;
 }

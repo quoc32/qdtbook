@@ -1,0 +1,51 @@
+### Test API lấy danh sách user theo role
+### Base URL
+@baseUrl = http://localhost:8080
+
+###############################################
+# 1. Lấy tất cả student
+###############################################
+GET {{baseUrl}}/api/users/by-role?role=student
+Content-Type: application/json
+
+###############################################
+# 2. Lấy tất cả special users
+###############################################
+GET {{baseUrl}}/api/users/by-role?role=special
+Content-Type: application/json
+
+###############################################
+# 3. Lấy tất cả admin
+###############################################
+GET {{baseUrl}}/api/users/by-role?role=admin
+Content-Type: application/json
+
+###############################################
+# 4. Test với role viết hoa (STUDENT)
+###############################################
+GET {{baseUrl}}/api/users/by-role?role=STUDENT
+Content-Type: application/json
+
+###############################################
+# 5. Test với role viết hoa thường lẫn lộn (SpEcIaL)
+###############################################
+GET {{baseUrl}}/api/users/by-role?role=SpEcIaL
+Content-Type: application/json
+
+###############################################
+# 6. Test lỗi: Role không hợp lệ
+###############################################
+GET {{baseUrl}}/api/users/by-role?role=teacher
+Content-Type: application/json
+
+###############################################
+# 7. Test lỗi: Role để trống
+###############################################
+GET {{baseUrl}}/api/users/by-role?role=
+Content-Type: application/json
+
+###############################################
+# 8. Test lỗi: Không có parameter role
+###############################################
+GET {{baseUrl}}/api/users/by-role
+Content-Type: application/json

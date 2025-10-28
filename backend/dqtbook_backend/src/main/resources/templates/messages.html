@@ -420,6 +420,109 @@
         transform: none;
       }
 
+      /* Image Upload Button */
+      .image-upoad-btn {
+        border: 0;
+        background: transparent;
+        color: #0084ff;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.1s ease;
+        cursor: pointer;
+        font-size: 20px;
+      }
+
+
+      .image-upload-btn:hover {
+        background: #f0f2f5;
+      }
+
+
+      .image-upload-btn input[type="file"] {
+        display: none;
+      }
+
+
+      /* Image Preview */
+      .image-preview-container {
+        position: relative;
+        display: none;
+        padding: 8px;
+        background: #fff;
+        border-top: 1px solid #e4e6ea;
+      }
+
+
+      .image-preview-container.show {
+        display: block;
+      }
+
+
+      .image-preview-wrapper {
+        position: relative;
+        display: inline-block;
+        max-width: 200px;
+      }
+
+
+      .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+
+      .remove-image-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        background: #ff4444;
+        color: white;
+        border: 2px solid white;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+
+      .remove-image-btn:hover {
+        background: #cc0000;
+      }
+
+
+      /* Message with Image */
+      .message-image {
+        max-width: 300px;
+        max-height: 300px;
+        border-radius: 12px;
+        cursor: pointer;
+        display: block;
+      }
+
+
+      .message-bubble.has-image {
+        padding: 8px 12px;
+        background: #f0f0f0;
+        color: #050505;
+      }
+
+
+      .message.sent .message-bubble.has-image {
+        background: #0084ff;
+        color: #fff;
+      }
+
       /* Right Sidebar - Chat Info */
       .chat-info-sidebar {
         background: #fff;
@@ -850,6 +953,12 @@
       let currentChatId = null;
       let selectedChatName = "";
       let selectedAvatarUrl = "";
+      
+      // ===========================================
+      // IMAGE UPLOAD STATE
+      // ============================================
+      let selectedImageFile = null; // File ảnh được chọn
+      let uploadedImageUrl = null; // URL ảnh sau khi upload
 
       // ============================================
       // WEBSOCKET CONFIGURATION
@@ -1008,8 +1117,10 @@
             const messageData = JSON.parse(message.body);
             console.log("📨 Nhận tin nhắn mới:", messageData);
 
+
             // Hiển thị tin nhắn lên UI
             displayReceivedMessage(messageData);
+
 
             // Tự động đánh dấu đã đọc nếu không phải tin nhắn của mình
             const auth = JSON.parse(localStorage.getItem("auth") || "{}");
@@ -1058,6 +1169,7 @@
         const newMessage = {
           id: messageData.id,
           content: messageData.content,
+          mediaUrl: messageData.mediaUrl, // Thêm mediaUrl
           isCurrentUser: isCurrentUser,
           time: formatMessageTime(messageData.timestamp),
           senderName: messageData.senderName,
@@ -1098,8 +1210,10 @@
           return;
         }
 
+
         try {
           console.log(`👁️ Đánh dấu tin nhắn ${messageId} là đã đọc`);
+
 
           // Tạo read status payload
           const readStatusPayload = {
@@ -1143,8 +1257,10 @@
         const sentMessages = chatMessages.querySelectorAll(".message.sent");
         if (sentMessages.length === 0) return;
 
+
         // Lấy tin nhắn mới nhất
         const lastSentMessage = sentMessages[sentMessages.length - 1];
+
 
         // Thêm checkmark vào tin nhắn mới nhất
         const messageTime = lastSentMessage.querySelector(".message-time");
@@ -1158,6 +1274,7 @@
           readIndicator.style.color = "#000";
 
           messageTime.appendChild(readIndicator);
+
 
           console.log(`✅ Hiển thị checkmark ở tin nhắn mới nhất`);
         }
@@ -1211,6 +1328,7 @@
         }
 
         console.log("Loading chats for userId:", userId);
+
 
         // Show loading
         chatList.innerHTML = `
@@ -1474,11 +1592,14 @@
             `Opening direct chat: Current User ${currentUserId} with Friend ${friendId}`
           );
 
+
           // Show loading state
           showChatLoadingState(chatName, avatarUrl);
 
+
           // Step 1: Check if chat exists, if not create it
           const chatId = await findOrCreateDirectChat(currentUserId, friendId);
+
 
           if (chatId) {
             // Set current chat info
@@ -1493,6 +1614,7 @@
               avatarUrl,
               currentUserId
             );
+
 
             // Step 3: Load chat info
             loadChatInfo(chatId, chatName, avatarUrl);
@@ -1522,11 +1644,14 @@
             return;
           }
 
+
           console.log(`Opening group chat: ${chatName} (ID: ${chatId})`);
           console.log("📋 Member IDs:", memberIds);
 
+
           // Show loading state
           showChatLoadingState(chatName, avatarUrl);
+
 
           // Group chat already exists, use the chatId directly
           console.log(`💬 Using existing chat ID: ${chatId}`);
@@ -1536,8 +1661,10 @@
           selectedChatName = chatName;
           selectedAvatarUrl = avatarUrl;
 
+
           // Step 1: Load chat content with messages
           await loadRealChatContent(chatId, chatName, avatarUrl, currentUserId);
+
 
           // Step 2: Load chat info sidebar
           loadGroupChatInfo(chatId, chatName, avatarUrl);
@@ -1756,9 +1883,19 @@
                             </div>
                         </div>
                     </div>
+                    <div class="image-preview-container" id="imagePreviewContainer">
+                        <div class="image-preview-wrapper">
+                            <img id="imagePreview" class="image-preview" src="" alt="Preview">
+                            <button class="remove-image-btn" onclick="removeImagePreview()">×</button>
+                        </div>
+                    </div>
                     
                     <div class="chat-input-area">
                         <div class="input-container">
+                            <button class="image-upload-btn" onclick="document.getElementById('imageUploadInput').click()">
+                                <span>🖼️</span>
+                                <input type="file" id="imageUploadInput" accept="image/*" onchange="handleImageSelect(event)">
+                            </button>
                             <input type="text" class="message-input" placeholder="Aa" id="messageInput">
                             <button class="send-btn" onclick="sendRealMessage()">
                                 <span>▶</span>
@@ -1816,10 +1953,11 @@
           const messages = await response.json();
           console.log("📨 Messages loaded:", messages);
 
+
           // Transform API messages to display format, keep original timestamp for sorting
           const displayMessages = messages.map((msg) => ({
             id: msg.message_id,
-            content: msg.content || "[Media]",
+            content: msg.content || "",
             mediaUrl: msg.media_url,
             isCurrentUser: msg.sender_id === currentUserId,
             time: formatMessageTime(msg.created_at),
@@ -1892,11 +2030,17 @@
         div.setAttribute("data-message-id", message.id);
 
         let contentHtml = "";
-        if (message.content) {
-          contentHtml += `<div>${escapeHtml(message.content)}</div>`;
-        }
+        let hasImage = false;
+        
+        // Hiển thị ảnh nếu có
         if (message.mediaUrl) {
-          contentHtml += `<div class="mt-2"><a href="${message.mediaUrl}" target="_blank" class="text-decoration-none">📎 Media</a></div>`;
+          hasImage = true;
+          contentHtml += `<img src="${message.mediaUrl}" class="message-image" alt="Image" onclick="window.open('${message.mediaUrl}', '_blank')">`;
+        }
+        
+        // Hiển thị text nếu có
+        if (message.content) {
+          contentHtml += `<div style="margin-top: ${hasImage ? '8px' : '0'}">${escapeHtml(message.content)}</div>`;
         }
 
         // Add sender info (will be hidden for sent messages via CSS)
@@ -1911,9 +2055,12 @@
                 `;
         }
 
+        const bubbleClass = hasImage ? 'message-bubble has-image' : 'message-bubble';
+
+
         div.innerHTML = `
                 ${senderInfoHtml}
-                <div class="message-bubble">
+                <div class="${bubbleClass}">
                     ${contentHtml}
                     <div class="message-time">${message.time}</div>
                 </div>
@@ -2026,15 +2173,112 @@
       // ============================================
       // GỬI TIN NHẮN QUA WEBSOCKET
       // ============================================
+      // ============================================
+      // IMAGE UPLOAD FUNCTIONS
+      // ============================================
+
+
+      /**
+       * Xử lý khi người dùng chọn ảnh
+       */
+      function handleImageSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+
+        // Kiểm tra file có phải là ảnh không
+        if (!file.type.startsWith('image/')) {
+          alert('Vui lòng chọn file ảnh!');
+          return;
+        }
+
+
+        // Kiểm tra kích thước file (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('Kích thước ảnh không được vượt quá 10MB!');
+          return;
+        }
+
+
+        selectedImageFile = file;
+
+
+        // Hiển thị preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('imagePreview');
+          const container = document.getElementById('imagePreviewContainer');
+          preview.src = e.target.result;
+          container.classList.add('show');
+        };
+        reader.readAsDataURL(file);
+      }
+
+
+      /**
+       * Xóa ảnh preview
+       */
+      function removeImagePreview() {
+        selectedImageFile = null;
+        uploadedImageUrl = null;
+        const preview = document.getElementById('imagePreview');
+        const container = document.getElementById('imagePreviewContainer');
+        const input = document.getElementById('imageUploadInput');
+        
+        preview.src = '';
+        container.classList.remove('show');
+        input.value = '';
+      }
+
+
+      /**
+       * Upload ảnh lên server
+       */
+      async function uploadImage() {
+        if (!selectedImageFile) return null;
+
+
+        const formData = new FormData();
+        formData.append('files', selectedImageFile);
+
+
+        try {
+          const response = await fetch('/api/media/upload', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+          });
+
+
+          if (!response.ok) {
+            throw new Error('Upload failed');
+          }
+
+
+          const data = await response.json();
+          if (data.urls && data.urls.length > 0) {
+            return data.urls[0]; // Trả về URL đầu tiên
+          }
+          return null;
+        } catch (error) {
+          console.error('❌ Lỗi upload ảnh:', error);
+          alert('Không thể upload ảnh. Vui lòng thử lại!');
+          return null;
+        }
+      }
+
 
       /**
        * Gửi tin nhắn sử dụng WebSocket (thay vì REST API)
        */
-      function sendRealMessage() {
+      async function sendRealMessage() {
         const messageInput = document.getElementById("messageInput");
         const content = messageInput.value.trim();
 
-        if (!content || !currentChatId) return;
+
+        // Kiểm tra có nội dung hoặc ảnh
+        if (!content && !selectedImageFile) return;
+        if (!currentChatId) return;
 
         // Lấy userId hiện tại
         const auth = JSON.parse(localStorage.getItem("auth") || "{}");
@@ -2054,9 +2298,25 @@
         // Disable input trong khi gửi
         messageInput.disabled = true;
         const sendBtn = messageInput.parentElement.querySelector(".send-btn");
+        const imageBtn = document.querySelector(".image-upload-btn");
         sendBtn.disabled = true;
+        imageBtn.disabled = true;
+
 
         try {
+          let mediaUrl = null;
+
+
+          // Nếu có ảnh, upload trước
+          if (selectedImageFile) {
+            console.log("📤 Đang upload ảnh...");
+            mediaUrl = await uploadImage();
+            if (!mediaUrl) {
+              throw new Error("Upload ảnh thất bại");
+            }
+            console.log("✅ Upload ảnh thành công:", mediaUrl);
+          }
+
           console.log(
             `📤 Gửi tin nhắn qua WebSocket đến chat ${currentChatId}`
           );
@@ -2065,8 +2325,9 @@
           const messagePayload = {
             chatId: currentChatId,
             senderId: currentUserId,
-            content: content,
-            messageType: "TEXT",
+            content: content || "",
+            messageType: mediaUrl ? "IMAGE" : "TEXT",
+            mediaUrl: mediaUrl
           };
 
           // Gửi tin nhắn qua WebSocket đến endpoint /app/chat.sendMessage
@@ -2078,8 +2339,9 @@
 
           console.log("✅ Tin nhắn đã được gửi qua WebSocket");
 
-          // Xóa nội dung input
+          // Xóa nội dung input và ảnh preview
           messageInput.value = "";
+          removeImagePreview();
 
           // Lưu ý: Tin nhắn sẽ được hiển thị khi nhận lại từ server qua subscription
           // Không cần thêm vào UI ngay lập tức
@@ -2090,6 +2352,7 @@
           // Bật lại input
           messageInput.disabled = false;
           sendBtn.disabled = false;
+          imageBtn.disabled = false;
           messageInput.focus();
         }
       }
@@ -2767,7 +3030,6 @@
 
           // Close modal
           closeCreateGroupModal();
-
           // Reload chats to show new group
           await loadChats();
         } catch (error) {

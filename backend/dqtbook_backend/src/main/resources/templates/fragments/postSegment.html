@@ -55,6 +55,7 @@
       <!-- Post Segment:BEGIN -->
       <div id="postList" class="post-feed"></div>
 
+      <!-- >> !!=== -->
       <template id="postCardTemplate">
           <article class="post-card" data-post-id="">
               <div class="pc-head">
@@ -268,10 +269,10 @@
                 })();
               })(this);"
             >Sửa bài viết</button>
-                        <!-- Script xử lý xóa bài viết -->
-                        <script>
-                            
-                        </script>
+            <!-- Script xử lý xóa bài viết -->
+            <script>
+                
+            </script>
 
             <button type="button" class="list-group-item list-group-item-action" onclick="(function(btn){
                 try{
@@ -535,9 +536,9 @@
                     <div class="modal-content">
                       <div class="modal-header">
                         <h5 class="modal-title">Cảm xúc</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng" 
-              onclick="(function(btn){ try{ var art = btn.closest('article'); var b = art && art.querySelector('.btn-reaction-summary'); if(b) b.focus(); }catch(e){} })(this)"
-            ></button>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng" 
+                        onclick="(function(btn){ try{ var art = btn.closest('article'); var b = art && art.querySelector('.btn-reaction-summary'); if(b) b.focus(); }catch(e){} })(this)"
+                      ></button>
                       </div>
                       <div class="modal-body">
                         <ul class="nav nav-pills reaction-tabs gap-1 mb-3 flex-wrap">
@@ -908,30 +909,30 @@
                     <div class="react-popover qdt-react-pop" role="group" aria-label="Chọn cảm xúc">
                     <!-- <span class="rx-arrow" aria-hidden="true"></span> -->
 
-                    <!-- like -->
-                    <button type="button" class="rx-btn rx-like" title="Thích"
-                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'like'); })(this)">👍</button>
+                      <!-- like -->
+                      <button type="button" class="rx-btn rx-like" title="Thích"
+                          onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'like'); })(this)">👍</button>
 
-                    <!-- love -->
-                    <button type="button" class="rx-btn rx-love" title="Yêu thích"
-                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'love'); })(this)">
-                      <i class="bi bi-heart-fill text-danger"></i>
-                    </button>
+                      <!-- love -->
+                      <button type="button" class="rx-btn rx-love" title="Yêu thích"
+                          onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'love'); })(this)">
+                        <i class="bi bi-heart-fill text-danger"></i>
+                      </button>
 
-                    <!-- haha -->
-                    <button type="button" class="rx-btn rx-haha" title="Haha"
-                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'haha'); })(this)">😆</button>
+                      <!-- haha -->
+                      <button type="button" class="rx-btn rx-haha" title="Haha"
+                          onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'haha'); })(this)">😆</button>
 
-                    <!-- sad -->
-                    <button type="button" class="rx-btn rx-sad" title="Buồn"
-                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'sad'); })(this)">😢</button>
+                      <!-- sad -->
+                      <button type="button" class="rx-btn rx-sad" title="Buồn"
+                          onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'sad'); })(this)">😢</button>
 
-                    <!-- angry -->
-                    <button type="button" class="rx-btn rx-angry" title="Phẫn nộ"
-                        onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'angry'); })(this)">😡</button>
-                    </div>
+                      <!-- angry -->
+                      <button type="button" class="rx-btn rx-angry" title="Phẫn nộ"
+                          onclick="(function(opt){ if(window.QDTReactions) window.QDTReactions.setReaction(opt.closest('.reaction-composer'),'angry'); })(this)">😡</button>
+                      </div>
                 </div>
-
+                <!-- >> Script xử lý thả reaction -->
                 <script>
                 (function(){
                     if(window.QDTReactions) return;
@@ -1168,11 +1169,11 @@
                     <span class="ico"><i class="bi bi-chat-dots"></i></span>
                     <span class="txt">Bình luận</span>
                 </button>
-        <!-- Share -->
-        <button type="button" class="act-btn" onclick="(function(btn){ try{ var article=btn.closest('article'); if(!article) return; var modal=article.querySelector('.share-modal'); if(modal) bootstrap.Modal.getOrCreateInstance(modal).show(); }catch(e){} })(this)">
-          <span class="ico"><i class="bi bi-share"></i></span>
-          <span class="txt">Chia sẻ</span>
-        </button>
+                <!-- Share -->
+                <button type="button" class="act-btn" onclick="(function(btn){ try{ var article=btn.closest('article'); if(!article) return; var modal=article.querySelector('.share-modal'); if(modal) bootstrap.Modal.getOrCreateInstance(modal).show(); }catch(e){} })(this)">
+                  <span class="ico"><i class="bi bi-share"></i></span>
+                  <span class="txt">Chia sẻ</span>
+                </button>
 
               </div>
 
@@ -1242,145 +1243,7 @@
                   </div>
                   </div>
                 </div>
-                
-
-                <!-- Share Modal:BEGIN -->
-                <div class="modal fade share-modal" tabindex="-1" aria-hidden="true" role="dialog">
-                  <div class="modal-dialog modal-dialog-centered modal-md">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                    <h5 class="modal-title">Chia sẻ bài viết</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                    </div>
-                    <div class="modal-body">
-                      <div class="mb-2">
-                        <textarea class="form-control share-textarea" rows="3" placeholder="Viết gì đó khi chia sẻ..."></textarea>
-                      </div>
-                      <div class="mb-2">
-                        <label class="form-label small">Ai có thể xem</label>
-                        <select class="form-select form-select-sm share-visibility">
-                          <option value="public">Công khai</option>
-                          <option value="friends">Bạn bè</option>
-                          <option value="private">Chỉ mình tôi</option>
-                        </select>
-                      </div>
-                      <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="button" class="btn btn-primary share-send-btn">Chia sẻ</button>
-                      </div>
-                    </div>
-                  </div>
-                  </div>
-                </div>
-
-                <script>
-                (function(){
-                  try{
-                    var script = document.currentScript;
-                    var article = script;
-                    while(article && article.tagName !== 'ARTICLE'){ article = article.parentElement; }
-                    if(!article) return;
-
-                    var shareModal = article.querySelector('.share-modal');
-                    if(!shareModal) return;
-
-                    var btn = shareModal.querySelector('.share-send-btn');
-                    var ta = shareModal.querySelector('.share-textarea');
-
-                    if(!btn) return;
-                    if(btn.dataset._shareHandler === '1'){
-                      // already attached
-                  } else {
-                      btn.dataset._shareHandler = '1';
-                      btn.addEventListener('click', async function(){
-                        try{
-                          if(btn.dataset.sending==='1') return; // prevent double submit
-                          btn.dataset.sending='1';
-                          btn.disabled = true;
-
-                          try{
-                            var postId = article.dataset.postId; if(!postId) return;
-                            var text = (ta && ta.value||'').trim();
-                            var visEl = shareModal.querySelector('.share-visibility');
-                            var visibility = (visEl && visEl.value) || 'public';
-                            var body = { shared_text: text, visibility: visibility };
-                            var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
-                              method: 'POST', credentials: 'include',
-                              headers: {'Content-Type':'application/json'},
-                              body: JSON.stringify(body)
-                            });
-
-                            if(res.ok){
-                              // hide modal and show small toast-like feedback
-                              bootstrap.Modal.getInstance(shareModal).hide();
-                              try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
-                              // clear textarea
-                              try{ if(ta) ta.value = ''; }catch(e){}
-                              // refresh per-post share list
-                              try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
-                              // refresh global share count (ties to original post id on share cards)
-                              try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
-                              // refresh the whole feed so the new share appears as a feed item
-                              try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
-                              } else {
-                              var json = {};
-                              try{ json = await res.json(); }catch(e){}
-                              alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
-                            }
-
-                          }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
-                          finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
-                          
-                          });
-                  }
-                    });
-                      if(btn){
-                        if(btn.dataset._shareHandler === '1'){
-                          // already attached
-                        } else {
-                          btn.dataset._shareHandler = '1';
-                          btn.addEventListener('click', async function(){
-                            try{
-                              if(btn.dataset.sending === '1') return;
-                              btn.dataset.sending = '1';
-                              btn.disabled = true;
-                              var postId = article.dataset.postId; if(!postId) return;
-                              var text = (ta && ta.value||'').trim();
-                              var visEl = shareModal.querySelector('.share-visibility');
-                              var visibility = (visEl && visEl.value) || 'public';
-                              var body = { shared_text: text, visibility: visibility };
-                              var res = await fetch('/api/posts/'+encodeURIComponent(postId)+'/shares', {
-                                method: 'POST', credentials: 'include',
-                                headers: {'Content-Type':'application/json'},
-                                body: JSON.stringify(body)
-                              });
-                              if(res.ok){
-                                try{ bootstrap.Modal.getInstance(shareModal).hide(); }catch(_){ }
-                                try{ var toasts = document.querySelector('.qdt-toast-area'); if(!toasts){ toasts = document.createElement('div'); toasts.className='qdt-toast-area position-fixed top-0 end-0 p-3'; document.body.appendChild(toasts);} var t = document.createElement('div'); t.className='toast show bg-success text-white p-2 my-2'; t.textContent='Đã chia sẻ'; toasts.appendChild(t); setTimeout(()=>t.remove(),3000);}catch(e){}
-                                try{ if(ta) ta.value = ''; }catch(e){}
-                                try{ if(typeof article._loadShares === 'function') article._loadShares(); }catch(e){}
-                                try{ if(window.QDTCounts && window.QDTCounts.refreshShareCountForPost){ window.QDTCounts.refreshShareCountForPost(article.dataset.postId); } }catch(e){}
-                                try{ if(typeof loadPosts === 'function') loadPosts(); }catch(e){}
-                              } else {
-                                var json = {};
-                                try{ json = await res.json(); }catch(e){}
-                                alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
-                              }
-                            }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
-                            finally{ try{ btn.dataset.sending='0'; btn.disabled=false; }catch(_){} }
-                          });
-                        }
-                      }
-
-                    // auto-load shares on article render
-                    try{ article._loadShares(); }catch(e){}
-
-                  }catch(e){}
-                })();
-                
-                </script>
-
-
+                <!-- >> Script xử lý Comments -->
                 <script>
                 (function(){
                   try{
@@ -2195,9 +2058,118 @@
                 })();
                 </script>
                 <!-- Comments Modal:END -->
+                                
+                <!-- Share Modal:BEGIN -->
+                <div class="modal fade share-modal" tabindex="-1" aria-hidden="true" role="dialog">
+                  <div class="modal-dialog modal-dialog-centered modal-md">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title">Chia sẻ bài viết</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-2">
+                        <textarea class="form-control share-textarea" rows="3" placeholder="Viết gì đó khi chia sẻ..."></textarea>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label small">Ai có thể xem</label>
+                        <select class="form-select form-select-sm share-visibility">
+                          <option value="public">Công khai</option>
+                          <option value="friends">Bạn bè</option>
+                          <option value="private">Chỉ mình tôi</option>
+                        </select>
+                      </div>
+                      <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary share-send-btn">Chia sẻ</button>
+                      </div>
+                    </div>
+                  </div>
+                  </div>
+                </div>
+                <!-- >> Script xử lý Share -->
+                <script>
+                  (function(){
+                    try {
+                      const script = document.currentScript;
+                      let article = script;
+                      while (article && article.tagName !== 'ARTICLE') article = article.parentElement;
+                      if (!article) return;
+
+                      const shareModal = article.querySelector('.share-modal');
+                      if (!shareModal) return;
+
+                      const btn = shareModal.querySelector('.share-send-btn');
+                      const ta = shareModal.querySelector('.share-textarea');
+                      if (!btn || btn.dataset._shareHandler === '1') return;
+
+                      btn.dataset._shareHandler = '1';
+
+                      btn.addEventListener('click', async function() {
+                        try {
+                          if (btn.dataset.sending === '1') return;
+                          btn.dataset.sending = '1';
+                          btn.disabled = true;
+
+                          const postId = article.dataset.postId;
+                          if (!postId) return;
+
+                          const text = (ta?.value || '').trim();
+                          const visEl = shareModal.querySelector('.share-visibility');
+                          const visibility = visEl?.value || 'public';
+                          const body = { shared_text: text, visibility };
+
+                          const res = await fetch('/api/posts/' + encodeURIComponent(postId) + '/shares', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                          });
+
+                          if (res.ok) {
+                            bootstrap.Modal.getInstance(shareModal)?.hide();
+                            const toasts = document.querySelector('.qdt-toast-area') || (() => {
+                              const t = document.createElement('div');
+                              t.className = 'qdt-toast-area position-fixed top-0 end-0 p-3';
+                              document.body.appendChild(t);
+                              return t;
+                            })();
+                            const toast = document.createElement('div');
+                            toast.className = 'toast show bg-success text-white p-2 my-2';
+                            toast.textContent = 'Đã chia sẻ';
+                            toasts.appendChild(toast);
+                            setTimeout(() => toast.remove(), 3000);
+
+                            if (ta) ta.value = '';
+                            if (typeof article._loadShares === 'function') article._loadShares();
+                            if (window.QDTCounts?.refreshShareCountForPost)
+                              window.QDTCounts.refreshShareCountForPost(article.dataset.postId);
+                            if (typeof loadPosts === 'function') loadPosts();
+                          } else {
+                            const json = await res.json().catch(() => ({}));
+                            alert('Không thể chia sẻ: ' + (json.message || res.status));
+                          }
+                        } catch (e) {
+                          console.error(e);
+                          alert('Lỗi khi chia sẻ');
+                        } finally {
+                          btn.dataset.sending = '0';
+                          btn.disabled = false;
+                        }
+                      });
+
+                      // auto-load shares
+                      try { article._loadShares(); } catch (e) {}
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  })();
+                </script>
+                <!-- Share Modal:END -->
 
           </article>
       </template>
+      <!-- >> !!=== -->
 
       <style>
       .post-feed{display:flex;flex-direction:column;gap:20px;}
@@ -2826,7 +2798,7 @@
         items.forEach(it=>{
           const node = tpl.content.firstElementChild.cloneNode(true);
 
-                  if(it.type === 'post'){
+          if(it.type === 'post'){
           const p = it.raw;
           const postId = p.post_id || p.id || '';
                     // if this post also has a share item shown in the feed, mark the node so we can hide per-post .post-shares
@@ -2837,10 +2809,10 @@
           const updated = p.updated_at || p.updatedAt || p.updated || null;
           const content = (p.content || '').trim();
 
-                    node.dataset.postId = postId;
-                    if(postsWithFeedShare && postsWithFeedShare.has(String(postId))){
-                      node.dataset.hasFeedShare = '1';
-                    }
+          node.dataset.postId = postId;
+          if(postsWithFeedShare && postsWithFeedShare.has(String(postId))){
+            node.dataset.hasFeedShare = '1';
+          }
           node.id = 'post-'+postId;
           node.querySelector('.pc-name').textContent = name;
           node.querySelector('.pc-avatar').src = avatar;
@@ -2881,14 +2853,25 @@
               const u = m.mediaUrl;
               if(!u) return;
               let el;
-                      // If u looks like a bare filename (no protocol or leading slash), call media API
-                      (function(){ if(u && !u.startsWith('http') && !u.startsWith('/') && !u.startsWith('data:')){ u = '/api/media/files/' + encodeURIComponent(u); } return u; })();
-                      if(String(t).toLowerCase().includes('video') || String(u).toLowerCase().endsWith('.mp4') || String(u).toLowerCase().endsWith('.webm')){
-                        el=document.createElement('video'); el.style.width='100%'; el.style.height='100%'; el.style.objectFit='contain'; el.style.display='block'; el.style.background='#000'; el.src=u; el.controls=true; el.playsInline=true;
-                      } else {
-                        el=document.createElement('img'); el.src=u; el.loading='lazy'; el.alt='';
-                      }
+              // If u looks like a bare filename (no protocol or leading slash), call media API
+              (function(){ if(u && !u.startsWith('http') && !u.startsWith('/') && !u.startsWith('data:')){ u = '/api/media/files/' + encodeURIComponent(u); } return u; })();
+              if(String(t).toLowerCase().includes('video') || String(u).toLowerCase().endsWith('.mp4') || String(u).toLowerCase().endsWith('.webm')){
+                el=document.createElement('video'); el.style.width='100%'; el.style.height='100%'; el.style.objectFit='contain'; el.style.display='block'; el.style.background='#000'; el.src=u; el.controls=true; el.playsInline=true;
+              } else if (String(t).toLowerCase().includes('pdf') || String(u).toLowerCase().endsWith('.pdf')){
+                el=document.createElement('a'); el.href=u;
+                const filename = u.split('/').pop();
+                el.innerHTML = " " + '<i class="bi bi-filetype-pdf"></i>' + "  " + filename; // quoc
+                el.target='_blank'; el.rel='noopener noreferrer';
+              } else {
+                el=document.createElement('img'); el.src=u; el.loading='lazy'; el.alt='';
+              }
               const fig=document.createElement('figure'); fig.style.margin='0'; fig.appendChild(el);
+              if (String(t).toLowerCase().includes('pdf') || String(u).toLowerCase().endsWith('.pdf')){
+                fig.style.display='flex';
+                fig.style.alignItems='center';
+                fig.style.justifyContent='center';
+                fig.style.height='100%';
+              }
               if(idx===3 && total>4){ const overlay=document.createElement('div'); overlay.textContent='+'+(total-4); overlay.style.position='absolute'; overlay.style.inset='0'; overlay.style.display='flex'; overlay.style.alignItems='center'; overlay.style.justifyContent='center'; overlay.style.fontSize='2rem'; overlay.style.fontWeight='700'; overlay.style.color='#fff'; overlay.style.background='rgba(0,0,0,.45)'; overlay.style.backdropFilter='blur(2px)'; fig.style.position='relative'; fig.appendChild(overlay); }
               mediaWrap.appendChild(fig);
             });

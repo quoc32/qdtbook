@@ -305,6 +305,7 @@
                         <div id="mediaControls" class="border rounded mt-3 p-2 d-flex gap-2 flex-wrap">
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-pick="image">Ảnh</button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-pick="video">Video</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-pick="pdf">PDF</button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Gắn thẻ</button>
                         </div>
 
@@ -334,7 +335,7 @@
             if (bar) bar.style.width = '0%';
             if (wrap) wrap.classList.add('d-none');
         });
-    (function(){
+        (function(){
         // Elements
         const modalEl      = document.getElementById('createPostModal');
         const form         = document.getElementById('createPostForm');
@@ -349,16 +350,16 @@
         const uploadBar    = document.getElementById('uploadBar');
         const uploadStatus = document.getElementById('uploadStatus');
 
-    // State
+        // State
         const MAX_FILES = 10;
         let files = [];              // File[]
         let objectURLs = [];         // revoke on cleanup
         let uploading = false;
-    // Edit mode state (hoist early so helpers can reference)
-    let editMode = false;
-    let editingPostId = null;
-    let editingPostType = 'normal';
-    let editingStatus = 'pending';
+        // Edit mode state (hoist early so helpers can reference)
+        let editMode = false;
+        let editingPostId = null;
+        let editingPostType = 'normal';
+        let editingStatus = 'pending';
 
         // Helpers
         function revokeAll(){
@@ -380,27 +381,32 @@
             previewList.innerHTML = '';
             revokeAll();
             if(files.length === 0){
-                previewArea.classList.add('d-none');
-                fileCounter.textContent = '';
-                return;
+            previewArea.classList.add('d-none');
+            fileCounter.textContent = '';
+            return;
             }
             previewArea.classList.remove('d-none');
             fileCounter.textContent = files.length + ' tệp đã chọn';
             files.forEach((f, idx)=>{
-                const url = URL.createObjectURL(f);
-                objectURLs.push(url);
-                const box = document.createElement('div');
-                box.className = 'media-thumb';
-                let inner = '';
-                if(f.type.startsWith('image/')){
-                    inner = `<img src="${url}" alt="">`;
-                }else if(f.type.startsWith('video/')){
-                    inner = `<video src="${url}" muted></video>`;
-                }else{
-                    inner = `<span class="small text-truncate px-1">${f.name}</span>`;
-                }
-                box.innerHTML = inner + `<button type="button" class="media-remove" data-rm="${idx}" aria-label="Xóa">&times;</button>`;
-                previewList.appendChild(box);
+            const url = URL.createObjectURL(f);
+            objectURLs.push(url);
+            const box = document.createElement('div');
+            box.className = 'media-thumb';
+            let inner = '';
+            if(f.type.startsWith('image/')){
+                inner = `<img src="${url}" alt="">`;
+            }else if(f.type.startsWith('video/')){
+                inner = `<video src="${url}" muted></video>`;
+            }else if(f.type === 'application/pdf'){
+                inner = `<div class="d-flex flex-column align-items-center text-center p-2 w-100">
+                      <span class="badge text-bg-danger mb-1">PDF</span>
+                      <span class="small text-truncate w-100" title="${f.name}">${f.name}</span>
+                     </div>`;
+            }else{
+                inner = `<span class="small text-truncate px-1" title="${f.name}">${f.name}</span>`;
+            }
+            box.innerHTML = inner + `<button type="button" class="media-remove" data-rm="${idx}" aria-label="Xóa">&times;</button>`;
+            previewList.appendChild(box);
             });
         }
 
@@ -417,11 +423,12 @@
         // Pick buttons
         pickButtons.forEach(btn=>{
             btn.addEventListener('click', ()=>{
-                const type = btn.dataset.pick;
-                if(type === 'image')      mediaInput.accept = 'image/*';
-                else if(type === 'video') mediaInput.accept = 'video/*';
-                else                      mediaInput.accept = 'image/*,video/*';
-                mediaInput.click();
+            const type = btn.dataset.pick;
+            if(type === 'image')      mediaInput.accept = 'image/*';
+            else if(type === 'video') mediaInput.accept = 'video/*';
+            else if(type === 'pdf')   mediaInput.accept = 'application/pdf';
+            else                      mediaInput.accept = 'image/*,video/*,application/pdf';
+            mediaInput.click();
             });
         });
 
@@ -429,9 +436,10 @@
         mediaInput.addEventListener('change', ()=>{
             const selected = Array.from(mediaInput.files);
             for(const f of selected){
-                if(files.length >= MAX_FILES) break;
-                if(!/^(image|video)\//.test(f.type)) continue;
+            if(files.length >= MAX_FILES) break;
+            if(/^(image|video)\//.test(f.type) || f.type === 'application/pdf'){
                 files.push(f);
+            }
             }
             mediaInput.value = '';
             updatePreview();
@@ -471,177 +479,185 @@
             // Simulated progress (since fetch upload progress not exposed)
             let fakeProgress = 0;
             const tick = () => {
-                if(fakeProgress < 95){
-                    fakeProgress = Math.min(95, fakeProgress + (8 + Math.random()*12));
-                    uploadBar.style.width = fakeProgress + '%';
-                }
+            if(fakeProgress < 95){
+                fakeProgress = Math.min(95, fakeProgress + (8 + Math.random()*12));
+                uploadBar.style.width = fakeProgress + '%';
+            }
             };
             const intervalId = setInterval(tick, 300);
 
             try{
-                const res = await fetch('http://localhost:8080/api/media/upload', {
-                    method: 'POST',
-                    body: fd,
-                    credentials: 'include'
-                });
+            const res = await fetch('http://localhost:8080/api/media/upload', {
+                method: 'POST',
+                body: fd,
+                credentials: 'include'
+            });
 
-                clearInterval(intervalId);
+            clearInterval(intervalId);
 
-                if(!res.ok){
-                    uploadStatus.textContent = 'Lỗi tải lên';
-                    throw new Error('Upload failed: ' + res.status);
-                }
+            if(!res.ok){
+                uploadStatus.textContent = 'Lỗi tải lên';
+                throw new Error('Upload failed: ' + res.status);
+            }
 
-                uploadBar.style.width = '100%';
-                uploadStatus.textContent = 'Tải lên xong';
+            uploadBar.style.width = '100%';
+            uploadStatus.textContent = 'Tải lên xong';
 
-                // Expecting: { "urls": [ ... ] }
-                let data;
-                try{
-                    data = await res.json();
-                }catch(err){
-                    throw new Error('Invalid JSON response');
-                }
-
-                const urls = Array.isArray(data?.urls) ? data.urls : [];
-                return urls; // Return plain array of URLs
+            // Expecting: { "urls": [ ... ] }
+            let data;
+            try{
+                data = await res.json();
             }catch(err){
-                clearInterval(intervalId);
-                uploadStatus.textContent = 'Lỗi mạng';
-                throw err;
+                throw new Error('Invalid JSON response');
+            }
+
+            const urls = Array.isArray(data?.urls) ? data.urls : [];
+            return urls; // Return plain array of URLs
+            }catch(err){
+            clearInterval(intervalId);
+            uploadStatus.textContent = 'Lỗi mạng';
+            throw err;
             }
         }
         // Create post
         async function createPost(uploadedUrls){
             // Map returned URLs to media objects paired with original file types
             const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
-                .filter(Boolean)
-                .map((url, idx) => {
-                    console.log('Mapping media URL:', url);
-                    const f = files[idx];
-                    let media_type = 'image';
-                    if (f?.type?.startsWith('video/')) media_type = 'video';
-                    else if (f?.type?.startsWith('image/')) media_type = 'image';
-                    return {
-                        media_type,
-                        media_url: "http://localhost:8080" + url
-                    };
-                });
+            .filter(Boolean)
+            .map((url, idx) => {
+                console.log('Mapping media URL:', url);
+                const f = files[idx];
+                let media_type = 'image';
+                if (f?.type?.startsWith('video/')) media_type = 'video';
+                else if (f?.type === 'application/pdf') media_type = 'pdf';
+                else if (f?.type?.startsWith('image/')) media_type = 'image';
+                return {
+                media_type,
+                media_url: "http://localhost:8080" + url
+                };
+            });
 
             const payload = {
-                author_id: (Number(JSON.parse(localStorage.getItem('auth')).user_id) || null), // from localStorage
-                content: contentEl.value.trim(),
-                visibility: (function(){ // map select -> public|friends|private
-                    try{
-                        const sel = document.querySelector('#createPostModal select.form-select');
-                        const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '')
-                            .toLocaleLowerCase('vi').trim();
-                        if (raw === 'public' || raw === 'friends' || raw === 'private') return raw;
-                        if (raw.includes('công khai')) return 'public';
-                        if (raw.includes('bạn bè')) return 'friends';
-                        if (raw.includes('chỉ mình tôi')) return 'private';
-                        return 'public';
-                    }catch(_){ return 'public'; }
-                })(), // Quốc 2
-                post_type: 'normal',
-                status: 'pending',
-                media: mediaArray
+            author_id: (Number(JSON.parse(localStorage.getItem('auth')).user_id) || null), // from localStorage
+            content: contentEl.value.trim(),
+            visibility: (function(){ // map select -> public|friends|private
+                try{
+                const sel = document.querySelector('#createPostModal select.form-select');
+                const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '')
+                    .toLocaleLowerCase('vi').trim();
+                if (raw === 'public' || raw === 'friends' || raw === 'private') return raw;
+                if (raw.includes('công khai')) return 'public';
+                if (raw.includes('bạn bè')) return 'friends';
+                if (raw.includes('chỉ mình tôi')) return 'private';
+                return 'public';
+                }catch(_){ return 'public'; }
+            })(), // Quốc 2
+            post_type: 'normal',
+            status: 'pending',
+            media: mediaArray
             };
 
             try{
-                const res = await fetch('http://localhost:8080/api/posts', {
-                    method:'POST',
-                    headers:{ 'Content-Type':'application/json' },
-                    body: JSON.stringify(payload),
-                    credentials:'include'
-                });
-                if(!res.ok) throw new Error('Post create failed: '+res.status);
-                return await res.json().catch(()=>({}));
+            const res = await fetch('http://localhost:8080/api/posts', {
+                method:'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify(payload),
+                credentials:'include'
+            });
+            if(!res.ok) throw new Error('Post create failed: '+res.status);
+            return await res.json().catch(()=>({}));
             }catch(err){
-                console.error(err);
-                throw err;
+            console.error(err);
+            throw err;
             }
         }
 
-    // Flags for share-edit mode
-    window.editingShare = false;
-    window.editingShareId = null;
-    window.editingSharePostId = null;
+        // Flags for share-edit mode
+        window.editingShare = false;
+        window.editingShareId = null;
+        window.editingSharePostId = null;
 
-    // Expose function to open modal in edit mode with existing post data
-    window.openEditPost = function(post){
+        // Expose function to open modal in edit mode with existing post data
+        window.openEditPost = function(post){
             try{
-                editMode = true;
-                editingPostId = post.id || post.ID || post.postId || null;
-                // Preserve type & status of the post being edited
-                editingPostType = (post.post_type || post.postType || post.type || 'normal');
-                editingStatus   = (post.status || 'pending');
-                // Prefill content
-                contentEl.value = post.content || '';
-                // Prefill visibility select
-                try{
-                    const sel = document.querySelector('#createPostModal select.form-select');
-                    if(sel){
-                        const vis = (post.visibility || '').toLowerCase();
-                        if(vis === 'public' || vis === 'friends' || vis === 'private') sel.value = vis;
-                    }
-                }catch(_){ }
-                // Prefill media previews if provided (post.medias or post.medias)
-                files = [];
-                revokeAll();
-                previewList.innerHTML = '';
-                if(Array.isArray(post.media) && post.media.length>0){
-                    post.media.forEach((m, idx)=>{
-                        const url = m.media_url || m.mediaUrl || m.url;
-                        if(!url) return;
-                        const box = document.createElement('div');
-                        box.className = 'media-thumb';
-                        box.innerHTML = `<img src="${url}" alt="">` + `<button type="button" class="media-remove" data-rm-existing="${idx}" aria-label="Xóa">&times;</button>`;
-                        previewList.appendChild(box);
-                    });
-                    previewArea.classList.remove('d-none');
+            editMode = true;
+            editingPostId = post.id || post.ID || post.postId || null;
+            // Preserve type & status of the post being edited
+            editingPostType = (post.post_type || post.postType || post.type || 'normal');
+            editingStatus   = (post.status || 'pending');
+            // Prefill content
+            contentEl.value = post.content || '';
+            // Prefill visibility select
+            try{
+                const sel = document.querySelector('#createPostModal select.form-select');
+                if(sel){
+                const vis = (post.visibility || '').toLowerCase();
+                if(vis === 'public' || vis === 'friends' || vis === 'private') sel.value = vis;
                 }
-                // Set submit button text
-                submitBtn.textContent = 'Lưu thay đổi';
-                const inst = new bootstrap.Modal(modalEl);
-                inst.show();
-                // Ensure button state reflects edit mode
-                updateSubmitState();
+            }catch(_){ }
+            // Prefill media previews if provided (post.medias or post.medias)
+            files = [];
+            revokeAll();
+            previewList.innerHTML = '';
+            if(Array.isArray(post.media) && post.media.length>0){
+                post.media.forEach((m, idx)=>{
+                const url = m.media_url || m.mediaUrl || m.url;
+                if(!url) return;
+                const isPdf = (m.media_type === 'pdf' || /\.pdf(\?|#|$)/i.test(url));
+                const box = document.createElement('div');
+                box.className = 'media-thumb';
+                box.innerHTML = isPdf
+                    ? `<div class="d-flex flex-column align-items-center text-center p-2 w-100">
+                     <span class="badge text-bg-danger mb-1">PDF</span>
+                     <span class="small text-truncate w-100" title="${url}">${(url||'').split('/').pop()}</span>
+                       </div>`
+                    : `<img src="${url}" alt="">`;
+                box.innerHTML += `<button type="button" class="media-remove" data-rm-existing="${idx}" aria-label="Xóa">&times;</button>`;
+                previewList.appendChild(box);
+                });
+                previewArea.classList.remove('d-none');
+            }
+            // Set submit button text
+            submitBtn.textContent = 'Lưu thay đổi';
+            const inst = new bootstrap.Modal(modalEl);
+            inst.show();
+            // Ensure button state reflects edit mode
+            updateSubmitState();
             }catch(err){
-                console.error(err);
-                alert('Không thể mở chế độ sửa bài.');
+            console.error(err);
+            alert('Không thể mở chế độ sửa bài.');
             }
         };
 
         // Expose function to open composer modal in share-edit mode
         window.openEditShare = function(opts){
             try{
-                // opts: { postId, shareId, sharedText, visibility }
-                window.editingShare = true;
-                window.editingShareId = opts.shareId || null;
-                window.editingSharePostId = opts.postId || null;
-                editMode = true;
-                editingPostId = opts.postId || null;
-                editingPostType = 'normal';
-                editingStatus = 'pending';
-                contentEl.value = opts.sharedText || '';
-                try{
-                    const setSel = (vis)=>{
-                        const sel = document.querySelector('#createPostModal select.form-select');
-                        if(sel){ try{ sel.value = vis || 'public'; }catch(_){ /* ignore */ } }
-                    };
-                    setSel(opts.visibility);
-                    requestAnimationFrame(()=> setSel(opts.visibility));
-                }catch(_){ }
-                files = [];
-                revokeAll();
-                previewList.innerHTML = '';
-                // Disable media UI for share-edit mode
-                try{ previewArea.classList.add('d-none'); fileCounter.textContent = ''; mediaInput.disabled = true; pickButtons.forEach(b=>b.disabled = true); const mc = document.getElementById('mediaControls'); if(mc) mc.classList.add('d-none'); }catch(_){ }
-                submitBtn.textContent = 'Lưu thay đổi';
-                const inst = new bootstrap.Modal(modalEl);
-                inst.show();
-                updateSubmitState();
+            // opts: { postId, shareId, sharedText, visibility }
+            window.editingShare = true;
+            window.editingShareId = opts.shareId || null;
+            window.editingSharePostId = opts.postId || null;
+            editMode = true;
+            editingPostId = opts.postId || null;
+            editingPostType = 'normal';
+            editingStatus = 'pending';
+            contentEl.value = opts.sharedText || '';
+            try{
+                const setSel = (vis)=>{
+                const sel = document.querySelector('#createPostModal select.form-select');
+                if(sel){ try{ sel.value = vis || 'public'; }catch(_){ /* ignore */ } }
+                };
+                setSel(opts.visibility);
+                requestAnimationFrame(()=> setSel(opts.visibility));
+            }catch(_){ }
+            files = [];
+            revokeAll();
+            previewList.innerHTML = '';
+            // Disable media UI for share-edit mode
+            try{ previewArea.classList.add('d-none'); fileCounter.textContent = ''; mediaInput.disabled = true; pickButtons.forEach(b=>b.disabled = true); const mc = document.getElementById('mediaControls'); if(mc) mc.classList.add('d-none'); }catch(_){ }
+            submitBtn.textContent = 'Lưu thay đổi';
+            const inst = new bootstrap.Modal(modalEl);
+            inst.show();
+            updateSubmitState();
             }catch(e){ console.error('openEditShare (composer) error:', e); throw e; }
         };
 
@@ -652,143 +668,144 @@
             updateSubmitState();
 
             try{
-                // If editing a share, we do not upload media — share-edit only updates text/visibility
-                let uploadedUrls = [];
-                if(!window.editingShare){
-                    uploadedUrls = await uploadFiles(); // array of URLs
-                }
-                    if(window.editingShare){
-                    
-                        // Edit share: send shared_text and visibility to share API
-                        try{
-                            const payload = {
-                                shared_text: contentEl.value.trim(),
-                                visibility: (function(){ try{ const sel = document.querySelector('#createPostModal select.form-select'); const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '').toLocaleLowerCase('vi').trim(); if (raw === 'public' || raw === 'friends' || raw === 'private') return raw; if (raw.includes('công khai')) return 'public'; if (raw.includes('bạn bè')) return 'friends'; if (raw.includes('chỉ mình tôi')) return 'private'; return 'public'; }catch(_){ return 'public'; } })()
-                            };
-                            const shareId = window.editingShareId;
-                            const postId = window.editingSharePostId || editingPostId;
-                            const res = await fetch('/api/posts/' + encodeURIComponent(postId) + '/shares/' + encodeURIComponent(shareId), {
-                                method: 'PUT',
-                                headers: { 'Content-Type':'application/json' },
-                                credentials: 'include',
-                                body: JSON.stringify(payload)
-                            });
-                            if(!res.ok) throw new Error('Update share failed: '+res.status);
-                            // Update DOM for the share: visibility label, dataset, time, and shared text
-                            try{
-                                const payloadVisibility = payload && payload.visibility ? payload.visibility : null;
-                                const payloadText = payload && typeof payload.shared_text !== 'undefined' ? payload.shared_text : null;
-                                const shareIdLocal = shareId;
-                                const rootArticle = document.querySelector('article[data-share-id="'+String(shareIdLocal)+'"]') || document.querySelector('article.post-card[data-share-id="'+String(shareIdLocal)+'"]');
-                                if(rootArticle){
-                                    if(payloadVisibility) {
-                                        rootArticle.dataset.visibility = payloadVisibility;
-                                        const visEl = rootArticle.querySelector('.pc-visibility');
-                                        if(visEl){
-                                            const map = { public: 'Công khai', friends: 'Bạn bè', private: 'Cá nhân' };
-                                            visEl.textContent = map[payloadVisibility] || payloadVisibility;
-                                        }
-                                    }
-                                    if(payloadText !== null){
-                                        const contentElLocal = rootArticle.querySelector('.post-content'); if(contentElLocal) contentElLocal.textContent = payloadText;
-                                    }
-                                    const timeElLocal = rootArticle.querySelector('.post-time');
-                                    try{
-                                        if(timeElLocal){
-                                            if(typeof formatRelativeTime === 'function'){
-                                                const nowIso = new Date().toISOString();
-                                                timeElLocal.textContent = formatRelativeTime(nowIso) + ' • Đã chỉnh sửa';
-                                                timeElLocal.setAttribute('datetime', nowIso);
-                                            } else {
-                                                timeElLocal.textContent = 'Vừa xong • Đã chỉnh sửa';
-                                            }
-                                        }
-                                    }catch(_){ }
-                                }
-                            }catch(e){ console.error('Failed update share DOM after PUT', e); }
-                            // clear share flags
-                            window.editingShare = false; window.editingShareId = null; window.editingSharePostId = null;
-                            try{ bootstrap.Modal.getOrCreateInstance(modalEl).hide(); }catch(_){ }
-                            try{ showToast && showToast('Cập nhật chia sẻ thành công', 'success'); }catch(_){ }
-                        }catch(err){ console.error(err); throw err; }
-                    } else if(editMode && editingPostId){
-                    // Update existing post via PUT
-                    const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
-                        .filter(Boolean)
-                        .map((url, idx) => {
-                            const f = files[idx];
-                            let media_type = 'image';
-                            if (f?.type?.startsWith('video/')) media_type = 'video';
-                            else if (f?.type?.startsWith('image/')) media_type = 'image';
-                            return {
-                                media_type,
-                                media_url: url
-                            };
-                        });
-
+            // If editing a share, we do not upload media — share-edit only updates text/visibility
+            let uploadedUrls = [];
+            if(!window.editingShare){
+                uploadedUrls = await uploadFiles(); // array of URLs
+            }
+                if(window.editingShare){
+                
+                // Edit share: send shared_text and visibility to share API
+                try{
                     const payload = {
-                        content: contentEl.value.trim(),
-                        visibility: (function(){ try{ const sel = document.querySelector('#createPostModal select.form-select'); const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '').toLocaleLowerCase('vi').trim(); if (raw === 'public' || raw === 'friends' || raw === 'private') return raw; if (raw.includes('công khai')) return 'public'; if (raw.includes('bạn bè')) return 'friends'; if (raw.includes('chỉ mình tôi')) return 'private'; return 'public'; }catch(_){ return 'public'; } })(),
-                        post_type: editingPostType || 'normal',
-                        status: editingStatus || 'pending',
-                        media: mediaArray
+                    shared_text: contentEl.value.trim(),
+                    visibility: (function(){ try{ const sel = document.querySelector('#createPostModal select.form-select'); const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '').toLocaleLowerCase('vi').trim(); if (raw === 'public' || raw === 'friends' || raw === 'private') return raw; if (raw.includes('công khai')) return 'public'; if (raw.includes('bạn bè')) return 'friends'; if (raw.includes('chỉ mình tôi')) return 'private'; return 'public'; }catch(_){ return 'public'; } })()
                     };
-
-                    // If no new uploads selected, omit media to preserve existing media on server
-                    if (mediaArray.length === 0) {
-                        delete payload.media;
-                    }
-
+                    const shareId = window.editingShareId;
+                    const postId = window.editingSharePostId || editingPostId;
+                    const res = await fetch('/api/posts/' + encodeURIComponent(postId) + '/shares/' + encodeURIComponent(shareId), {
+                    method: 'PUT',
+                    headers: { 'Content-Type':'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                    });
+                    if(!res.ok) throw new Error('Update share failed: '+res.status);
+                    // Update DOM for the share: visibility label, dataset, time, and shared text
                     try{
-                        const res = await fetch('http://localhost:8080/api/posts/' + encodeURIComponent(editingPostId), {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                            credentials: 'include'
-                        });
-                        if(!res.ok) throw new Error('Update failed: '+res.status);
-                    }catch(err){
-                        console.error(err);
-                        throw err;
+                    const payloadVisibility = payload && payload.visibility ? payload.visibility : null;
+                    const payloadText = payload && typeof payload.shared_text !== 'undefined' ? payload.shared_text : null;
+                    const shareIdLocal = shareId;
+                    const rootArticle = document.querySelector('article[data-share-id="'+String(shareIdLocal)+'"]') || document.querySelector('article.post-card[data-share-id="'+String(shareIdLocal)+'"]');
+                    if(rootArticle){
+                        if(payloadVisibility) {
+                        rootArticle.dataset.visibility = payloadVisibility;
+                        const visEl = rootArticle.querySelector('.pc-visibility');
+                        if(visEl){
+                            const map = { public: 'Công khai', friends: 'Bạn bè', private: 'Cá nhân' };
+                            visEl.textContent = map[payloadVisibility] || payloadVisibility;
+                        }
+                        }
+                        if(payloadText !== null){
+                        const contentElLocal = rootArticle.querySelector('.post-content'); if(contentElLocal) contentElLocal.textContent = payloadText;
+                        }
+                        const timeElLocal = rootArticle.querySelector('.post-time');
+                        try{
+                        if(timeElLocal){
+                            if(typeof formatRelativeTime === 'function'){
+                            const nowIso = new Date().toISOString();
+                            timeElLocal.textContent = formatRelativeTime(nowIso) + ' • Đã chỉnh sửa';
+                            timeElLocal.setAttribute('datetime', nowIso);
+                            } else {
+                            timeElLocal.textContent = 'Vừa xong • Đã chỉnh sửa';
+                            }
+                        }
+                        }catch(_){ }
                     }
-                }else{
-                    await createPost(uploadedUrls);
+                    }catch(e){ console.error('Failed update share DOM after PUT', e); }
+                    // clear share flags
+                    window.editingShare = false; window.editingShareId = null; window.editingSharePostId = null;
+                    try{ bootstrap.Modal.getOrCreateInstance(modalEl).hide(); }catch(_){ }
+                    try{ showToast && showToast('Cập nhật chia sẻ thành công', 'success'); }catch(_){ }
+                }catch(err){ console.error(err); throw err; }
+                } else if(editMode && editingPostId){
+                // Update existing post via PUT
+                const mediaArray = (Array.isArray(uploadedUrls) ? uploadedUrls : [])
+                .filter(Boolean)
+                .map((url, idx) => {
+                    const f = files[idx];
+                    let media_type = 'image';
+                    if (f?.type?.startsWith('video/')) media_type = 'video';
+                    else if (f?.type === 'application/pdf') media_type = 'pdf';
+                    else if (f?.type?.startsWith('image/')) media_type = 'image';
+                    return {
+                    media_type,
+                    media_url: url
+                    };
+                });
+
+                const payload = {
+                content: contentEl.value.trim(),
+                visibility: (function(){ try{ const sel = document.querySelector('#createPostModal select.form-select'); const raw = (sel ? (sel.value || sel.options[sel.selectedIndex]?.text || '') : '').toLocaleLowerCase('vi').trim(); if (raw === 'public' || raw === 'friends' || raw === 'private') return raw; if (raw.includes('công khai')) return 'public'; if (raw.includes('bạn bè')) return 'friends'; if (raw.includes('chỉ mình tôi')) return 'private'; return 'public'; }catch(_){ return 'public'; } })(),
+                post_type: editingPostType || 'normal',
+                status: editingStatus || 'pending',
+                media: mediaArray
+                };
+
+                // If no new uploads selected, omit media to preserve existing media on server
+                if (mediaArray.length === 0) {
+                delete payload.media;
                 }
-                // Reset
-                files = [];
-                revokeAll();
-                updatePreview();
-                form.reset();
-                contentEl.value = '';
-                setTimeout(()=>{
-                    uploadWrap.classList.add('d-none');
-                    uploadBar.style.width='0%';
-                }, 350);
-                const inst = bootstrap.Modal.getInstance(modalEl);
-                if(inst) inst.hide();
-                // clear edit mode
-                editMode = false;
-                editingPostId = null;
-                editingPostType = 'normal';
-                editingStatus = 'pending';
-                submitBtn.textContent = 'Đăng';
+
+                try{
+                const res = await fetch('http://localhost:8080/api/posts/' + encodeURIComponent(editingPostId), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
+                });
+                if(!res.ok) throw new Error('Update failed: '+res.status);
+                }catch(err){
+                console.error(err);
+                throw err;
+                }
+            }else{
+                await createPost(uploadedUrls);
+            }
+            // Reset
+            files = [];
+            revokeAll();
+            updatePreview();
+            form.reset();
+            contentEl.value = '';
+            setTimeout(()=>{
+                uploadWrap.classList.add('d-none');
+                uploadBar.style.width='0%';
+            }, 350);
+            const inst = bootstrap.Modal.getInstance(modalEl);
+            if(inst) inst.hide();
+            // clear edit mode
+            editMode = false;
+            editingPostId = null;
+            editingPostType = 'normal';
+            editingStatus = 'pending';
+            submitBtn.textContent = 'Đăng';
             }catch(err){
-                // keep previews for retry
+            // keep previews for retry
             }finally{
-                uploading = false;
-                updateSubmitState();
-                setTimeout(() => {
-                    const modal = document.getElementById('createPostModal');
-                    if (modal && !modal.classList.contains('show')) {
-                        window.location.reload();
-                    }
-                }, 450);
+            uploading = false;
+            updateSubmitState();
+            setTimeout(() => {
+                const modal = document.getElementById('createPostModal');
+                if (modal && !modal.classList.contains('show')) {
+                window.location.reload();
+                }
+            }, 450);
             }
         });
 
         // Initial
         updateSubmitState();
-    })();
+        })();
     </script>
     <style>
         .media-thumb{
