@@ -2145,6 +2145,8 @@
                             if (window.QDTCounts?.refreshShareCountForPost)
                               window.QDTCounts.refreshShareCountForPost(article.dataset.postId);
                             if (typeof loadPosts === 'function') loadPosts();
+                            // reload the page after successful share
+                            window.location.reload();
                           } else {
                             const json = await res.json().catch(() => ({}));
                             alert('Không thể chia sẻ: ' + (json.message || res.status));
@@ -3016,7 +3018,12 @@
                       var btn = shareModal.querySelector('.share-send-btn');
                       var ta = shareModal.querySelector('.share-textarea');
                       if(btn){
-                        btn.addEventListener('click', async function(){
+                        // avoid double-binding if another initializer already attached handler
+                        if(btn.dataset._shareHandler === '1'){
+                          // already bound elsewhere
+                        } else {
+                          btn.dataset._shareHandler = '1';
+                          btn.addEventListener('click', async function(){
                           try{
                             var postId = article.dataset.postId; if(!postId) return;
                             var text = (ta && ta.value||'').trim();
@@ -3038,7 +3045,8 @@
                               alert('Không thể chia sẻ: '+(json && json.message?json.message:res.status));
                             }
                           }catch(e){ console.error(e); alert('Lỗi khi chia sẻ'); }
-                        });
+                          });
+                        }
                       }
 
                       // define loader if not present
