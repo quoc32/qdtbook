@@ -2875,6 +2875,7 @@
                 const filename = u.split('/').pop();
                 el.innerHTML = " " + '<i class="bi bi-filetype-pdf"></i>' + "  " + filename; // quoc
                 el.target='_blank'; el.rel='noopener noreferrer';
+                el.style.paddingTop='5px'; el.style.paddingBottom='5px';
               } else {
                 el=document.createElement('img'); el.src=u; el.loading='lazy'; el.alt='';
               }
