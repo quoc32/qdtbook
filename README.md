@@ -68,15 +68,6 @@ mvn spring-boot:run
 
 ## Kiến thức học được
 
-Xây dựng RESTful API với Spring Boot
-
-Xác thực & phân quyền bằng Session
-
-Tương tác cơ sở dữ liệu với JPA / Hibernate
-
-Realtime communication (WebSocket)
-
-Tổ chức kiến trúc 3 tầng: Controller – Service – Repository
 
  ## Tác giả
 
