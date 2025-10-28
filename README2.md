@@ -8,10 +8,8 @@
 
 - [Giới Thiệu](#-giới-thiệu)
 - [Công Nghệ Sử Dụng](#️-công-nghệ-sử-dụng)
-- [Kiến Trúc Hệ Thống](#️-kiến-trúc-hệ-thống)
 - [Cấu Trúc Thư Mục](#-cấu-trúc-thư-mục)
 - [Tính Năng Chi Tiết](#-tính-năng-chi-tiết)
-- [API Documentation](#-api-documentation)
 - [Cài Đặt & Chạy Dự Án](#️-cài-đặt--chạy-dự-án)
 - [Kiến Thức Học Được](#-kiến-thức-học-được)
 - [Tác Giả](#-tác-giả)
@@ -24,16 +22,16 @@
 
 ### ✨ Điểm Nổi Bật
 
-- 🔐 **Xác thực đa dạng**: Hỗ trợ đăng ký/đăng nhập thông thường và OAuth2 (Google)
-- 💬 **Nhắn tin thời gian thực**: Sử dụng WebSocket để chat real-time tương tự như các nền tảng mạng xã hội hiện đại như facebook, instagram, twitter
-- 📱 **Giao diện hiện đại**: Responsive design với Thymeleaf + Bootstrap
-- 🔒 **Bảo mật cao**: Spring Security với session management
-- 🎓 **Tính năng đặc biệt**: Mạng xã hội này tích hợp 1 trang "Bài viết quan trọng" cho phép thông báo các thông tin quan trọng như thông tin đăng kí học phần, sự kiện quan trọng, lễ tốt nghiệp cho sinh viên, thông báo về các hoạt động của trường,...
-- 🔔 **Hệ thống thông báo**: Nhận thông báo về lời mời kết bạn, bình luận, reaction, tin nhắn mới và các hoạt động liên quan
-- 👤 **Quản lý Profile**: Trang cá nhân với đầy đủ thông tin, chỉnh sửa profile, upload avatar/cover photo, xem profile người khác
-- 🛒 **Marketplace**: Chợ sinh viên để mua bán đồ cũ
-- 👥 **Quản lý bạn bè**: Gửi lời mời, chấp nhận, từ chối, chặn
-- 📊 **Admin Dashboard**: Quản lý người dùng, bài viết, báo cáo vi phạm
+- **Xác thực đa dạng**: Hỗ trợ đăng ký/đăng nhập thông thường và OAuth2 (Google)
+- **Nhắn tin thời gian thực**: Sử dụng WebSocket để chat real-time tương tự như các nền tảng mạng xã hội hiện đại như facebook, instagram, twitter
+- **Giao diện hiện đại**: Responsive design với Thymeleaf + Bootstrap
+- **Bảo mật cao**: Spring Security với session management
+- **Tính năng đặc biệt**: Mạng xã hội này tích hợp 1 trang "Bài viết quan trọng" cho phép thông báo các thông tin quan trọng như thông tin đăng kí học phần, sự kiện quan trọng, lễ tốt nghiệp cho sinh viên, thông báo về các hoạt động của trường,...
+- **Hệ thống thông báo**: Nhận thông báo về lời mời kết bạn, bình luận, reaction, tin nhắn mới và các hoạt động liên quan
+- **Quản lý Profile**: Trang cá nhân với đầy đủ thông tin, chỉnh sửa profile, upload avatar/cover photo, xem profile người khác
+- **Marketplace**: Chợ sinh viên để mua bán đồ cũ
+- **Quản lý bạn bè**: Gửi lời mời, chấp nhận, từ chối, chặn
+- **Admin Dashboard**: Quản lý người dùng, bài viết, báo cáo vi phạm
 
 ---
 
@@ -69,27 +67,6 @@
 
 ---
 
-## 🏗️ Kiến Trúc Hệ Thống
-
-### Kiến Trúc 3 Tầng (MVC Pattern)
-
-```
-┌─────────────────────────────────────────┐
-│       PRESENTATION LAYER                │
-│  Controllers + Thymeleaf + WebSocket    │
-└─────────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────┐
-│         BUSINESS LAYER                  │
-│  Services + Business Logic              │
-└─────────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────┐
-│        DATA ACCESS LAYER                │
-│  Repositories + JPA + MySQL             │
-└─────────────────────────────────────────┘
-```
-
 ---
 
 ## 📁 Cấu Trúc Thư Mục
@@ -104,12 +81,25 @@ dqtbook_backend/
 │   ├── repository/          # Data Access Layer
 │   ├── dto/                 # Data Transfer Objects
 │   ├── exception/           # Custom Exceptions
-│   └── enums/               # Enumerations
+│   ├── enums/               # Enumerations
+│   └── view/                # View Controllers (Thymeleaf)
 │
 ├── src/main/resources/
 │   ├── application.properties
 │   ├── static/              # CSS, JS, Images
 │   └── templates/           # Thymeleaf HTML templates
+│       ├── index.html       # Trang chủ (Newsfeed)
+│       ├── login.html       # Đăng nhập
+│       ├── register.html    # Đăng ký
+│       ├── user.html        # Trang cá nhân
+│       ├── another_user.html # Xem profile người khác
+│       ├── friends.html     # Danh sách bạn bè
+│       ├── messages.html    # Tin nhắn
+│       ├── event.html       # Sự kiện
+│       ├── market.html      # Marketplace
+│       ├── adminManager.html # Quản trị viên
+│       ├── error.html       # Trang lỗi
+│       └── fragments/       # Thymeleaf fragments
 │
 ├── pom.xml
 └── .env                     # Environment variables
@@ -166,59 +156,6 @@ dqtbook_backend/
 - Xóa bài viết vi phạm
 - Xem báo cáo từ người dùng
 - Thống kê user trong hệ thống
-
----
-
-## 📡 API Documentation
-
-### Authentication APIs
-```
-POST   /api/auth/login              # Đăng nhập
-POST   /api/auth/logout             # Đăng xuất
-GET    /api/auth/me                 # Thông tin user hiện tại
-POST   /api/users/register          # Đăng ký
-```
-
-### Post APIs
-```
-GET    /api/posts                   # Tất cả bài viết
-GET    /api/posts/suitable/{userId} # Bài viết phù hợp
-GET    /api/posts/important         # Bài viết quan trọng
-POST   /api/posts                   # Tạo bài viết
-PUT    /api/posts/{id}              # Cập nhật
-DELETE /api/posts/{id}              # Xóa
-```
-
-### Interaction APIs
-```
-POST   /api/posts/{postId}/reactions      # Thêm reaction
-GET    /api/posts/{postId}/comments       # Lấy comments
-POST   /api/posts/{postId}/comments       # Thêm comment
-POST   /api/posts/{postId}/shares         # Chia sẻ
-```
-
-### Friend APIs
-```
-GET    /api/friends/{userId}              # Danh sách bạn bè
-POST   /api/friends/request               # Gửi lời mời
-PUT    /api/friends/accept                # Chấp nhận
-DELETE /api/friends/unfriend              # Hủy kết bạn
-```
-
-### Chat APIs (REST)
-```
-GET    /api/chats/user/{userId}           # Danh sách chat
-GET    /api/chats/{chatId}/messages       # Lịch sử tin nhắn
-POST   /api/chats                         # Tạo chat mới
-```
-
-### WebSocket Endpoints
-```
-/ws                              # WebSocket connection
-/app/chat.sendMessage            # Gửi tin nhắn
-/app/chat.typing                 # Typing status
-/topic/chat.{chatId}             # Subscribe tin nhắn
-```
 
 ---
 
