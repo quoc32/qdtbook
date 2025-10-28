@@ -36,3 +36,27 @@ src/
  │       ├─ templates/
  │       └─ application.properties
  └─ test/
+
+## Cách chạy dự án
+### 1. Clone dự án
+git clone https://github.com/quoc32/qdtbook.git
+cd backend/qdtbook_backend
+### 2. Cấu hình database và biến môi trường
+Thêm file .env (cùng cấp thư mục với file pom.xml) bao gồm các thông tin như sau:
+DB_HOST=<mysql database url>(ví dụ: jdbc:mysql://localhost:3306/spkt_connect?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC)
+DB_USERNAME=<user_name>
+DB_PASSWORD=<Mật khẩu database>
+MAIL_USERNAME=<email Đăng ký dịch vụ smtp>
+MAIL_PASSWORD=<app_word>
+GOOGLE_CLIENT_ID=<gg client id>
+GOOGLE_CLIENT_SECRET=<gg client token>
+### 3. Chạy ứng dụng
+mvn spring-boot:run
+
+
+
+
+
+
+
+ 
