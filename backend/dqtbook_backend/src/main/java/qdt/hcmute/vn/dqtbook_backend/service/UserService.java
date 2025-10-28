@@ -182,6 +182,11 @@ public class UserService {
         user.setGender(dto.getGender());
         user.setDateOfBirth(dto.getDateOfBirth());
         user.setAvatarUrl(dto.getAvatarUrl() != null ? dto.getAvatarUrl() : "http://localhost:8080/default-avatar.png");
+        if (dto.getRole() != null) {
+            user.setRole(dto.getRole());
+        } else {
+            user.setRole("student");  // Mặc định role là student
+        }
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
 

@@ -2157,6 +2157,7 @@
                             if (typeof loadPosts === 'function') loadPosts();
                             // reload the page after successful share
                             window.location.reload();
+
                           } else {
                             const json = await res.json().catch(() => ({}));
                             alert('Không thể chia sẻ: ' + (json.message || res.status));
@@ -2172,6 +2173,9 @@
 
                       // auto-load shares
                       try { article._loadShares(); } catch (e) {}
+                      // reload whole page to reflect share count changes
+                      // window.location.reload();
+
                     } catch (e) {
                       console.error(e);
                     }

@@ -691,10 +691,11 @@
                           <li><a class="dropdown-item view-profile-btn" href="/views/user/${escapeHtml(f.friend_info.id)}" data-id="${escapeHtml(f.id)}">Xem trang cá nhân</a></li>
                           <li><a class="dropdown-item remove-friend-btn text-danger" href="#" onclick="handleUnfriend(${escapeHtml(f.friend_info.id)})">Hủy kết bạn</a></li>
                           <li><hr class="dropdown-divider"></li>
-                          <li><a class="dropdown-item block-friend-btn text-warning" href="#" data-id="${escapeHtml(f.id)}">Block</a></li>
+                          
                         </ul>
                       </div>
                     `;
+                    // <li><a class="dropdown-item block-friend-btn text-warning" href="#" data-id="${escapeHtml(f.id)}">Block</a></li>
                     frag.appendChild(li);
                   });
                   
